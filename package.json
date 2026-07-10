@@ -1,0 +1,25 @@
+{
+  "name": "cfs-artgallery",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10",
+    "@react-three/fiber": "^9",
+    "maath": "^0.10.8",
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19",
+    "three": "^0.178.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/three": "^0.178.0",
+    "typescript": "^5"
+  }
+}

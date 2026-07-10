@@ -1,0 +1,52 @@
+{
+  "name": "Mist Room — prototype",
+  "theme": {
+    "fog": "#cfd9e5",
+    "floor": "#a9b6c5",
+    "panel": "#f4f1ea",
+    "frame": "#5f7186",
+    "accent": "#7fa8c9"
+  },
+  "artworks": [
+    {
+      "slug": "placeholder-horizon",
+      "title": "Quiet Horizon",
+      "artist": "Placeholder Artist",
+      "medium": "Placeholder — generated vector study",
+      "description": "Placeholder artwork for the Phase 0 prototype. Real pieces from the ME/CFS community will hang here. This plaque is where the artist's own words about the work will live.",
+      "image": "/art/placeholder-horizon.svg",
+      "width": 1.2,
+      "height": 1.5
+    },
+    {
+      "slug": "placeholder-ember",
+      "title": "Ember Hour",
+      "artist": "Placeholder Artist",
+      "medium": "Placeholder — generated vector study",
+      "description": "Placeholder artwork for the Phase 0 prototype. A wide, warm piece to test how landscape formats sit on the floating panels.",
+      "image": "/art/placeholder-ember.svg",
+      "width": 1.5,
+      "height": 1.1
+    },
+    {
+      "slug": "placeholder-thicket",
+      "title": "Thicket",
+      "artist": "Placeholder Artist",
+      "medium": "Placeholder — generated vector study",
+      "description": "Placeholder artwork for the Phase 0 prototype. A smaller portrait piece to test scale variation between works.",
+      "image": "/art/placeholder-thicket.svg",
+      "width": 1.0,
+      "height": 1.3
+    },
+    {
+      "slug": "placeholder-tide",
+      "title": "Low Tide, Slow Light",
+      "artist": "Placeholder Artist",
+      "medium": "Placeholder — generated vector study",
+      "description": "Placeholder artwork for the Phase 0 prototype. The last stop of the tour, to test the end-of-room moment.",
+      "image": "/art/placeholder-tide.svg",
+      "width": 1.3,
+      "height": 1.0
+    }
+  ]
+}
