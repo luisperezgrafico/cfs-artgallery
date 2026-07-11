@@ -105,12 +105,32 @@ export function viewpointForSlot(slot: WallSlot): Viewpoint {
   return { position: [vx, EYE_H, vz], look: [ax, ay, az] };
 }
 
+/** Wide overview shot from room entrance — shows the full room interior */
 export const ROOM_OVERVIEW: Viewpoint = {
-  position: [0, 2.1, 3.2],
-  look: [0, 1.6, -1.8],
+  position: [0, 2.3, 3.4],
+  look: [0, 1.55, -2.2],
+};
+
+/** Camera position just inside the room door — cinematic first glimpse */
+export const ROOM_ENTRANCE: Viewpoint = {
+  position: [0, 1.6, 3.5],
+  look: [0, 1.7, -1.0],
 };
 
 export const LOBBY_OVERVIEW: Viewpoint = {
   position: [0, 1.95, 3.4],
   look: [0, 1.6, -2.5],
 };
+
+/** Camera walks toward each portal before swapping scenes */
+export const LOBBY_EXITS: Record<string, Viewpoint> = {
+  'room-a': { position: [-3.6, 1.58, -0.6], look: [-3.6, 2.0, -4.0] },
+  'room-b': { position: [0,    1.58, -0.6], look: [0,    2.0, -4.0] },
+  'room-c': { position: [3.6,  1.58, -0.6], look: [3.6,  2.0, -4.0] },
+};
+
+/** Shared state type — exported so both Gallery and Overlay can import it */
+export type GalleryState =
+  | { scene: 'lobby' }
+  | { scene: 'lobby-exit'; targetRoom: string }
+  | { scene: 'room'; roomSlug: string; slotIndex: number };

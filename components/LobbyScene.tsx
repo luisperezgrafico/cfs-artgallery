@@ -32,7 +32,7 @@ export function LobbyScene({
 
       <RoomShell theme={LOBBY_THEME} variant="lobby" />
 
-      <CameraRig viewpoint={viewpoint} moving={moving} snap={snap} onSettled={onSettled} />
+      <CameraRig viewpoint={viewpoint} snap={snap} onSettled={onSettled} />
     </>
   );
 }

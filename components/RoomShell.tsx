@@ -1,25 +1,59 @@
 'use client';
 
-import { useMemo } from 'react';
-import * as THREE from 'three';
+import { Text } from '@react-three/drei';
 import { ROOM, type RoomTheme, type RoomVariant } from '@/lib/gallery';
 
 const { W, D, H, DOOR_W, DOOR_H } = ROOM;
-const TRIM_H = 0.08;
-const TRIM_D = 0.06;
 const HALF_W = W / 2;
 const HALF_D = D / 2;
 
+// Architectural constants
+const DADO_Y      = 1.05;  // dado rail center height
+const DADO_H      = 0.10;  // dado rail strip height
+const DADO_D      = 0.07;  // dado rail protrusion from wall
+const TRIM_H      = 0.08;  // baseboard / crown height
+const TRIM_D      = 0.06;  // baseboard / crown depth
+const PIL_W       = 0.22;  // pilaster face width
+const PIL_D       = 0.14;  // pilaster protrusion depth
+const PANEL_INSET = 0.012; // how far recessed panels sit behind the wall plane
+
+// Pilaster x-positions on the back wall (between artwork slots at -3.5, 0, +3.5)
+const BACK_PIL_X  = [-4.8, -1.75, 1.75, 4.8] as const;
+// Pilaster z-positions on the side walls
+const SIDE_PIL_Z  = [-2.6, 0, 2.6] as const;
+
+function shiftHex(hex: string, delta: number): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const clamp = (v: number) => Math.max(0, Math.min(255, v));
+  const r = clamp(((n >> 16) & 0xff) + delta);
+  const g = clamp(((n >> 8)  & 0xff) + delta);
+  const b = clamp(( n        & 0xff) + delta);
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+const WALL_POEMS: Record<string, string> = {
+  warm: '"In stillness, we find\nwhat movement cannot reach."',
+  cool: '"Some walls hold us.\nSome walls hold light for us."',
+  dark: '"The dark is patient.\nSo are we."',
+};
+
 export function RoomShell({ theme, variant }: { theme: RoomTheme; variant: RoomVariant }) {
+  const pilasterColor = shiftHex(theme.walls, -18);
+  const panelColor    = shiftHex(theme.walls, -10);
+
   return (
     <group>
       <Floor theme={theme} />
       <Ceiling theme={theme} variant={variant} />
-      <BackWall theme={theme} />
-      <LeftWall theme={theme} />
-      <RightWall theme={theme} />
+      <BackWall theme={theme} panelColor={panelColor} pilasterColor={pilasterColor} />
+      <LeftWall theme={theme} panelColor={panelColor} pilasterColor={pilasterColor} />
+      <RightWall theme={theme} panelColor={panelColor} pilasterColor={pilasterColor} />
       <FrontWall theme={theme} variant={variant} />
       <Trims theme={theme} />
+      <DadoRail theme={theme} />
+      {variant !== 'lobby' && (
+        <WallPoem variant={variant as 'warm' | 'cool' | 'dark'} theme={theme} />
+      )}
       {variant === 'warm' && <WarmDetails theme={theme} />}
       {variant === 'cool' && <CoolDetails theme={theme} />}
       {variant === 'dark' && <DarkDetails theme={theme} />}
@@ -46,79 +80,127 @@ function Ceiling({ theme, variant }: { theme: RoomTheme; variant: RoomVariant })
   );
 }
 
-function BackWall({ theme }: { theme: RoomTheme }) {
+// ── Back wall with pilasters and recessed panels ──────────────────────────────
+
+function BackWall({
+  theme, panelColor, pilasterColor,
+}: { theme: RoomTheme; panelColor: string; pilasterColor: string }) {
+  // Panels: sections between consecutive pilasters (and wall edges)
+  const edgeXs = [-HALF_W, ...BACK_PIL_X, HALF_W];
+  const panels: { cx: number; w: number }[] = [];
+  for (let i = 0; i < edgeXs.length - 1; i++) {
+    const left  = edgeXs[i]  + (i === 0 ? 0 : PIL_W / 2);
+    const right = edgeXs[i + 1] - (i === edgeXs.length - 2 ? 0 : PIL_W / 2);
+    panels.push({ cx: (left + right) / 2, w: right - left });
+  }
+
   return (
-    <mesh position={[0, H / 2, -HALF_D]}>
-      <planeGeometry args={[W, H]} />
-      <meshStandardMaterial color={theme.walls} roughness={0.85} />
-    </mesh>
+    <group position={[0, H / 2, -HALF_D]}>
+      {/* base wall */}
+      <mesh>
+        <planeGeometry args={[W, H]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+
+      {/* recessed panels (above dado rail) */}
+      {panels.map(({ cx, w }) => (
+        <mesh key={cx} position={[cx, (H - DADO_Y) / 2 - (H / 2 - H + (H - DADO_Y) / 2), -PANEL_INSET]}>
+          <planeGeometry args={[Math.max(0.01, w - 0.08), H - DADO_Y - 0.22]} />
+          <meshStandardMaterial color={panelColor} roughness={0.9} />
+        </mesh>
+      ))}
+
+      {/* pilasters */}
+      {BACK_PIL_X.map((x) => (
+        <mesh key={x} position={[x, 0, PIL_D / 2]}>
+          <boxGeometry args={[PIL_W, H, PIL_D]} />
+          <meshStandardMaterial color={pilasterColor} roughness={0.8} />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
-function LeftWall({ theme }: { theme: RoomTheme }) {
+// ── Side walls with pilasters ─────────────────────────────────────────────────
+
+function LeftWall({
+  theme, panelColor, pilasterColor,
+}: { theme: RoomTheme; panelColor: string; pilasterColor: string }) {
   return (
-    <mesh position={[-HALF_W, H / 2, 0]} rotation-y={Math.PI / 2}>
-      <planeGeometry args={[D, H]} />
-      <meshStandardMaterial color={theme.walls} roughness={0.85} />
-    </mesh>
+    <group position={[-HALF_W, H / 2, 0]} rotation-y={Math.PI / 2}>
+      <mesh>
+        <planeGeometry args={[D, H]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+      {SIDE_PIL_Z.map((z) => (
+        <mesh key={z} position={[z, 0, PIL_D / 2]}>
+          <boxGeometry args={[PIL_W, H, PIL_D]} />
+          <meshStandardMaterial color={pilasterColor} roughness={0.8} />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
-function RightWall({ theme }: { theme: RoomTheme }) {
+function RightWall({
+  theme, panelColor, pilasterColor,
+}: { theme: RoomTheme; panelColor: string; pilasterColor: string }) {
   return (
-    <mesh position={[HALF_W, H / 2, 0]} rotation-y={-Math.PI / 2}>
-      <planeGeometry args={[D, H]} />
-      <meshStandardMaterial color={theme.walls} roughness={0.85} />
-    </mesh>
+    <group position={[HALF_W, H / 2, 0]} rotation-y={-Math.PI / 2}>
+      <mesh>
+        <planeGeometry args={[D, H]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+      {SIDE_PIL_Z.map((z) => (
+        <mesh key={z} position={[z, 0, PIL_D / 2]}>
+          <boxGeometry args={[PIL_W, H, PIL_D]} />
+          <meshStandardMaterial color={pilasterColor} roughness={0.8} />
+        </mesh>
+      ))}
+    </group>
   );
 }
+
+// ── Front wall (with doorway) ─────────────────────────────────────────────────
 
 function FrontWall({ theme, variant }: { theme: RoomTheme; variant: RoomVariant }) {
-  const sideW = (W - DOOR_W) / 2; // width of each panel flanking the doorway
-  const topH = H - DOOR_H;        // height above the door
+  const sideW = (W - DOOR_W) / 2;
+  const topH  = H - DOOR_H;
 
   return (
     <group position={[0, 0, HALF_D]} rotation-y={Math.PI}>
-      {/* left panel */}
       <mesh position={[-(DOOR_W / 2 + sideW / 2), H / 2, 0]}>
         <planeGeometry args={[sideW, H]} />
         <meshStandardMaterial color={theme.walls} roughness={0.85} />
       </mesh>
-      {/* right panel */}
       <mesh position={[(DOOR_W / 2 + sideW / 2), H / 2, 0]}>
         <planeGeometry args={[sideW, H]} />
         <meshStandardMaterial color={theme.walls} roughness={0.85} />
       </mesh>
-      {/* top panel above the door */}
       <mesh position={[0, DOOR_H + topH / 2, 0]}>
         <planeGeometry args={[DOOR_W, topH]} />
         <meshStandardMaterial color={theme.walls} roughness={0.85} />
       </mesh>
-      {/* doorway arch trim */}
       <DoorwayTrim theme={theme} variant={variant} />
     </group>
   );
 }
 
 function DoorwayTrim({ theme, variant }: { theme: RoomTheme; variant: RoomVariant }) {
-  const t = 0.12; // trim thickness
-  const d = 0.08; // trim depth
+  const t = 0.12;
+  const d = 0.08;
 
   if (variant === 'warm') {
-    // Rounded arch: half-torus over the doorway
     return (
       <group>
-        {/* left jamb */}
         <mesh position={[-(DOOR_W / 2 + t / 2), DOOR_H / 2, -d / 2]}>
           <boxGeometry args={[t, DOOR_H, d]} />
           <meshStandardMaterial color={theme.trim} roughness={0.7} />
         </mesh>
-        {/* right jamb */}
         <mesh position={[(DOOR_W / 2 + t / 2), DOOR_H / 2, -d / 2]}>
           <boxGeometry args={[t, DOOR_H, d]} />
           <meshStandardMaterial color={theme.trim} roughness={0.7} />
         </mesh>
-        {/* arch curve (half torus) */}
         <mesh position={[0, DOOR_H, -d / 2]} rotation-z={Math.PI}>
           <torusGeometry args={[DOOR_W / 2, t / 2, 8, 20, Math.PI]} />
           <meshStandardMaterial color={theme.trim} roughness={0.7} />
@@ -127,7 +209,6 @@ function DoorwayTrim({ theme, variant }: { theme: RoomTheme; variant: RoomVarian
     );
   }
 
-  // Cool and dark: simple rectangular lintel
   return (
     <group>
       <mesh position={[-(DOOR_W / 2 + t / 2), DOOR_H / 2, -d / 2]}>
@@ -146,37 +227,59 @@ function DoorwayTrim({ theme, variant }: { theme: RoomTheme; variant: RoomVarian
   );
 }
 
-/** Baseboard and crown molding strips on all walls */
+// ── Dado rail (horizontal band at ~1m height on all walls) ────────────────────
+
+function DadoRail({ theme }: { theme: RoomTheme }) {
+  const color = theme.trim;
+  return (
+    <group>
+      {/* back wall */}
+      <mesh position={[0, DADO_Y, -HALF_D + DADO_D / 2]}>
+        <boxGeometry args={[W, DADO_H, DADO_D]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      {/* left wall */}
+      <mesh position={[-HALF_W + DADO_D / 2, DADO_Y, 0]}>
+        <boxGeometry args={[DADO_D, DADO_H, D]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      {/* right wall */}
+      <mesh position={[HALF_W - DADO_D / 2, DADO_Y, 0]}>
+        <boxGeometry args={[DADO_D, DADO_H, D]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+    </group>
+  );
+}
+
+// ── Baseboard and crown molding ───────────────────────────────────────────────
+
 function Trims({ theme }: { theme: RoomTheme }) {
   const color = theme.trim;
   return (
     <group>
-      {/* baseboard — back wall */}
+      {/* baseboard */}
       <mesh position={[0, TRIM_H / 2, -HALF_D + 0.01]}>
         <boxGeometry args={[W, TRIM_H, TRIM_D]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* baseboard — left wall */}
       <mesh position={[-HALF_W + 0.01, TRIM_H / 2, 0]} rotation-y={Math.PI / 2}>
         <boxGeometry args={[D, TRIM_H, TRIM_D]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* baseboard — right wall */}
       <mesh position={[HALF_W - 0.01, TRIM_H / 2, 0]} rotation-y={-Math.PI / 2}>
         <boxGeometry args={[D, TRIM_H, TRIM_D]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* crown — back wall */}
+      {/* crown */}
       <mesh position={[0, H - TRIM_H / 2, -HALF_D + 0.01]}>
         <boxGeometry args={[W, TRIM_H, TRIM_D]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* crown — left wall */}
       <mesh position={[-HALF_W + 0.01, H - TRIM_H / 2, 0]} rotation-y={Math.PI / 2}>
         <boxGeometry args={[D, TRIM_H, TRIM_D]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* crown — right wall */}
       <mesh position={[HALF_W - 0.01, H - TRIM_H / 2, 0]} rotation-y={-Math.PI / 2}>
         <boxGeometry args={[D, TRIM_H, TRIM_D]} />
         <meshStandardMaterial color={color} />
@@ -185,7 +288,34 @@ function Trims({ theme }: { theme: RoomTheme }) {
   );
 }
 
-/** Room A extras: tall arched windows on side walls, warm light glow */
+// ── Wall poem (back wall, above artworks) ─────────────────────────────────────
+
+function WallPoem({
+  variant, theme,
+}: { variant: 'warm' | 'cool' | 'dark'; theme: RoomTheme }) {
+  const poem = WALL_POEMS[variant];
+  // Text color: light for dark rooms, dark for light rooms
+  const textColor = variant === 'dark' ? '#8090c0' : shiftHex(theme.trim, -30);
+
+  return (
+    <Text
+      position={[0, 3.1, -HALF_D + 0.05]}
+      fontSize={0.16}
+      color={textColor}
+      anchorX="center"
+      anchorY="middle"
+      textAlign="center"
+      maxWidth={4.5}
+      lineHeight={1.6}
+      letterSpacing={0.02}
+    >
+      {poem}
+    </Text>
+  );
+}
+
+// ── Variant-specific details ──────────────────────────────────────────────────
+
 function WarmDetails({ theme }: { theme: RoomTheme }) {
   const winW = 0.9;
   const winH = 1.6;
@@ -196,71 +326,45 @@ function WarmDetails({ theme }: { theme: RoomTheme }) {
     <group>
       {winZ.map((z, i) => (
         <group key={i}>
-          {/* left wall window */}
           <mesh position={[-HALF_W + 0.04, winY, z]}>
             <planeGeometry args={[winW, winH]} />
-            <meshStandardMaterial
-              color="#ffcc80"
-              emissive="#ffcc80"
-              emissiveIntensity={0.6}
-              roughness={0.4}
-            />
+            <meshStandardMaterial color="#ffcc80" emissive="#ffcc80" emissiveIntensity={0.6} roughness={0.4} />
           </mesh>
-          {/* right wall window */}
           <mesh position={[HALF_W - 0.04, winY, z]}>
             <planeGeometry args={[winW, winH]} />
-            <meshStandardMaterial
-              color="#ffcc80"
-              emissive="#ffcc80"
-              emissiveIntensity={0.6}
-              roughness={0.4}
-            />
+            <meshStandardMaterial color="#ffcc80" emissive="#ffcc80" emissiveIntensity={0.6} roughness={0.4} />
           </mesh>
         </group>
       ))}
-      {/* point lights from windows */}
       <pointLight position={[-HALF_W + 0.8, winY, -1.8]} color="#ffcc80" intensity={1.2} distance={5} />
-      <pointLight position={[HALF_W - 0.8, winY, 1.2]} color="#ffcc80" intensity={1.2} distance={5} />
+      <pointLight position={[HALF_W - 0.8, winY, 1.2]}  color="#ffcc80" intensity={1.2} distance={5} />
     </group>
   );
 }
 
-/** Room B extras: ceiling skylights, cool north light */
 function CoolDetails({ theme }: { theme: RoomTheme }) {
-  const skyW = 3.0;
-  const skyD = 1.2;
-
   return (
     <group>
-      {/* two skylight panels in the ceiling */}
       {[-2.0, 2.0].map((x, i) => (
         <mesh key={i} position={[x, H - 0.02, 0]} rotation-x={Math.PI / 2}>
-          <planeGeometry args={[skyW, skyD]} />
-          <meshStandardMaterial
-            color="#e0eeff"
-            emissive="#c0d8ff"
-            emissiveIntensity={0.5}
-            roughness={0.2}
-          />
+          <planeGeometry args={[3.0, 1.2]} />
+          <meshStandardMaterial color="#e0eeff" emissive="#c0d8ff" emissiveIntensity={0.5} roughness={0.2} />
         </mesh>
       ))}
-      {/* cool ambient from skylights */}
       <pointLight position={[-2.0, H - 0.3, 0]} color="#c8e0ff" intensity={1.5} distance={6} />
-      <pointLight position={[2.0, H - 0.3, 0]} color="#c8e0ff" intensity={1.5} distance={6} />
+      <pointLight position={[ 2.0, H - 0.3, 0]} color="#c8e0ff" intensity={1.5} distance={6} />
     </group>
   );
 }
 
-/** Room C extras: wall niches, dramatic spot lighting */
 function DarkDetails({ theme }: { theme: RoomTheme }) {
-  const nicheW = 0.7;
-  const nicheH = 0.9;
+  const nicheW     = 0.7;
+  const nicheH     = 0.9;
   const nicheDepth = 0.18;
-  const nicheY = 2.2;
+  const nicheY     = 2.2;
 
   return (
     <group>
-      {/* niches in left wall: a recessed box suggesting depth */}
       {[-1.6, 1.6].map((z, i) => (
         <group key={i}>
           <mesh position={[-HALF_W + nicheDepth / 2 + 0.02, nicheY, z]}>
@@ -269,16 +373,10 @@ function DarkDetails({ theme }: { theme: RoomTheme }) {
           </mesh>
           <mesh position={[-HALF_W + nicheDepth + 0.01, nicheY, z]}>
             <planeGeometry args={[nicheW, nicheH]} />
-            <meshStandardMaterial
-              color="#384870"
-              emissive="#304068"
-              emissiveIntensity={0.3}
-              roughness={0.5}
-            />
+            <meshStandardMaterial color="#384870" emissive="#304068" emissiveIntensity={0.3} roughness={0.5} />
           </mesh>
         </group>
       ))}
-      {/* spot lights aimed at artwork zones */}
       <spotLight
         position={[0, H - 0.3, -1.5]}
         target-position={[0, 1.85, -HALF_D + 0.5]}
@@ -312,25 +410,23 @@ function DarkDetails({ theme }: { theme: RoomTheme }) {
 
 /** Lobby extras: 3 coloured portal frames on the back wall */
 export function LobbyDetails({ theme }: { theme: RoomTheme }) {
-  const portals: { x: number; color: string; label: string }[] = [
-    { x: -3.6, color: '#c4704a', label: 'Warm Room' },
-    { x: 0,    color: '#a8b8c4', label: 'Stone Room' },
-    { x: 3.6,  color: '#1e2840', label: 'Night Room' },
+  const portals: { x: number; color: string }[] = [
+    { x: -3.6, color: '#c4704a' },
+    { x: 0,    color: '#a8b8c4' },
+    { x: 3.6,  color: '#1e2840' },
   ];
-  const pH = 2.6;
-  const pW = 1.8;
+  const pH    = 2.6;
+  const pW    = 1.8;
   const frameT = 0.12;
 
   return (
     <group>
       {portals.map((p) => (
         <group key={p.x} position={[p.x, pH / 2 + 0.2, -HALF_D + 0.06]}>
-          {/* colored backing */}
           <mesh>
             <planeGeometry args={[pW, pH]} />
             <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={0.08} roughness={0.9} />
           </mesh>
-          {/* frame — top, bottom, left, right strips */}
           {[
             { pos: [0,  pH / 2 + frameT / 2, 0.02] as [number,number,number], args: [pW + frameT * 2, frameT, 0.06] as [number,number,number] },
             { pos: [0, -pH / 2 - frameT / 2, 0.02] as [number,number,number], args: [pW + frameT * 2, frameT, 0.06] as [number,number,number] },
@@ -342,7 +438,6 @@ export function LobbyDetails({ theme }: { theme: RoomTheme }) {
               <meshStandardMaterial color={theme.trim} roughness={0.7} />
             </mesh>
           ))}
-          {/* subtle glow from portal */}
           <pointLight position={[0, 0, 0.5]} color={p.color} intensity={0.8} distance={3} />
         </group>
       ))}

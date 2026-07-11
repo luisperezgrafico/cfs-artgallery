@@ -1,10 +1,6 @@
 'use client';
 
-import type { GalleryManifest, RoomData } from '@/lib/gallery';
-
-type GalleryState =
-  | { scene: 'lobby' }
-  | { scene: 'room'; roomSlug: string; slotIndex: number };
+import type { GalleryManifest, GalleryState, RoomData } from '@/lib/gallery';
 
 interface Props {
   state: GalleryState;
@@ -35,16 +31,19 @@ export function Overlay({
   onToggleMotion,
   onToggleAmbient,
 }: Props) {
-  const isLobby = state.scene === 'lobby';
-  const isRoom = state.scene === 'room';
-  const slotIndex = isRoom ? state.slotIndex : 0;
-  const totalSlots = currentRoom?.slots.length ?? 0;
-  const currentSlot = currentRoom && slotIndex > 0 ? currentRoom.slots[slotIndex - 1] : null;
-  const currentArt =
-    currentSlot?.artworkSlug ? currentRoom!.artworks[currentSlot.artworkSlug] : null;
+  const isLobby      = state.scene === 'lobby';
+  const isTransition = state.scene === 'lobby-exit' ||
+                       (state.scene === 'room' && state.slotIndex === -1);
+  const isRoom       = state.scene === 'room' && state.slotIndex >= 0;
+  const slotIndex    = state.scene === 'room' ? state.slotIndex : 0;
+  const totalSlots   = currentRoom?.slots.length ?? 0;
+  const currentSlot  = currentRoom && slotIndex > 0 ? currentRoom.slots[slotIndex - 1] : null;
+  const currentArt   = currentSlot?.artworkSlug ? currentRoom!.artworks[currentSlot.artworkSlug] : null;
 
   const statusText = isLobby
     ? `${gallery.title} — entrance`
+    : isTransition
+    ? 'Entering room…'
     : slotIndex === 0
     ? `${currentRoom!.name} — overview`
     : currentArt
@@ -55,7 +54,7 @@ export function Overlay({
     <>
       <header className="hud hud-top">
         <span className="room-name">
-          {isLobby ? gallery.title : currentRoom?.name ?? ''}
+          {isLobby || isTransition ? gallery.title : currentRoom?.name ?? ''}
         </span>
         <div className="comfort" role="group" aria-label="Comfort settings">
           <button className="chip" aria-pressed={motionOn} onClick={onToggleMotion}>
@@ -109,9 +108,12 @@ export function Overlay({
         </aside>
       )}
 
-      {/* Bottom navigation */}
+      {/* Bottom navigation — hidden during walk-through transitions */}
       <nav className="hud hud-bottom" aria-label="Tour navigation">
-        {isLobby ? (
+        {isTransition ? (
+          // Camera is animating — no user controls
+          <div />
+        ) : isLobby ? (
           <>
             <div />
             <span className="nav-status">Choose a room above to enter</span>

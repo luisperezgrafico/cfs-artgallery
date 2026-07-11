@@ -56,7 +56,7 @@ export function RoomScene({
         })}
       </Suspense>
 
-      <CameraRig viewpoint={viewpoint} moving={moving} snap={snap} onSettled={onSettled} />
+      <CameraRig viewpoint={viewpoint} snap={snap} onSettled={onSettled} />
     </>
   );
 }
