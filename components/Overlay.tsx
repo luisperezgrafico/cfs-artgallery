@@ -68,6 +68,9 @@ export function Overlay({
 
       <p className="sr-only" role="status" aria-live="polite">{statusText}</p>
 
+      {/* Drag-to-look hint — visible whenever camera is settled */}
+      {!isEntering && <p className="drag-hint" aria-hidden="true">drag to look around</p>}
+
       {/* Lobby: room selector */}
       {isLobby && (
         <nav className="lobby-nav" aria-label="Choose a room">

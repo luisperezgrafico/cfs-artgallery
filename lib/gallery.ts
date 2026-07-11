@@ -105,21 +105,22 @@ export function viewpointForSlot(slot: WallSlot): Viewpoint {
   return { position: [vx, EYE_H, vz], look: [ax, ay, az] };
 }
 
-/** Wide overview shot from room entrance — shows the full room interior */
+/** Standing in the center of the room looking at the artwork wall */
 export const ROOM_OVERVIEW: Viewpoint = {
-  position: [0, 2.3, 3.4],
-  look: [0, 1.55, -2.2],
+  position: [0, 1.65, 0],
+  look: [0, 1.65, -3.8],
 };
 
-/** Camera position just inside the room door — cinematic first glimpse */
+/** Just inside the doorway — camera snaps here then glides to ROOM_OVERVIEW */
 export const ROOM_ENTRANCE: Viewpoint = {
-  position: [0, 1.6, 3.5],
-  look: [0, 1.7, -1.0],
+  position: [0, 1.65, 3.0],
+  look: [0, 1.65, 0],
 };
 
+/** Standing in the lobby center, looking at the three portals */
 export const LOBBY_OVERVIEW: Viewpoint = {
-  position: [0, 1.95, 3.4],
-  look: [0, 1.6, -2.5],
+  position: [0, 1.65, 0.5],
+  look: [0, 1.6, -3.5],
 };
 
 /** Shared state type — exported so both Gallery and Overlay can import it */

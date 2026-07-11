@@ -143,7 +143,7 @@ export default function Gallery() {
   return (
     <div className="stage">
       <Canvas
-        frameloop={ambientOn || moving ? 'always' : 'demand'}
+        frameloop="always"
         dpr={[1, 1.75]}
         camera={{ fov: 55, position: LOBBY_OVERVIEW.position, near: 0.1, far: 60 }}
       >
