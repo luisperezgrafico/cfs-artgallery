@@ -122,15 +122,7 @@ export const LOBBY_OVERVIEW: Viewpoint = {
   look: [0, 1.6, -2.5],
 };
 
-/** Camera walks toward each portal before swapping scenes */
-export const LOBBY_EXITS: Record<string, Viewpoint> = {
-  'room-a': { position: [-3.6, 1.58, -0.6], look: [-3.6, 2.0, -4.0] },
-  'room-b': { position: [0,    1.58, -0.6], look: [0,    2.0, -4.0] },
-  'room-c': { position: [3.6,  1.58, -0.6], look: [3.6,  2.0, -4.0] },
-};
-
 /** Shared state type — exported so both Gallery and Overlay can import it */
 export type GalleryState =
   | { scene: 'lobby' }
-  | { scene: 'lobby-exit'; targetRoom: string }
   | { scene: 'room'; roomSlug: string; slotIndex: number };

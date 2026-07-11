@@ -8,8 +8,8 @@ import type { Viewpoint } from '@/lib/gallery';
 
 const SMOOTH_POS = 0.52;
 const SMOOTH_ROT = 0.38;
-const SETTLE_DIST = 0.022;
-const SETTLE_ANGLE = 0.006; // radians
+const SETTLE_DIST = 0.05;   // metres
+const SETTLE_ANGLE = 0.018; // radians (~1°)
 
 export function CameraRig({
   viewpoint,
