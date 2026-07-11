@@ -3,6 +3,15 @@
 *Working draft — July 2026. Co-created by Luis + [Reddit collaborator]. This document is the
 source of truth for what we're building and, just as importantly, what we're deliberately not building.*
 
+---
+
+*Revision log:*
+- *July 2026 — Phase 0 prototype completed and deployed to Vercel.*
+- *July 2026 — Architecture updated: Lobby + 3 fixed themed rooms, blank-canvas submission
+  system, Vercel Blob storage, curator approval queue.*
+
+---
+
 ## Vision
 
 > "A sort of online art gallery for works made by the M.E. community. Not just a series of
@@ -22,7 +31,7 @@ exhibition — they don't scroll a grid. Artists get the dignity of being *exhib
    wayfinding are the *price*, not the experience. We keep the sense of place (space, light,
    scale, atmosphere) and remove the simulation of effort (free-roam, camera control, getting lost).
 3. **A system, not a set of handmade rooms.** Rooms are data + a shared template, so new
-   exhibitions cost curation effort, not engineering effort.
+   rooms cost curation effort, not engineering effort.
 4. **Sustainable pace for us too.** Both maintainers have ME/CFS. Small milestones, no deadlines,
    heavy use of AI assistance for implementation. The architecture must survive weeks of nobody
    touching it.
@@ -33,51 +42,105 @@ exhibition — they don't scroll a grid. Artists get the dignity of being *exhib
 - A minimal "door" page: name, one sentence, one button/gesture to enter. No corporate landing.
 - Serves as the shareable cover (Reddit, link previews) and as the ritual moment of *entering*.
 
-### Inside: guided tour on rails
-- The gallery is real-time 3D (stylized low-poly, dreamlike atmosphere), but the visitor
-  **never controls the camera**. Navigation is a single mental model:
-  - **← previous / next →** — always in the same place. Moves artwork to artwork; passing the
-    last artwork of a room glides you into the next room. One interaction for the whole visit.
-  - **Map** (optional overlay) — a stylized floor plan listing rooms and artworks for those with
-    energy to jump around. Agency as an option, never a requirement.
-- The "walk" between viewpoints is automatic: a short camera glide with easing.
-  With `prefers-reduced-motion` (or a manual toggle), glides become crossfades.
-- **Plaque**: each artwork viewpoint offers title, artist, medium, and optionally the story
-  behind the piece — shown on request, like stepping closer to read the label.
+### Gallery structure: Lobby + 3 themed rooms
 
-### Rooms as a themed template system
-- Each room = one config file: theme, palette, fog/light settings, a small set of ambient
-  decorations picked from a shared kit, and the list of artworks with wall positions.
-- Ambient kit (reusable, shader/instance-based, cheap): swaying low-poly vegetation,
-  water (falls/pools) as animated shaders, fog, floating particles, sky gradients.
-- Dreamlike stylization is the aesthetic *and* the performance strategy: no photorealism,
-  no dynamic shadows, no 4K PBR textures. A room floating in mist says "made for us"
-  better than a generic white-cube replica.
+```
+[ Door ] → [ Lobby ] → Room A
+                     → Room B
+                     → Room C
+```
+
+**Lobby (reception):** The first space after the door. Museum-like interior: reception desk feel,
+warm light, a few featured or recent works on display. Three visible passages/arches lead to the
+themed rooms. The lobby is also the hub for the map overlay.
+
+**Three themed rooms (fixed for now):** Each room has its own palette, atmosphere, and a mix
+of filled artwork panels and blank canvases. Rooms are permanent for this version — new rooms
+are a future development milestone, not something that grows automatically.
+
+### Navigation: guided tour on rails
+- The visitor **never controls the camera**. Two levels of navigation:
+  - **← / →** within a room: moves artwork to artwork (including blank canvases).
+    Passing the last slot in a room returns to the lobby.
+  - **Room select:** from the lobby, or via the map overlay, jump to any room directly.
+- The "walk" between viewpoints is an automatic camera glide with easing.
+  With `prefers-reduced-motion` (or a manual toggle), glides become crossfades.
+- **Plaque:** each filled artwork shows title, artist, medium, and the artist's own words —
+  on request, like stepping closer to read the label.
+- **Blank canvas plaque:** shows a brief invitation and an "Submit your work" button that
+  opens the upload modal (see Submission system below).
+
+### Themed rooms as a template system
+- Each room = one config file: theme, palette, fog/light settings, ambient decoration kit
+  selection, and the list of frame slots (filled or blank) with wall positions.
+- Ambient decoration kit (reusable, shader/instance-based, cheap): swaying low-poly vegetation,
+  water as animated shaders, fog, floating particles, sky/light gradients.
+- Dreamlike stylization is the aesthetic *and* the performance strategy: no photorealism, no
+  dynamic shadows, no 4K textures.
 - Decoration is restrained: the art is the protagonist; atmosphere supports it.
+- **Museum interior aesthetic:** actual walls, floor, ceiling (not a floating void), benches,
+  warm gallery lighting, recognisable museum-room proportions. This grounds the dreamlike
+  elements and makes the space feel curated and dignified.
+
+### Prototype filling strategy
+For testing both flows, rooms are seeded at approximately **50% filled / 50% blank**:
+- Filled slots: placeholder SVG artwork (as in Phase 0) with realistic plaque data.
+- Blank slots: visible empty frames with the submission invitation.
 
 ### Comfort controls (persistent, one tap)
 - Motion: glide ↔ crossfade
-- Ambient animation: on/off (water, plants, particles freeze)
+- Ambient animation: on/off (freezes room, drops GPU to zero while still)
 - Sound: off by default; optional ambient audio, never autoplay
-- Brightness: default is low-glare; palette avoids harsh whites
+
+## Submission system
+
+Artists submit directly from inside the gallery — approaching a blank canvas triggers the flow.
+
+### Upload flow (artist side)
+1. Artist approaches a blank canvas → plaque shows: *"This space is waiting for you."*
+2. Button: **"Submit your work"** → opens an upload modal (HTML overlay, not 3D).
+3. Modal collects: image file, title, medium, short statement (optional), name/handle,
+   consent checkbox (display permission + "all rights reserved by artist").
+4. Image uploaded to **Vercel Blob** (free tier: 500 MB storage / 1 GB transfer per month —
+   sufficient for hundreds of optimised artwork images).
+5. Submission metadata written to a simple JSON queue file (no database: just a Vercel KV
+   entry or a serverless function appending to a flat file).
+6. Artist sees: *"Thank you — your work is in review. We'll add it to the gallery soon."*
+7. The blank canvas remains blank until a curator approves. The specific slot is not reserved —
+   approval assigns the work to the next available blank in any room.
+
+### Approval flow (curator side)
+- A password-protected route (`/admin`) — basic HTTP auth, no full auth system needed.
+- Lists pending submissions: thumbnail preview, title, artist, statement, consent confirmation.
+- Two actions: **Approve** (assigns to a blank slot → image moves to permanent Blob path,
+  room JSON updated, redeploy triggered) or **Reject** (sends a gentle notification, file
+  deleted from Blob).
+- Curators: Luis + collaborator. No public moderation, no community voting.
+
+### Storage notes
+- Vercel Blob free tier covers the MVP comfortably. If the gallery grows significantly,
+  the upgrade to Pro ($20/month) is the only cost change — no architecture change.
+- Approved images are stored in Blob and referenced in room JSON. They survive deploys.
+- Pending/rejected images are cleaned up after the curator decision.
 
 ## Accessibility requirements (non-negotiable)
 
 - All navigation UI is **HTML on top of the canvas**, never inside the 3D scene. Screen readers
-  traverse the exhibition as a list: "Nature room, artwork 3 of 8: *Title*, by *Artist*" + alt
-  text + plaque content. Full keyboard navigation.
+  traverse the gallery as a list: "Room A, slot 3 of 8: *Title*, by *Artist*" + alt text +
+  plaque content. Full keyboard navigation.
+- The upload modal is a standard accessible HTML form — fully keyboard navigable, labelled inputs.
 - `prefers-reduced-motion` respected for every animation, including camera glides.
 - No autoplay of sound or video. No flashing content. Calm typography, generous spacing.
 - Works on a mid-range phone over a weak connection (see performance budget).
-- A plain "list view" of the exhibition (artworks + plaques as simple pages) exists as a
-  first-class fallback — also our SEO/share surface and the guarantee that no one is locked out.
+- A plain **list view** of the gallery exists as a first-class fallback — also the SEO/share
+  surface and the guarantee that no one is locked out.
 
 ## Performance budget
 
 Informed by measuring a Unity-based platform gallery (Metasteps): 66 MB transferred / 122 MB
-in RAM — unusable on the devices our audience has. Our budget:
+in RAM. Our budget:
 
-- Initial load (door + first room): **≤ 5 MB**
+- Initial load (door + lobby): **≤ 5 MB**
 - Each additional room: **≤ 2 MB**, lazy-loaded on approach
 - GPU renders **only during transitions/ambient animation** (demand-based frameloop);
   a still visitor costs zero battery
@@ -85,52 +148,63 @@ in RAM — unusable on the devices our audience has. Our budget:
 
 ## Architecture
 
-- **Stack:** Next.js (static export) + React Three Fiber (three.js) + drei, hosted on **Vercel**.
-  Chosen for: declarative 3D that fits the template+data room system, mature ecosystem,
-  and maximal AI-assistance friendliness.
-- **No database, no backend, no auth.** Content lives in the repo:
-  - `content/exhibitions/<slug>/room-<n>.json` — room config (theme, ambient, artwork layout)
-  - `content/artworks/<slug>.md` — plaque data + image reference
-  - Images optimized at build time (responsive sizes, modern formats)
-- **Publishing** = add files, commit, deploy. Curation is the workflow, git is the CMS.
-- **Artist submissions:** external form (Tally or similar) → we curate → we add to the repo.
-  No user uploads, no accounts, no live moderation. Ever (see out of scope).
+- **Stack:** Next.js (App Router, not static export — required for server actions/API routes
+  needed by the submission system) + React Three Fiber + drei, hosted on **Vercel**.
+- **Vercel Blob:** image storage for artwork uploads (free tier sufficient for MVP).
+- **Vercel KV (or simple API route + JSON):** lightweight queue for pending submissions.
+  No traditional database.
+- **No visitor accounts.** The only "auth" in the system is the curator `/admin` route
+  (HTTP basic auth via middleware — one env var with a hashed password).
+- **Content structure:**
+  - `content/rooms/<slug>.json` — room config (theme, ambient, frame slots with filled/blank state)
+  - `content/artworks/<slug>.json` — approved artwork metadata (image URL in Blob, plaque data)
+  - Pending submissions live in KV/queue only until approved or rejected.
 
 ## Out of scope (deliberately)
 
 - Visitor accounts / login of any kind
 - Comments, likes, social features
 - Free-roam 3D navigation or photorealistic rendering
-- Direct artist uploads or self-service publishing
-- Databases, CMS platforms, server-side code
-- Anything requiring real-time moderation
+- Artists managing their own profile or editing submissions after approval
+- Multiple curator roles or permissions
+- Databases (Postgres, MongoDB, etc.)
+- Real-time collaboration or live updates
 
 ## Phases
 
-### Phase 0 — Prototype (validate the feeling)
-One room, low-poly, one ambient theme, 3–5 placeholder artworks, prev/next rail navigation,
-plaque, reduced-motion fallback. Goal: put it on phones, feel it on a low-energy day, show the
-subreddit friend. **Kill or commit based on this.**
+### Phase 0 — Prototype ✓ DONE
+One circular room, low-poly, mist atmosphere, 4 placeholder artworks, prev/next rail navigation,
+plaque, reduced-motion fallback, comfort controls. Deployed to Vercel.
 
-### Phase 1 — MVP (first real exhibition)
-- The door page
-- 2–3 themed rooms from the template system, 8–15 curated artworks
-  (possibly a call for art in the subreddit)
-- Comfort controls, list-view fallback, map overlay
-- Launch post in the community
+### Phase 1 — Interior & structure
+- Redesign room aesthetic: actual walls, floor, ceiling, benches, gallery lighting
+- Implement Lobby + 3 themed rooms with the template system
+- 50% filled / 50% blank frame slots (placeholder content)
+- Map overlay, room-to-room navigation, lobby as hub
+- Validate the full navigation flow on mobile
 
-### Phase 2 — v1
-- Submission form + curation workflow documented
-- Second exhibition; archive of past exhibitions
-- Optional ambient audio
+### Phase 2 — Submission system
+- Upload modal triggered from blank canvases
+- Vercel Blob image storage + upload API route
+- Pending queue (Vercel KV)
+- `/admin` curator approval panel with approve/reject
+- Image optimisation on upload (resize, convert to WebP)
+- Artist consent + attribution baked into the flow
+
+### Phase 3 — MVP launch
+- Real artworks from the community (call for submissions on r/cfs)
+- List-view fallback, accessibility audit
+- Optional ambient audio (off by default)
+- Launch post
 
 ### Later (only if it still sparks joy)
-- Artist pages, audio-described tours, seasonal/one-off special rooms
+- Artist statement pages, audio-described tours, seasonal special rooms
+- Archive of "full" rooms as exhibitions close to new submissions
 
 ## Open questions
 
 - Name + domain
-- Theme of the first exhibition (and whether to open a call for art on r/cfs)
-- Credit/licensing model for artists (plaque always credits; ask artists for display permission
-  in the submission form; default "all rights reserved by artist")
+- Themes for the 3 rooms (first ideas: nature/earth, night/rest, abstract/inner world?)
 - Whether the collaborator wants to co-curate, co-build, or both
+- Notification to artist on approval — email (needs a transactional email service) or
+  just a message they can check via a submission token link?

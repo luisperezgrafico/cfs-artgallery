@@ -1,0 +1,9 @@
+{
+  "title": "ME/CFS Community Gallery",
+  "tagline": "A quiet place to be with art made by our community.",
+  "rooms": [
+    { "slug": "room-a", "name": "Warm Room", "variant": "warm" },
+    { "slug": "room-b", "name": "Stone Room", "variant": "cool" },
+    { "slug": "room-c", "name": "Night Room", "variant": "dark" }
+  ]
+}

@@ -1,3 +1,18 @@
+// Room geometry constants — shared by content files and 3D components
+export const ROOM = {
+  W: 11,       // width (x: -5.5 to +5.5)
+  D: 8,        // depth (z: -4 to +4)
+  H: 3.8,      // ceiling height
+  DOOR_W: 2.2, // doorway width
+  DOOR_H: 3.0, // doorway height
+  ART_Y: 1.85, // artwork center height
+  EYE_H: 1.55, // camera eye height
+  VIEW_DIST: 2.3, // distance camera stands from artwork
+} as const;
+
+export type WallId = 'back' | 'left' | 'right';
+export type RoomVariant = 'lobby' | 'warm' | 'cool' | 'dark';
+
 export interface Artwork {
   slug: string;
   title: string;
@@ -5,23 +20,57 @@ export interface Artwork {
   medium: string;
   description: string;
   image: string;
-  /** physical size of the piece in the room, meters */
   width: number;
   height: number;
 }
 
-export interface RoomTheme {
-  fog: string;
-  floor: string;
-  panel: string;
-  frame: string;
-  accent: string;
+export interface WallSlot {
+  wall: WallId;
+  /** position along wall from center, in metres */
+  offset: number;
+  /** artwork slug from the room's artworks map, or null = blank canvas */
+  artworkSlug: string | null;
 }
 
-export interface Room {
+export interface RoomTheme {
+  fog: string;
+  fogNear: number;
+  fogFar: number;
+  walls: string;
+  floor: string;
+  ceiling: string;
+  trim: string;
+  accent: string;
+  ambientColor: string;
+  ambientIntensity: number;
+  dirLightColor: string;
+  dirLightIntensity: number;
+}
+
+export interface RoomData {
+  slug: string;
   name: string;
+  variant: RoomVariant;
   theme: RoomTheme;
-  artworks: Artwork[];
+  slots: WallSlot[];
+  artworks: Record<string, Artwork>;
+}
+
+export interface GalleryRoom {
+  slug: string;
+  name: string;
+  variant: RoomVariant;
+}
+
+export interface GalleryManifest {
+  title: string;
+  tagline: string;
+  rooms: GalleryRoom[];
+}
+
+export interface Placement {
+  position: [number, number, number];
+  rotY: number;
 }
 
 export interface Viewpoint {
@@ -29,38 +78,39 @@ export interface Viewpoint {
   look: [number, number, number];
 }
 
-/** Room layout: artworks float on an arc facing its center. */
-const RADIUS = 7;
-const SPREAD = Math.PI * 0.9; // arc covered by the artworks (~162°)
-const ART_Y = 1.7; // artwork center height
-const EYE = 1.5; // visitor eye height
-const VIEW_DIST = 2.4; // how close a viewpoint stands to its artwork
+const WALL_GAP = 0.06; // artwork sits just off the wall surface
 
-export interface Placement {
-  position: [number, number, number];
-  rotY: number;
+export function slotPlacement(slot: WallSlot): Placement {
+  const { W, D, ART_Y } = ROOM;
+  switch (slot.wall) {
+    case 'back':
+      return { position: [slot.offset, ART_Y, -D / 2 + WALL_GAP], rotY: 0 };
+    case 'left':
+      // rotY = PI/2 → normal faces +x (into room)
+      return { position: [-W / 2 + WALL_GAP, ART_Y, slot.offset], rotY: Math.PI / 2 };
+    case 'right':
+      // rotY = -PI/2 → normal faces -x (into room)
+      return { position: [W / 2 - WALL_GAP, ART_Y, slot.offset], rotY: -Math.PI / 2 };
+  }
 }
 
-export function artworkPlacement(i: number, n: number): Placement {
-  const a = n === 1 ? 0 : -SPREAD / 2 + (SPREAD * i) / (n - 1);
-  const x = Math.sin(a) * RADIUS;
-  const z = -Math.cos(a) * RADIUS;
-  return { position: [x, ART_Y, z], rotY: Math.atan2(-x, -z) };
+export function viewpointForSlot(slot: WallSlot): Viewpoint {
+  const p = slotPlacement(slot);
+  const [ax, ay, az] = p.position;
+  const { EYE_H, VIEW_DIST } = ROOM;
+  // artwork normal after rotY: (sin(rotY), 0, cos(rotY))
+  // viewer stands along that normal
+  const vx = ax + Math.sin(p.rotY) * VIEW_DIST;
+  const vz = az + Math.cos(p.rotY) * VIEW_DIST;
+  return { position: [vx, EYE_H, vz], look: [ax, ay, az] };
 }
 
-export const OVERVIEW: Viewpoint = {
-  position: [0, 2.3, 5.2],
-  look: [0, 1.4, -5],
+export const ROOM_OVERVIEW: Viewpoint = {
+  position: [0, 2.1, 3.2],
+  look: [0, 1.6, -1.8],
 };
 
-export function viewpointFor(i: number, n: number): Viewpoint {
-  const [x, y, z] = artworkPlacement(i, n).position;
-  const k = (RADIUS - VIEW_DIST) / RADIUS;
-  return { position: [x * k, EYE, z * k], look: [x, y, z] };
-}
-
-/** Viewpoint 0 is the room overview; 1..n stand in front of each artwork. */
-export function viewpoints(room: Room): Viewpoint[] {
-  const n = room.artworks.length;
-  return [OVERVIEW, ...room.artworks.map((_, i) => viewpointFor(i, n))];
-}
+export const LOBBY_OVERVIEW: Viewpoint = {
+  position: [0, 1.95, 3.4],
+  look: [0, 1.6, -2.5],
+};

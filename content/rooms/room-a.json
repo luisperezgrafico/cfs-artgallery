@@ -1,0 +1,70 @@
+{
+  "slug": "room-a",
+  "name": "Warm Room",
+  "variant": "warm",
+  "theme": {
+    "fog": "#e8c8a0",
+    "fogNear": 8,
+    "fogFar": 22,
+    "walls": "#c4704a",
+    "floor": "#8b6542",
+    "ceiling": "#e8d8b8",
+    "trim": "#a05030",
+    "accent": "#f0a060",
+    "ambientColor": "#fff0d8",
+    "ambientIntensity": 0.85,
+    "dirLightColor": "#ffcc88",
+    "dirLightIntensity": 0.85
+  },
+  "slots": [
+    { "wall": "back",  "offset": -3.5, "artworkSlug": "quiet-horizon" },
+    { "wall": "back",  "offset":  0.0, "artworkSlug": null },
+    { "wall": "back",  "offset":  3.5, "artworkSlug": "ember-hour" },
+    { "wall": "left",  "offset": -1.6, "artworkSlug": null },
+    { "wall": "left",  "offset":  1.6, "artworkSlug": "thicket" },
+    { "wall": "right", "offset": -1.6, "artworkSlug": null },
+    { "wall": "right", "offset":  1.6, "artworkSlug": "low-tide" }
+  ],
+  "artworks": {
+    "quiet-horizon": {
+      "slug": "quiet-horizon",
+      "title": "Quiet Horizon",
+      "artist": "Placeholder Artist",
+      "medium": "Digital illustration",
+      "description": "A still landscape at the hour before dawn. The mountains sit in layers of blue and the sun has not yet committed to rising. Made during a long rest period.",
+      "image": "/art/placeholder-horizon.svg",
+      "width": 1.2,
+      "height": 1.5
+    },
+    "ember-hour": {
+      "slug": "ember-hour",
+      "title": "Ember Hour",
+      "artist": "Placeholder Artist",
+      "medium": "Digital illustration",
+      "description": "That specific warm moment at the end of the day when everything softens. A piece about the comfort of endings.",
+      "image": "/art/placeholder-ember.svg",
+      "width": 1.5,
+      "height": 1.1
+    },
+    "thicket": {
+      "slug": "thicket",
+      "title": "Thicket",
+      "artist": "Placeholder Artist",
+      "medium": "Digital illustration",
+      "description": "Trees seen from a bed. The view out of a window on a day when outside was unreachable. The trees seemed to lean in, curious.",
+      "image": "/art/placeholder-thicket.svg",
+      "width": 1.0,
+      "height": 1.3
+    },
+    "low-tide": {
+      "slug": "low-tide",
+      "title": "Low Tide, Slow Light",
+      "artist": "Placeholder Artist",
+      "medium": "Digital illustration",
+      "description": "Night at the edge of water. A piece about the particular quality of stillness that illness teaches you to find beautiful.",
+      "image": "/art/placeholder-tide.svg",
+      "width": 1.3,
+      "height": 1.0
+    }
+  }
+}

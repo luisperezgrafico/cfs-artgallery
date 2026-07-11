@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="730" height="920" viewBox="0 0 730 920">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="48%" r="40%">
+      <stop offset="0" stop-color="#6070c0" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#1a2236" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="730" height="920" fill="#1a2236"/>
+  <ellipse cx="365" cy="440" rx="220" ry="240" fill="url(#glow)"/>
+  <circle cx="365" cy="200" r="50" fill="#3a4870" opacity="0.9"/>
+  <circle cx="365" cy="200" r="28" fill="#4858a0" opacity="0.8"/>
+  <circle cx="365" cy="200" r="10" fill="#8090d8" opacity="0.9"/>
+  <line x1="365" y1="240" x2="365" y2="850" stroke="#2e3a60" stroke-width="2" opacity="0.6"/>
+  <ellipse cx="365" cy="760" rx="180" ry="20" fill="#2a3450" opacity="0.7"/>
+  <circle cx="210" cy="320" r="3" fill="#c0c8f0" opacity="0.7"/>
+  <circle cx="520" cy="280" r="2" fill="#c0c8f0" opacity="0.6"/>
+  <circle cx="140" cy="480" r="2" fill="#c0c8f0" opacity="0.5"/>
+  <circle cx="600" cy="440" r="3" fill="#c0c8f0" opacity="0.6"/>
+  <circle cx="290" cy="620" r="2" fill="#c0c8f0" opacity="0.4"/>
+  <circle cx="480" cy="580" r="2" fill="#c0c8f0" opacity="0.5"/>
+</svg>

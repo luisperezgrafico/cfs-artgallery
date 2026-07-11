@@ -1,0 +1,59 @@
+{
+  "slug": "room-c",
+  "name": "Night Room",
+  "variant": "dark",
+  "theme": {
+    "fog": "#1a2236",
+    "fogNear": 5,
+    "fogFar": 14,
+    "walls": "#1e2840",
+    "floor": "#121620",
+    "ceiling": "#252e44",
+    "trim": "#2e3a58",
+    "accent": "#4858a0",
+    "ambientColor": "#7080b8",
+    "ambientIntensity": 0.4,
+    "dirLightColor": "#b0b8e8",
+    "dirLightIntensity": 0.6
+  },
+  "slots": [
+    { "wall": "back",  "offset": -3.2, "artworkSlug": "into-the-dark" },
+    { "wall": "back",  "offset":  0.0, "artworkSlug": null },
+    { "wall": "back",  "offset":  3.2, "artworkSlug": "ember-deep" },
+    { "wall": "left",  "offset":  0.0, "artworkSlug": null },
+    { "wall": "right", "offset": -1.6, "artworkSlug": "night-thicket" },
+    { "wall": "right", "offset":  1.6, "artworkSlug": null }
+  ],
+  "artworks": {
+    "into-the-dark": {
+      "slug": "into-the-dark",
+      "title": "Into the Dark",
+      "artist": "Placeholder Artist",
+      "medium": "Digital illustration",
+      "description": "The dark is not empty. Made during the longest flare. There is something patient waiting in the indigo — not threatening, just there.",
+      "image": "/art/placeholder-night.svg",
+      "width": 1.1,
+      "height": 1.4
+    },
+    "ember-deep": {
+      "slug": "ember-deep",
+      "title": "Ember in the Deep",
+      "artist": "Placeholder Artist",
+      "medium": "Digital illustration",
+      "description": "A small warm light persisting. You do not have to be burning to be a fire.",
+      "image": "/art/placeholder-ember.svg",
+      "width": 1.2,
+      "height": 0.9
+    },
+    "night-thicket": {
+      "slug": "night-thicket",
+      "title": "The Thicket at Night",
+      "artist": "Placeholder Artist",
+      "medium": "Digital illustration",
+      "description": "The same trees, after dark. The forms become suggestions. The mind fills in what the eyes cannot hold.",
+      "image": "/art/placeholder-thicket.svg",
+      "width": 1.0,
+      "height": 1.3
+    }
+  }
+}

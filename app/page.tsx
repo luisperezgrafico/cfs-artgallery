@@ -28,7 +28,7 @@ export default function Home() {
       <button className="door-enter" onClick={() => setEntered(true)}>
         Enter the gallery
       </button>
-      <p className="door-note">Phase 0 prototype · placeholder artworks</p>
+      <p className="door-note">Phase 1 · placeholder artworks · lobby + 3 rooms</p>
     </main>
   );
 }

@@ -1,19 +1,19 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Sparkles, useTexture } from '@react-three/drei';
-import * as THREE from 'three';
+import { Suspense } from 'react';
+import { useTexture } from '@react-three/drei';
+import { RoomShell } from '@/components/RoomShell';
+import { CameraRig } from '@/components/CameraRig';
 import {
-  artworkPlacement,
+  slotPlacement,
   type Artwork,
-  type Room,
+  type RoomData,
   type RoomTheme,
   type Viewpoint,
+  type WallSlot,
 } from '@/lib/gallery';
-import { CameraRig } from '@/components/CameraRig';
 
-export function Scene({
+export function RoomScene({
   room,
   viewpoint,
   moving,
@@ -21,51 +21,40 @@ export function Scene({
   ambient,
   onSettled,
 }: {
-  room: Room;
+  room: RoomData;
   viewpoint: Viewpoint;
   moving: boolean;
   snap: boolean;
   ambient: boolean;
   onSettled: () => void;
 }) {
-  const n = room.artworks.length;
-
   return (
     <>
       <color attach="background" args={[room.theme.fog]} />
-      <fog attach="fog" args={[room.theme.fog, 7, 30]} />
+      <fog attach="fog" args={[room.theme.fog, room.theme.fogNear, room.theme.fogFar]} />
 
-      <hemisphereLight args={['#ffffff', room.theme.floor, 1.0]} />
-      <directionalLight position={[4, 8, 2]} intensity={1.1} />
-
-      {/* floating floor disc */}
-      <mesh rotation-x={-Math.PI / 2}>
-        <circleGeometry args={[15, 48]} />
-        <meshStandardMaterial color={room.theme.floor} />
-      </mesh>
-
-      {room.artworks.map((art, i) => (
-        <ArtworkPanel
-          key={art.slug}
-          art={art}
-          placement={artworkPlacement(i, n)}
-          theme={room.theme}
-        />
-      ))}
-
-      <Sparkles
-        count={110}
-        scale={[18, 6, 18]}
-        position={[0, 3, 0]}
-        size={2.2}
-        speed={0.25}
-        opacity={0.45}
-        color="#ffffff"
+      <ambientLight color={room.theme.ambientColor} intensity={room.theme.ambientIntensity} />
+      <directionalLight
+        position={[3, 6, 2]}
+        color={room.theme.dirLightColor}
+        intensity={room.theme.dirLightIntensity}
       />
 
-      <Crystal position={[-9, 0.8, 2]} scale={0.9} theme={room.theme} ambient={ambient} />
-      <Crystal position={[9.5, 1.1, 0.5]} scale={1.2} theme={room.theme} ambient={ambient} />
-      <Crystal position={[0, 0.6, -10.5]} scale={0.7} theme={room.theme} ambient={ambient} />
+      <RoomShell theme={room.theme} variant={room.variant} />
+
+      <Suspense fallback={null}>
+        {room.slots.map((slot, i) => {
+          const art = slot.artworkSlug ? room.artworks[slot.artworkSlug] : null;
+          return (
+            <ArtworkPanel
+              key={i}
+              slot={slot}
+              artwork={art}
+              theme={room.theme}
+            />
+          );
+        })}
+      </Suspense>
 
       <CameraRig viewpoint={viewpoint} moving={moving} snap={snap} onSettled={onSettled} />
     </>
@@ -73,62 +62,62 @@ export function Scene({
 }
 
 function ArtworkPanel({
-  art,
-  placement,
+  slot,
+  artwork,
   theme,
 }: {
-  art: Artwork;
-  placement: { position: [number, number, number]; rotY: number };
+  slot: WallSlot;
+  artwork: Artwork | null;
   theme: RoomTheme;
 }) {
-  const texture = useTexture(art.image);
+  const p = slotPlacement(slot);
+  const w = artwork?.width ?? 1.1;
+  const h = artwork?.height ?? 1.1;
 
   return (
-    <group position={placement.position} rotation-y={placement.rotY}>
-      {/* floating backing panel */}
-      <mesh position-z={-0.09}>
-        <planeGeometry args={[art.width + 0.8, art.height + 0.8]} />
-        <meshStandardMaterial color={theme.panel} />
+    <group position={p.position} rotation-y={p.rotY}>
+      {/* backing panel with generous mount border */}
+      <mesh position-z={-0.08}>
+        <planeGeometry args={[w + 0.7, h + 0.7]} />
+        <meshStandardMaterial color={artwork ? '#f4f0e8' : '#e8e4dc'} roughness={0.9} />
       </mesh>
       {/* frame */}
-      <mesh position-z={-0.045}>
-        <boxGeometry args={[art.width + 0.12, art.height + 0.12, 0.05]} />
-        <meshStandardMaterial color={theme.frame} />
+      <mesh position-z={-0.04}>
+        <boxGeometry args={[w + 0.12, h + 0.12, 0.04]} />
+        <meshStandardMaterial color={theme.trim} roughness={0.7} metalness={0.1} />
       </mesh>
-      {/* the work itself, unlit so colors stay faithful */}
-      <mesh>
-        <planeGeometry args={[art.width, art.height]} />
-        <meshBasicMaterial map={texture} toneMapped={false} />
-      </mesh>
+      {artwork ? (
+        <FilledCanvas artwork={artwork} />
+      ) : (
+        <BlankCanvas w={w} h={h} accent={theme.accent} />
+      )}
     </group>
   );
 }
 
-function Crystal({
-  position,
-  scale,
-  theme,
-  ambient,
-}: {
-  position: [number, number, number];
-  scale: number;
-  theme: RoomTheme;
-  ambient: boolean;
-}) {
-  const ref = useRef<THREE.Mesh>(null);
-  const phase = useMemo(() => Math.random() * Math.PI * 2, []);
-
-  useFrame((state) => {
-    if (!ambient || !ref.current) return;
-    const t = state.clock.elapsedTime + phase;
-    ref.current.rotation.y = t * 0.12;
-    ref.current.position.y = position[1] + Math.sin(t * 0.4) * 0.18;
-  });
-
+function FilledCanvas({ artwork }: { artwork: Artwork }) {
+  const texture = useTexture(artwork.image);
   return (
-    <mesh ref={ref} position={position} scale={scale}>
-      <icosahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial color={theme.accent} flatShading />
+    <mesh>
+      <planeGeometry args={[artwork.width, artwork.height]} />
+      <meshBasicMaterial map={texture} toneMapped={false} />
     </mesh>
+  );
+}
+
+function BlankCanvas({ w, h, accent }: { w: number; h: number; accent: string }) {
+  return (
+    <group>
+      {/* cream canvas surface */}
+      <mesh>
+        <planeGeometry args={[w, h]} />
+        <meshStandardMaterial color="#f0ece4" roughness={0.95} />
+      </mesh>
+      {/* subtle inner border hinting at the empty space */}
+      <mesh position-z={0.002}>
+        <boxGeometry args={[w - 0.06, h - 0.06, 0.004]} />
+        <meshStandardMaterial color={accent} transparent opacity={0.15} />
+      </mesh>
+    </group>
   );
 }
