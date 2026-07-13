@@ -21,38 +21,40 @@ const TourControls: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4">
-      <button
-        onClick={previousFrame}
-        className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-30"
-        disabled={currentFrameIndex <= 0}
-        aria-label="Previous artwork"
-      >
-        <ChevronLeft size={18} />
-      </button>
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={previousFrame}
+          disabled={currentFrameIndex <= 0}
+          aria-label="Previous artwork"
+          className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-30"
+        >
+          <ChevronLeft size={22} />
+        </button>
 
-      <div className="flex items-center gap-3 px-4 py-2 bg-black/50 backdrop-blur-sm border border-white/10 rounded-full">
-        <span className="text-white/60 text-xs">
+        <div className="px-6 py-3 bg-black/50 backdrop-blur-sm rounded-full text-white text-base font-medium min-w-[80px] text-center tabular-nums">
           {currentFrameIndex + 1} / {totalFrames}
-        </span>
+        </div>
+
+        <button
+          onClick={nextFrame}
+          disabled={currentFrameIndex >= totalFrames - 1}
+          aria-label="Next artwork"
+          className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-30"
+        >
+          <ChevronRight size={22} />
+        </button>
+
         <button
           onClick={quitTour}
-          className="flex items-center gap-1 text-white/60 hover:text-white text-xs transition-colors"
           aria-label="Exit tour"
+          className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
         >
-          <X size={12} />
-          <span>Exit</span>
+          <X size={20} />
         </button>
       </div>
 
-      <button
-        onClick={nextFrame}
-        className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-30"
-        disabled={currentFrameIndex >= totalFrames - 1}
-        aria-label="Next artwork"
-      >
-        <ChevronRight size={18} />
-      </button>
+      <p className="text-white/40 text-sm">Tap or swipe to navigate</p>
     </div>
   );
 };
