@@ -126,4 +126,49 @@ export const LOBBY_OVERVIEW: Viewpoint = {
 /** Shared state type — exported so both Gallery and Overlay can import it */
 export type GalleryState =
   | { scene: 'lobby' }
+  | { scene: 'walking'; to: string }
   | { scene: 'room'; roomSlug: string; slotIndex: number };
+
+// ── Single-scene world layout ─────────────────────────────────────────────────
+// Lobby at world origin. Room B straight back (−z). Rooms A and C to the sides.
+// Each room's local z=+4 (front wall/door) faces the connecting corridor.
+
+export interface RoomTransform {
+  offset: [number, number, number];
+  rotY: number;
+}
+
+export const ROOM_TRANSFORMS: Record<string, RoomTransform> = {
+  'room-a': { offset: [-16, 0, 0], rotY:  Math.PI / 2 },
+  'room-b': { offset: [0, 0, -16], rotY:  0            },
+  'room-c': { offset: [16, 0, 0],  rotY: -Math.PI / 2  },
+};
+
+export function localToWorld(
+  local: [number, number, number],
+  offset: [number, number, number],
+  rotY: number,
+): [number, number, number] {
+  const c = Math.cos(rotY), s = Math.sin(rotY);
+  const [lx, ly, lz] = local;
+  return [
+    offset[0] + c * lx + s * lz,
+    offset[1] + ly,
+    offset[2] + (-s * lx + c * lz),
+  ];
+}
+
+export function worldRoomOverview(t: RoomTransform): Viewpoint {
+  return {
+    position: localToWorld(ROOM_OVERVIEW.position, t.offset, t.rotY),
+    look:     localToWorld(ROOM_OVERVIEW.look,     t.offset, t.rotY),
+  };
+}
+
+export function worldViewpointForSlot(slot: WallSlot, t: RoomTransform): Viewpoint {
+  const local = viewpointForSlot(slot);
+  return {
+    position: localToWorld(local.position, t.offset, t.rotY),
+    look:     localToWorld(local.look,     t.offset, t.rotY),
+  };
+}

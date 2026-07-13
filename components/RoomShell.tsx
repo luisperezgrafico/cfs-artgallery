@@ -52,18 +52,35 @@ const WALL_POEMS: Record<string, string> = {
 export function RoomShell({ theme, variant }: { theme: RoomTheme; variant: RoomVariant }) {
   const pilColor   = shiftHex(theme.walls, -16);
   const panelColor = shiftHex(theme.walls, -9);
+  const isLobby    = variant === 'lobby';
 
   return (
     <group>
       <Floor theme={theme} />
       <Ceiling theme={theme} />
-      <BackWall  theme={theme} pilColor={pilColor} panelColor={panelColor} />
-      <LeftWall  theme={theme} pilColor={pilColor} />
-      <RightWall theme={theme} pilColor={pilColor} />
+
+      {isLobby ? (
+        <LobbyBackWall theme={theme} />
+      ) : (
+        <BackWall theme={theme} pilColor={pilColor} panelColor={panelColor} />
+      )}
+
+      {isLobby ? (
+        <>
+          <LobbyPortalWall theme={theme} side="left" />
+          <LobbyPortalWall theme={theme} side="right" />
+        </>
+      ) : (
+        <>
+          <LeftWall  theme={theme} pilColor={pilColor} />
+          <RightWall theme={theme} pilColor={pilColor} />
+        </>
+      )}
+
       <FrontWall theme={theme} variant={variant} />
       <Trims theme={theme} />
-      <DadoRail theme={theme} />
-      {variant !== 'lobby' && (
+      <DadoRail theme={theme} skipSides={isLobby} />
+      {!isLobby && (
         <WallPoem variant={variant as 'warm' | 'cool' | 'dark'} theme={theme} />
       )}
       {variant === 'warm'  && <WarmDetails  theme={theme} />}
@@ -242,9 +259,63 @@ function DoorwayTrim({ theme, variant }: { theme: RoomTheme; variant: RoomVarian
   );
 }
 
+// ── Lobby-specific walls (with corridor portal openings) ──────────────────────
+
+// Back wall: single portal at x=0 for Room B corridor
+function LobbyBackWall({ theme }: { theme: RoomTheme }) {
+  const sideW = (W - DOOR_W) / 2; // 4.4
+  const topH  = H - DOOR_H;       // 0.8
+  // Group is at [0, H/2, -HALF_D]; local y=0 → world y=H/2
+  // Top panel center local-y: DOOR_H - H/2 + topH/2
+  const topLocalY = DOOR_H - H / 2 + topH / 2;
+  return (
+    <group position={[0, H / 2, -HALF_D]}>
+      <mesh position={[-(DOOR_W / 2 + sideW / 2), 0, 0]}>
+        <planeGeometry args={[sideW, H]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+      <mesh position={[(DOOR_W / 2 + sideW / 2), 0, 0]}>
+        <planeGeometry args={[sideW, H]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+      <mesh position={[0, topLocalY, 0]}>
+        <planeGeometry args={[DOOR_W, topH]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
+
+// Side walls: single portal at z=0 (world z=0) for Room A/C corridors
+function LobbyPortalWall({ theme, side }: { theme: RoomTheme; side: 'left' | 'right' }) {
+  const x    = side === 'left' ? -HALF_W : HALF_W;
+  const rotY = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
+  // In group local space, the local x-axis spans the wall's D dimension.
+  // Portal at local x=0 (world z=0), width DOOR_W.
+  const sideW    = (D - DOOR_W) / 2; // 2.9
+  const topH     = H - DOOR_H;       // 0.8
+  const topLocalY = DOOR_H - H / 2 + topH / 2;
+  return (
+    <group position={[x, H / 2, 0]} rotation-y={rotY}>
+      <mesh position={[-(DOOR_W / 2 + sideW / 2), 0, 0]}>
+        <planeGeometry args={[sideW, H]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+      <mesh position={[(DOOR_W / 2 + sideW / 2), 0, 0]}>
+        <planeGeometry args={[sideW, H]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+      <mesh position={[0, topLocalY, 0]}>
+        <planeGeometry args={[DOOR_W, topH]} />
+        <meshStandardMaterial color={theme.walls} roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
+
 // ── Dado rail ─────────────────────────────────────────────────────────────────
 
-function DadoRail({ theme }: { theme: RoomTheme }) {
+function DadoRail({ theme, skipSides = false }: { theme: RoomTheme; skipSides?: boolean }) {
   const color = theme.trim;
   return (
     <group>
@@ -252,14 +323,18 @@ function DadoRail({ theme }: { theme: RoomTheme }) {
         <boxGeometry args={[W, DADO_H, DADO_D]} />
         <meshStandardMaterial color={color} roughness={0.7} />
       </mesh>
-      <mesh position={[-HALF_W + DADO_D / 2, DADO_Y, 0]}>
-        <boxGeometry args={[DADO_D, DADO_H, D]} />
-        <meshStandardMaterial color={color} roughness={0.7} />
-      </mesh>
-      <mesh position={[HALF_W - DADO_D / 2, DADO_Y, 0]}>
-        <boxGeometry args={[DADO_D, DADO_H, D]} />
-        <meshStandardMaterial color={color} roughness={0.7} />
-      </mesh>
+      {!skipSides && (
+        <>
+          <mesh position={[-HALF_W + DADO_D / 2, DADO_Y, 0]}>
+            <boxGeometry args={[DADO_D, DADO_H, D]} />
+            <meshStandardMaterial color={color} roughness={0.7} />
+          </mesh>
+          <mesh position={[HALF_W - DADO_D / 2, DADO_Y, 0]}>
+            <boxGeometry args={[DADO_D, DADO_H, D]} />
+            <meshStandardMaterial color={color} roughness={0.7} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
@@ -402,37 +477,41 @@ function DarkDetails({ theme }: { theme: RoomTheme }) {
   );
 }
 
-/** Lobby: 3 coloured portal frames on the back wall */
+/** Lobby: one portal frame per wall (back=Room B, left=Room A, right=Room C) */
 export function LobbyDetails({ theme }: { theme: RoomTheme }) {
-  const portals: { x: number; color: string }[] = [
-    { x: -3.6, color: '#c4704a' },
-    { x: 0,    color: '#a8b8c4' },
-    { x: 3.6,  color: '#1e2840' },
+  const frameT = 0.10;
+  const frameD = 0.05;
+  const pH = DOOR_H;  // 3.0
+  const pW = DOOR_W;  // 2.2
+  const cy = pH / 2;  // centre height
+
+  // Each entry: world position of frame centre, rotation, accent colour
+  const portals: { pos: [number,number,number]; rotY: number; color: string }[] = [
+    { pos: [0,         cy, -HALF_D + frameD], rotY:  0,            color: '#a8b8c4' }, // Room B
+    { pos: [-HALF_W + frameD, cy, 0],         rotY:  Math.PI / 2,  color: '#c4704a' }, // Room A
+    { pos: [ HALF_W - frameD, cy, 0],         rotY: -Math.PI / 2,  color: '#2a3858' }, // Room C
   ];
-  const pH    = 2.6;
-  const pW    = 1.8;
-  const frameT = 0.12;
 
   return (
     <group>
-      {portals.map((p) => (
-        <group key={p.x} position={[p.x, pH / 2 + 0.2, -HALF_D + 0.06]}>
-          <mesh>
-            <planeGeometry args={[pW, pH]} />
-            <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={0.08} roughness={0.9} />
+      {portals.map((p, i) => (
+        <group key={i} position={p.pos} rotation-y={p.rotY}>
+          {/* left jamb */}
+          <mesh position={[-(pW / 2 + frameT / 2), 0, 0]}>
+            <boxGeometry args={[frameT, pH, frameD]} />
+            <meshStandardMaterial color={theme.trim} roughness={0.7} />
           </mesh>
-          {[
-            { pos: [0,  pH / 2 + frameT / 2, 0.02] as [number,number,number], args: [pW + frameT * 2, frameT, 0.06] as [number,number,number] },
-            { pos: [0, -pH / 2 - frameT / 2, 0.02] as [number,number,number], args: [pW + frameT * 2, frameT, 0.06] as [number,number,number] },
-            { pos: [-pW / 2 - frameT / 2, 0, 0.02] as [number,number,number], args: [frameT, pH, 0.06] as [number,number,number] },
-            { pos: [ pW / 2 + frameT / 2, 0, 0.02] as [number,number,number], args: [frameT, pH, 0.06] as [number,number,number] },
-          ].map((f, i) => (
-            <mesh key={i} position={f.pos}>
-              <boxGeometry args={f.args} />
-              <meshStandardMaterial color={theme.trim} roughness={0.7} />
-            </mesh>
-          ))}
-          <pointLight position={[0, 0, 0.5]} color={p.color} intensity={0.8} distance={3} />
+          {/* right jamb */}
+          <mesh position={[(pW / 2 + frameT / 2), 0, 0]}>
+            <boxGeometry args={[frameT, pH, frameD]} />
+            <meshStandardMaterial color={theme.trim} roughness={0.7} />
+          </mesh>
+          {/* lintel */}
+          <mesh position={[0, pH / 2 + frameT / 2, 0]}>
+            <boxGeometry args={[pW + frameT * 2, frameT, frameD]} />
+            <meshStandardMaterial color={theme.trim} roughness={0.7} />
+          </mesh>
+          <pointLight position={[0, pH / 2, 0.6]} color={p.color} intensity={1.2} distance={4} />
         </group>
       ))}
     </group>

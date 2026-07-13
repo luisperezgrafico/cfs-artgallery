@@ -6,10 +6,10 @@ import * as THREE from 'three';
 import { easing } from 'maath';
 import type { Viewpoint } from '@/lib/gallery';
 
-const SMOOTH_POS   = 0.52;
-const SMOOTH_ROT   = 0.38;
-const SETTLE_DIST  = 0.05;   // metres
-const SETTLE_ANGLE = 0.018;  // radians (~1°)
+const SMOOTH_POS   = 0.40;
+const SMOOTH_ROT   = 0.40;
+const SETTLE_DIST  = 0.15;   // metres — relaxed so walk settles cleanly
+const SETTLE_ANGLE = 0.03;   // radians (~1.7°)
 const LOOK_SENS    = 0.0038; // radians per pixel
 const MAX_PITCH    = 0.45;   // ~26°
 

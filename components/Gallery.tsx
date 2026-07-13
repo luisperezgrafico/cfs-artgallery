@@ -8,16 +8,15 @@ import roomBData from '@/content/rooms/room-b.json';
 import roomCData from '@/content/rooms/room-c.json';
 import {
   LOBBY_OVERVIEW,
-  ROOM_ENTRANCE,
-  ROOM_OVERVIEW,
-  viewpointForSlot,
+  ROOM_TRANSFORMS,
+  worldRoomOverview,
+  worldViewpointForSlot,
   type GalleryManifest,
   type GalleryState,
   type RoomData,
   type Viewpoint,
 } from '@/lib/gallery';
-import { RoomScene } from '@/components/Scene';
-import { LobbyScene } from '@/components/LobbyScene';
+import { GalleryScene } from '@/components/GalleryScene';
 import { Overlay } from '@/components/Overlay';
 
 const FADE_MS = 280;
@@ -29,27 +28,24 @@ const ROOMS: Record<string, RoomData> = {
 };
 
 type GalleryAction =
-  | { type: 'ENTER_ROOM'; roomSlug: string }
-  | { type: 'ADVANCE_ENTRANCE' }
+  | { type: 'WALK_TO';  roomSlug: string }
+  | { type: 'ARRIVE';   roomSlug: string }
   | { type: 'EXIT_TO_LOBBY' }
   | { type: 'NAV'; delta: 1 | -1 };
 
 function reduce(state: GalleryState, action: GalleryAction): GalleryState {
   switch (action.type) {
-    case 'ENTER_ROOM':
-      // slotIndex -1 = cinematic entrance; auto-advances to 0 (overview)
-      return { scene: 'room', roomSlug: action.roomSlug, slotIndex: -1 };
-    case 'ADVANCE_ENTRANCE':
-      if (state.scene === 'room' && state.slotIndex === -1)
-        return { ...state, slotIndex: 0 };
-      return state;
+    case 'WALK_TO':
+      return { scene: 'walking', to: action.roomSlug };
+    case 'ARRIVE':
+      return { scene: 'room', roomSlug: action.roomSlug, slotIndex: 0 };
     case 'EXIT_TO_LOBBY':
       return { scene: 'lobby' };
     case 'NAV': {
-      if (state.scene !== 'room' || state.slotIndex < 0) return state;
+      if (state.scene !== 'room') return state;
       const room = ROOMS[state.roomSlug];
       const next = state.slotIndex + action.delta;
-      if (next < 0) return { scene: 'lobby' };
+      if (next < 0) return state;
       if (next > room.slots.length) return state;
       return { ...state, slotIndex: next };
     }
@@ -57,9 +53,8 @@ function reduce(state: GalleryState, action: GalleryAction): GalleryState {
 }
 
 export default function Gallery() {
-  const [state, dispatch]     = useReducer(reduce, { scene: 'lobby' });
-  const [moving, setMoving]   = useState(false);
-  const [fading, setFading]   = useState(false);
+  const [state, dispatch]           = useReducer(reduce, { scene: 'lobby' });
+  const [fading, setFading]         = useState(false);
   const [plaqueOpen, setPlaqueOpen] = useState(false);
   const [motionOn, setMotionOn]     = useState(true);
   const [ambientOn, setAmbientOn]   = useState(true);
@@ -71,101 +66,91 @@ export default function Gallery() {
     }
   }, []);
 
-  // CameraRig always snaps on fresh mount (re-mounts on scene change),
-  // so scene transitions (lobby↔room) get a free snap for free.
-  // The only extra thing: when entering a room, auto-advance from entrance (-1)
-  // to overview (0) after a short pause so the snap renders first.
-  const isEntranceState = state.scene === 'room' && state.slotIndex === -1;
-  useEffect(() => {
-    if (!isEntranceState) return;
-    const t = window.setTimeout(() => {
-      dispatch({ type: 'ADVANCE_ENTRANCE' });
-      setMoving(true);
-    }, 160);
-    return () => window.clearTimeout(t);
-  }, [isEntranceState]);
+  // Compute target viewpoint from state — all coordinates in world space
+  const viewpoint = useMemo<Viewpoint>(() => {
+    if (state.scene === 'lobby') return LOBBY_OVERVIEW;
+    const slug = state.scene === 'walking' ? state.to : state.roomSlug;
+    const t    = ROOM_TRANSFORMS[slug];
+    if (state.scene === 'walking') return worldRoomOverview(t);
+    if (state.slotIndex === 0)     return worldRoomOverview(t);
+    return worldViewpointForSlot(ROOMS[slug].slots[state.slotIndex - 1], t);
+  }, [state]);
 
-  // Scene changes (lobby↔room) always fade so the snap isn't visible.
-  // In-room navigation uses smooth camera movement when motionOn=true.
-  const sceneChange = useCallback(
-    (action: GalleryAction) => {
-      if (fading) return;
-      setPlaqueOpen(false);
+  // CameraRig fires this when it finishes animating
+  const handleSettled = useCallback(() => {
+    if (state.scene === 'walking') {
+      dispatch({ type: 'ARRIVE', roomSlug: state.to });
+    }
+  }, [state]);
+
+  // Enter a room: smooth walk (motionOn) or instant fade
+  const enterRoom = useCallback((slug: string) => {
+    if (fading) return;
+    setPlaqueOpen(false);
+    if (motionOn) {
+      dispatch({ type: 'WALK_TO', roomSlug: slug });
+    } else {
       setFading(true);
       window.setTimeout(() => {
-        dispatch(action);
+        dispatch({ type: 'ARRIVE', roomSlug: slug });
         requestAnimationFrame(() => setFading(false));
       }, FADE_MS);
-    },
-    [fading],
-  );
+    }
+  }, [fading, motionOn]);
 
-  const navAction = useCallback(
-    (action: GalleryAction) => {
-      if (fading) return;
-      if (state.scene === 'room' && state.slotIndex === -1) return;
-      setPlaqueOpen(false);
-      if (motionOn) {
-        dispatch(action);
-        setMoving(true);
-      } else {
-        setFading(true);
-        window.setTimeout(() => {
-          dispatch(action);
-          requestAnimationFrame(() => setFading(false));
-        }, FADE_MS);
-      }
-    },
-    [fading, motionOn, state],
-  );
+  // Exit back to lobby — always fades (no corridor walk-back yet)
+  const exitToLobby = useCallback(() => {
+    if (fading) return;
+    setPlaqueOpen(false);
+    setFading(true);
+    window.setTimeout(() => {
+      dispatch({ type: 'EXIT_TO_LOBBY' });
+      requestAnimationFrame(() => setFading(false));
+    }, FADE_MS);
+  }, [fading]);
+
+  // In-room artwork navigation
+  const nav = useCallback((delta: 1 | -1) => {
+    if (fading || state.scene !== 'room') return;
+    setPlaqueOpen(false);
+    if (motionOn) {
+      dispatch({ type: 'NAV', delta });
+    } else {
+      setFading(true);
+      window.setTimeout(() => {
+        dispatch({ type: 'NAV', delta });
+        requestAnimationFrame(() => setFading(false));
+      }, FADE_MS);
+    }
+  }, [fading, motionOn, state.scene]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') navAction({ type: 'NAV', delta: 1 });
-      if (e.key === 'ArrowLeft')  navAction({ type: 'NAV', delta: -1 });
+      if (e.key === 'ArrowRight') nav(1);
+      if (e.key === 'ArrowLeft')  nav(-1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [navAction]);
+  }, [nav]);
 
-  const viewpoint = useMemo<Viewpoint>(() => {
-    if (state.scene === 'lobby') return LOBBY_OVERVIEW;
-    const room = ROOMS[state.roomSlug];
-    if (state.slotIndex === -1) return ROOM_ENTRANCE;
-    if (state.slotIndex === 0)  return ROOM_OVERVIEW;
-    return viewpointForSlot(room.slots[state.slotIndex - 1]);
-  }, [state]);
-
-  const fogColor   = state.scene === 'lobby' ? '#e8e4d8' : ROOMS[state.roomSlug]?.theme.fog ?? '#e8e4d8';
+  const snap        = !motionOn;
   const currentRoom = state.scene === 'room' ? ROOMS[state.roomSlug] : null;
-  const snap = !motionOn;
 
   return (
     <div className="stage">
       <Canvas
         frameloop="always"
         dpr={[1, 1.75]}
-        camera={{ fov: 55, position: LOBBY_OVERVIEW.position, near: 0.1, far: 60 }}
+        camera={{ fov: 55, position: LOBBY_OVERVIEW.position, near: 0.1, far: 65 }}
       >
         <Suspense fallback={null}>
-          {state.scene === 'lobby' ? (
-            <LobbyScene
-              viewpoint={viewpoint}
-              moving={moving}
-              snap={snap}
-              ambient={ambientOn}
-              onSettled={() => setMoving(false)}
-            />
-          ) : (
-            <RoomScene
-              room={ROOMS[state.roomSlug]}
-              viewpoint={viewpoint}
-              moving={moving}
-              snap={snap}
-              ambient={ambientOn}
-              onSettled={() => setMoving(false)}
-            />
-          )}
+          <GalleryScene
+            rooms={ROOMS}
+            viewpoint={viewpoint}
+            snap={snap}
+            onSettled={handleSettled}
+            ambient={ambientOn}
+          />
         </Suspense>
       </Canvas>
 
@@ -176,17 +161,17 @@ export default function Gallery() {
         plaqueOpen={plaqueOpen}
         motionOn={motionOn}
         ambientOn={ambientOn}
-        onEnterRoom={(slug) => sceneChange({ type: 'ENTER_ROOM', roomSlug: slug })}
-        onExitToLobby={() => sceneChange({ type: 'EXIT_TO_LOBBY' })}
-        onNav={(delta) => navAction({ type: 'NAV', delta })}
-        onTogglePlaque={() => setPlaqueOpen((v) => !v)}
-        onToggleMotion={() => setMotionOn((v) => !v)}
-        onToggleAmbient={() => setAmbientOn((v) => !v)}
+        onEnterRoom={enterRoom}
+        onExitToLobby={exitToLobby}
+        onNav={nav}
+        onTogglePlaque={() => setPlaqueOpen(v => !v)}
+        onToggleMotion={() => setMotionOn(v => !v)}
+        onToggleAmbient={() => setAmbientOn(v => !v)}
       />
 
       <div
         className={`fade${fading ? ' fade-on' : ''}`}
-        style={{ background: fogColor }}
+        style={{ background: '#e0dcd4' }}
         aria-hidden="true"
       />
     </div>

@@ -31,19 +31,18 @@ export function Overlay({
   onToggleMotion,
   onToggleAmbient,
 }: Props) {
-  const isLobby     = state.scene === 'lobby';
-  const isRoom      = state.scene === 'room';
-  // slotIndex -1 = cinematic entrance, user controls not shown yet
-  const slotIndex   = isRoom ? state.slotIndex : 0;
-  const isEntering  = isRoom && slotIndex === -1;
-  const totalSlots  = currentRoom?.slots.length ?? 0;
+  const isLobby    = state.scene === 'lobby';
+  const isWalking  = state.scene === 'walking';
+  const isRoom     = state.scene === 'room';
+  const slotIndex  = isRoom ? state.slotIndex : 0;
+  const totalSlots = currentRoom?.slots.length ?? 0;
   const currentSlot = currentRoom && slotIndex > 0 ? currentRoom.slots[slotIndex - 1] : null;
   const currentArt  = currentSlot?.artworkSlug ? currentRoom!.artworks[currentSlot.artworkSlug] : null;
 
   const statusText = isLobby
     ? `${gallery.title} — entrada`
-    : isEntering
-    ? 'Entrando a la sala…'
+    : isWalking
+    ? 'Caminando hacia la sala…'
     : slotIndex === 0
     ? `${currentRoom!.name} — vista general`
     : currentArt
@@ -54,7 +53,7 @@ export function Overlay({
     <>
       <header className="hud hud-top">
         <span className="room-name">
-          {isLobby ? gallery.title : currentRoom?.name ?? ''}
+          {isLobby ? gallery.title : isWalking ? '…' : currentRoom?.name ?? ''}
         </span>
         <div className="comfort" role="group" aria-label="Comfort settings">
           <button className="chip" aria-pressed={motionOn} onClick={onToggleMotion}>
@@ -68,8 +67,8 @@ export function Overlay({
 
       <p className="sr-only" role="status" aria-live="polite">{statusText}</p>
 
-      {/* Drag-to-look hint — visible whenever camera is settled */}
-      {!isEntering && <p className="drag-hint" aria-hidden="true">drag to look around</p>}
+      {/* Drag-to-look hint — hidden while walking */}
+      {!isWalking && <p className="drag-hint" aria-hidden="true">drag to look around</p>}
 
       {/* Lobby: room selector */}
       {isLobby && (
@@ -113,8 +112,8 @@ export function Overlay({
 
       {/* Bottom navigation */}
       <nav className="hud hud-bottom" aria-label="Tour navigation">
-        {isEntering ? (
-          // Camera gliding in — no controls yet
+        {isWalking ? (
+          // Camera walking — no controls
           <div />
         ) : isLobby ? (
           <>
