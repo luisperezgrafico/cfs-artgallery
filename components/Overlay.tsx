@@ -1,93 +1,78 @@
 'use client';
 
-import type { GalleryManifest, GalleryState, RoomData } from '@/lib/gallery';
+import type { GalleryManifest, RoomData } from '@/lib/gallery';
 
 interface Props {
-  state: GalleryState;
+  roomSlug: string;
+  frameIndex: number;
+  roomData: RoomData;
   gallery: GalleryManifest;
-  currentRoom: RoomData | null;
-  plaqueOpen: boolean;
   motionOn: boolean;
-  ambientOn: boolean;
-  onEnterRoom: (slug: string) => void;
-  onExitToLobby: () => void;
+  onSwitchRoom: (slug: string) => void;
+  onOverview: () => void;
   onNav: (delta: 1 | -1) => void;
-  onTogglePlaque: () => void;
   onToggleMotion: () => void;
-  onToggleAmbient: () => void;
 }
 
 export function Overlay({
-  state,
+  roomSlug,
+  frameIndex,
+  roomData,
   gallery,
-  currentRoom,
-  plaqueOpen,
   motionOn,
-  ambientOn,
-  onEnterRoom,
-  onExitToLobby,
+  onSwitchRoom,
+  onOverview,
   onNav,
-  onTogglePlaque,
   onToggleMotion,
-  onToggleAmbient,
 }: Props) {
-  const isLobby    = state.scene === 'lobby';
-  const isWalking  = state.scene === 'walking';
-  const isRoom     = state.scene === 'room';
-  const slotIndex  = isRoom ? state.slotIndex : 0;
-  const totalSlots = currentRoom?.slots.length ?? 0;
-  const currentSlot = currentRoom && slotIndex > 0 ? currentRoom.slots[slotIndex - 1] : null;
-  const currentArt  = currentSlot?.artworkSlug ? currentRoom!.artworks[currentSlot.artworkSlug] : null;
+  const isOverview   = frameIndex === -1;
+  const totalFrames  = roomData.slots.length;
+  const currentSlot  = frameIndex >= 0 ? roomData.slots[frameIndex] : null;
+  const currentArt   = currentSlot?.artworkSlug ? roomData.artworks[currentSlot.artworkSlug] : null;
 
-  const statusText = isLobby
-    ? `${gallery.title} — entrada`
-    : isWalking
-    ? 'Caminando hacia la sala…'
-    : slotIndex === 0
-    ? `${currentRoom!.name} — vista general`
+  const statusText = isOverview
+    ? `${roomData.name} — vista general`
     : currentArt
-    ? `${currentRoom!.name}, obra ${slotIndex} de ${totalSlots}: "${currentArt.title}", por ${currentArt.artist}`
-    : `${currentRoom!.name}, espacio vacío ${slotIndex} de ${totalSlots}`;
+    ? `${roomData.name}, obra ${frameIndex + 1} de ${totalFrames}: "${currentArt.title}", por ${currentArt.artist}`
+    : `${roomData.name}, espacio vacío ${frameIndex + 1} de ${totalFrames}`;
 
   return (
     <>
+      {/* Top bar */}
       <header className="hud hud-top">
-        <span className="room-name">
-          {isLobby ? gallery.title : isWalking ? '…' : currentRoom?.name ?? ''}
-        </span>
+        <span className="room-name">{roomData.name}</span>
         <div className="comfort" role="group" aria-label="Comfort settings">
           <button className="chip" aria-pressed={motionOn} onClick={onToggleMotion}>
             Motion {motionOn ? 'on' : 'off'}
           </button>
-          <button className="chip" aria-pressed={ambientOn} onClick={onToggleAmbient}>
-            Ambience {ambientOn ? 'on' : 'off'}
-          </button>
         </div>
       </header>
 
+      {/* Screen-reader status */}
       <p className="sr-only" role="status" aria-live="polite">{statusText}</p>
 
-      {/* Drag-to-look hint — hidden while walking */}
-      {!isWalking && <p className="drag-hint" aria-hidden="true">drag to look around</p>}
-
-      {/* Lobby: room selector */}
-      {isLobby && (
-        <nav className="lobby-nav" aria-label="Choose a room">
-          {gallery.rooms.map((room) => (
-            <button
-              key={room.slug}
-              className={`room-btn room-btn--${room.variant}`}
-              onClick={() => onEnterRoom(room.slug)}
-            >
-              {room.name}
-            </button>
-          ))}
-        </nav>
+      {/* Tap hint — only on overview */}
+      {isOverview && (
+        <p className="drag-hint" aria-hidden="true">tap an artwork to zoom in</p>
       )}
 
-      {/* Room: plaque */}
-      {isRoom && slotIndex > 0 && plaqueOpen && (
-        <aside className="plaque" aria-label="About this space">
+      {/* Room selector */}
+      <nav className="lobby-nav" aria-label="Choose a room">
+        {gallery.rooms.map((room) => (
+          <button
+            key={room.slug}
+            className={`room-btn room-btn--${room.variant}${room.slug === roomSlug ? ' room-btn--active' : ''}`}
+            onClick={() => onSwitchRoom(room.slug)}
+            aria-current={room.slug === roomSlug ? 'true' : undefined}
+          >
+            {room.name}
+          </button>
+        ))}
+      </nav>
+
+      {/* Artwork plaque — shown when zoomed */}
+      {!isOverview && (
+        <aside className="plaque" aria-label="About this work">
           {currentArt ? (
             <>
               <h2>{currentArt.title}</h2>
@@ -112,43 +97,33 @@ export function Overlay({
 
       {/* Bottom navigation */}
       <nav className="hud hud-bottom" aria-label="Tour navigation">
-        {isWalking ? (
-          // Camera walking — no controls
-          <div />
-        ) : isLobby ? (
+        {isOverview ? (
           <>
             <div />
-            <span className="nav-status">Choose a room above to enter</span>
+            <span className="nav-status">Tap an artwork to explore it</span>
             <div />
           </>
         ) : (
           <>
             <button
               className="nav-btn"
-              onClick={() => slotIndex === 0 ? onExitToLobby() : onNav(-1)}
+              onClick={() => frameIndex === 0 ? onOverview() : onNav(-1)}
             >
-              {slotIndex === 0 ? '← Lobby' : '← Back'}
+              {frameIndex === 0 ? '← Overview' : '← Back'}
             </button>
 
             <div className="nav-center">
-              {slotIndex > 0 && (
-                <span className="nav-status" aria-hidden="true">
-                  {slotIndex} / {totalSlots}
-                </span>
-              )}
-              {slotIndex > 0 && (
-                <button className="chip" aria-pressed={plaqueOpen} onClick={onTogglePlaque}>
-                  {plaqueOpen ? 'Close' : currentArt ? 'About this work' : 'About this space'}
-                </button>
-              )}
+              <span className="nav-status" aria-hidden="true">
+                {frameIndex + 1} / {totalFrames}
+              </span>
             </div>
 
             <button
               className="nav-btn"
               onClick={() => onNav(1)}
-              disabled={slotIndex === totalSlots}
+              disabled={frameIndex === totalFrames - 1}
             >
-              {slotIndex === 0 ? 'Explore →' : 'Next →'}
+              Next →
             </button>
           </>
         )}

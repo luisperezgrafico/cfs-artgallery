@@ -260,6 +260,11 @@ button {
 .room-btn--cool  { border-color: #6888a044; }
 .room-btn--dark  { border-color: #4858a044; }
 
+.room-btn--active {
+  box-shadow: 0 0 0 2px var(--accent);
+  font-weight: 600;
+}
+
 /* ---------- blank canvas submit button ---------- */
 
 .submit-btn {
