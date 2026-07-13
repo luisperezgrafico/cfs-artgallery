@@ -1,0 +1,68 @@
+import { ImageMetadata } from '../types/museum';
+
+export const drawingImages: ImageMetadata[] = [
+  {
+    url: '/art/placeholder-horizon.svg',
+    title: 'Quiet Horizon',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'A still landscape at the hour before dawn. Made during a long rest period.',
+  },
+  {
+    url: '/art/placeholder-ember.svg',
+    title: 'Ember Hour',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'That specific warm moment at the end of the day when everything softens.',
+  },
+  {
+    url: '/art/placeholder-thicket.svg',
+    title: 'Thicket',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'Trees seen from a bed. The view out of a window on a day when outside was unreachable.',
+  },
+  {
+    url: '/art/placeholder-tide.svg',
+    title: 'Low Tide, Slow Light',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'Night at the edge of water. A piece about the particular quality of stillness that illness teaches you to find beautiful.',
+  },
+  {
+    url: '/art/placeholder-night.svg',
+    title: 'Night Study',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'A quiet study of night forms.',
+  },
+  {
+    url: '/art/placeholder-abstract.svg',
+    title: 'Untitled I',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'An open space.',
+  },
+  {
+    url: '/art/placeholder-horizon.svg',
+    title: 'Untitled II',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'A second horizon.',
+  },
+  {
+    url: '/art/placeholder-ember.svg',
+    title: 'Untitled III',
+    artist: 'Placeholder Artist',
+    date: '2024',
+    link: '#',
+    description: 'Warmth held.',
+  },
+];
