@@ -23,7 +23,7 @@ const Room: React.FC<RoomProps> = ({ width, length, height, wallTiltAngle = 0.15
       {/* Ceiling */}
       <mesh position={[0, height, length / 2]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[ceilingWidth, length]} />
-        <meshStandardMaterial color="#444" metalness={0} roughness={0.9} />
+        <meshStandardMaterial color="#1a1538" metalness={0} roughness={0.9} />
       </mesh>
 
       {/* Left Wall */}

@@ -13,6 +13,7 @@ import { CameraManager } from './museum/CameraManager';
 import SpotlightGroup from './museum/SpotlightGroup';
 import { useTour } from '../contexts/TourContext';
 import CeilingLight from './museum/CeilingLight';
+import Bench from './museum/Bench';
 import { drawingImages } from '../config/imagesConfig';
 
 interface MuseumProps {
@@ -85,7 +86,8 @@ const Museum: React.FC<MuseumProps> = () => {
           return null;
         })}
 
-        <ambientLight intensity={0.3} />
+        <ambientLight intensity={0.2} />
+        <hemisphereLight args={['#3d2b6b', '#0a0816', 0.25]} />
         <directionalLight intensity={2.5} position={[0, -100, 5]} />
 
         <SpotlightGroup roomHeight={defaultRoomDimensions.height} />
@@ -95,6 +97,10 @@ const Museum: React.FC<MuseumProps> = () => {
         <CeilingLight position={[0.95, 3.95, 8]} />
         <CeilingLight position={[-1.15, 3.95, 11]} />
         <CeilingLight position={[1.15, 3.95, 11]} />
+
+        {/* Gallery benches — center of room, long axis runs left-right */}
+        <Bench position={[0, 0, 5.5]} />
+        <Bench position={[0, 0, 10]} />
       </group>
     </ZoomProvider>
   );
