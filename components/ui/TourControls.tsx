@@ -36,7 +36,7 @@ const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
         <div className="fixed bottom-8 md:bottom-16 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
           <button
             onClick={startTour}
-            className="bg-white/20 hover:bg-white/30 px-4 py-2 md:px-10 md:py-4 rounded-full text-white flex items-center gap-3 shadow-lg transition-colors"
+            className="bg-white/20 hover:bg-white/30 px-6 py-3 md:px-10 md:py-4 rounded-full text-white flex items-center gap-3 shadow-lg transition-colors"
           >
             <Play size={isMobile ? 18 : 24} />
             <span className="text-sm md:text-lg font-semibold">Start the Tour</span>
@@ -52,7 +52,7 @@ const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   return (
     <div style={style}>
       <div className="fixed bottom-8 md:bottom-16 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
-        <div className="flex gap-4 items-center bg-black/40 backdrop-blur-md p-2 rounded-full shadow-lg">
+        <div className="flex gap-4 items-center bg-black/40 backdrop-blur-md px-4 py-3 rounded-full shadow-lg">
           <button
             onClick={previousFrame}
             disabled={currentFrameIndex === 0}
@@ -80,9 +80,9 @@ const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
           <button
             onClick={quitTour}
             aria-label="Exit tour"
-            className="bg-white/10 hover:bg-white/20 p-1 rounded-full text-white ml-1 transition-colors"
+            className="bg-white/10 hover:bg-white/20 rounded-full text-white w-9 h-9 flex items-center justify-center transition-colors"
           >
-            <X size={14} />
+            <X size={18} />
           </button>
         </div>
 
