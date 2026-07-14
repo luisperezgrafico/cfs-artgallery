@@ -98,9 +98,11 @@ const Museum: React.FC<MuseumProps> = () => {
         <CeilingLight position={[-1.15, 3.95, 11]} />
         <CeilingLight position={[1.15, 3.95, 11]} />
 
-        {/* Gallery benches — center of room, long axis runs left-right */}
-        <Bench position={[0, 0, 5.5]} />
-        <Bench position={[0, 0, 10]} />
+        {/* Gallery benches — against side walls, long axis runs depth-wise */}
+        <Bench position={[-2.8, 0, 5.5]} rotation={[0, Math.PI / 2, 0]} />
+        <Bench position={[ 2.8, 0, 5.5]} rotation={[0, Math.PI / 2, 0]} />
+        <Bench position={[-2.8, 0, 10]} rotation={[0, Math.PI / 2, 0]} />
+        <Bench position={[ 2.8, 0, 10]} rotation={[0, Math.PI / 2, 0]} />
       </group>
     </ZoomProvider>
   );

@@ -8,13 +8,8 @@ import { useTour } from '../../contexts/TourContext';
 const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   const { isMobile } = useDetectGPU();
   const {
-    isTourStarted,
-    currentFrameIndex,
-    totalFrames,
-    startTour,
-    nextFrame,
-    previousFrame,
-    quitTour,
+    isTourStarted, currentFrameIndex, totalFrames,
+    startTour, nextFrame, previousFrame, quitTour,
   } = useTour();
 
   useEffect(() => {
@@ -38,17 +33,17 @@ const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   if (!isTourStarted) {
     return (
       <div style={style}>
-        <div className="fixed bottom-8 md:bottom-16 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
+        <div className="fixed bottom-8 md:bottom-16 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
           <button
             onClick={startTour}
-            className="bg-white/20 hover:bg-white/30 px-6 py-3 md:px-10 md:py-4 rounded-full text-white flex items-center gap-3 shadow-lg transition-colors"
+            className="bg-white/20 hover:bg-white/30 px-4 py-2 md:px-10 md:py-4 rounded-full text-white flex items-center gap-3 shadow-lg transition-colors"
           >
-            <Play size={isMobile ? 18 : 22} />
-            <span className="text-sm md:text-lg font-semibold">Start Tour</span>
+            <Play size={isMobile ? 18 : 24} />
+            <span className="text-sm md:text-lg font-semibold">Start the Tour</span>
           </button>
-          <p className="text-white/50 text-xs whitespace-nowrap">
+          <div className="text-white/60 text-xs mt-2">
             {isMobile ? 'Tap to start' : 'Press Space or Enter to start'}
-          </p>
+          </div>
         </div>
       </div>
     );
@@ -56,42 +51,44 @@ const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
 
   return (
     <div style={style}>
-      <div className="fixed bottom-8 md:bottom-16 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3">
-        <div className="flex items-center gap-3">
+      <div className="fixed bottom-8 md:bottom-16 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
+        <div className="flex gap-4 items-center bg-black/40 backdrop-blur-md p-2 rounded-full shadow-lg">
           <button
             onClick={previousFrame}
-            disabled={currentFrameIndex <= 0}
+            disabled={currentFrameIndex === 0}
             aria-label="Previous artwork"
-            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-30"
+            className={`bg-white/20 p-2 rounded-full text-white w-9 h-9 flex items-center justify-center transition-colors
+              ${currentFrameIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
           >
-            <ChevronLeft size={22} />
+            <ChevronLeft size={18} />
           </button>
 
-          <div className="px-6 py-3 bg-black/50 backdrop-blur-sm rounded-full text-white text-base font-medium min-w-[80px] text-center tabular-nums">
+          <div className="text-white bg-white/10 px-4 py-1 rounded-full text-sm font-medium min-w-[80px] text-center tabular-nums">
             {currentFrameIndex + 1} / {totalFrames}
           </div>
 
           <button
             onClick={nextFrame}
-            disabled={currentFrameIndex >= totalFrames - 1}
+            disabled={currentFrameIndex === totalFrames - 1}
             aria-label="Next artwork"
-            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors disabled:opacity-30"
+            className={`bg-white/20 p-2 rounded-full text-white w-9 h-9 flex items-center justify-center transition-colors
+              ${currentFrameIndex === totalFrames - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
           >
-            <ChevronRight size={22} />
+            <ChevronRight size={18} />
           </button>
 
           <button
             onClick={quitTour}
             aria-label="Exit tour"
-            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            className="bg-white/10 hover:bg-white/20 p-1 rounded-full text-white ml-1 transition-colors"
           >
-            <X size={20} />
+            <X size={14} />
           </button>
         </div>
 
-        <p className="text-white/40 text-xs whitespace-nowrap">
+        <div className="text-white/60 text-xs mt-2">
           {isMobile ? 'Tap or swipe to navigate' : '← → arrows · Esc to exit'}
-        </p>
+        </div>
       </div>
     </div>
   );
