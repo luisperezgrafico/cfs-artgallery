@@ -316,6 +316,11 @@ button {
   opacity: 1;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @media (max-width: 480px) {
   .room-name {
     display: none;

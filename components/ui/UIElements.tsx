@@ -27,8 +27,8 @@ const UIElements: React.FC = () => {
 
       {currentScreen === 'scene' && (
         <>
-          <TourControls />
-          <Controls />
+          <TourControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+          <Controls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
         </>
       )}
     </>
