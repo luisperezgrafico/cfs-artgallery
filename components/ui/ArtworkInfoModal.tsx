@@ -5,45 +5,60 @@ import { Info, X, ExternalLink } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 import { drawingImages } from '../../config/imagesConfig';
 
+function useIsLandscape() {
+  const [landscape, setLandscape] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia('(orientation: landscape) and (max-height: 500px)');
+    setLandscape(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setLandscape(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+  return landscape;
+}
+
 const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   const { isTourStarted, currentFrameIndex } = useTour();
   const [isOpen, setIsOpen] = useState(false);
+  const isLandscape = useIsLandscape();
 
   const artwork = isTourStarted && currentFrameIndex >= 0
     ? drawingImages[currentFrameIndex]
     : null;
 
-  // Close modal when navigating to a different frame
-  useEffect(() => {
-    setIsOpen(false);
-  }, [currentFrameIndex]);
-
-  // Close modal when tour ends
-  useEffect(() => {
-    if (!isTourStarted) setIsOpen(false);
-  }, [isTourStarted]);
+  useEffect(() => { setIsOpen(false); }, [currentFrameIndex]);
+  useEffect(() => { if (!isTourStarted) setIsOpen(false); }, [isTourStarted]);
 
   if (!artwork) return null;
 
+  // In landscape, place button on the left side so it doesn't overlap the artwork
+  const buttonPositionClass = isLandscape
+    ? 'fixed left-4 top-1/2 -translate-y-1/2 z-30'
+    : 'fixed bottom-0 left-0 right-0 z-30 flex justify-center';
+
+  const buttonStyle: React.CSSProperties = isLandscape
+    ? { paddingLeft: 'max(1rem, env(safe-area-inset-left))' }
+    : { paddingBottom: 'max(6.5rem, calc(env(safe-area-inset-bottom) + 6rem))' };
+
   return (
     <div style={style}>
-      {/* Info button — sits above the tour controls */}
-      <div className="fixed bottom-[120px] md:bottom-[148px] left-1/2 -translate-x-1/2 z-30">
+      {/* Info button */}
+      <div className={buttonPositionClass} style={buttonStyle}>
         <button
           onClick={() => setIsOpen(true)}
           aria-label="Artwork information"
           className="flex items-center gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm transition-colors shadow-lg border border-white/10"
         >
           <Info size={14} />
-          <span>Artwork info</span>
+          {!isLandscape && <span>Artwork info</span>}
         </button>
       </div>
 
       {/* Modal overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-          style={{ animation: 'fadeIn 0.2s ease-out' }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ animation: 'fadeIn 0.2s ease-out', padding: 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))' }}
         >
           {/* Backdrop */}
           <div

@@ -321,6 +321,20 @@ button {
   to   { opacity: 1; }
 }
 
+/* Safe-area utilities for iPhone notch / home indicator */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+@utility pl-safe {
+  padding-left: env(safe-area-inset-left);
+}
+@utility pr-safe {
+  padding-right: env(safe-area-inset-right);
+}
+
 @media (max-width: 480px) {
   .room-name {
     display: none;

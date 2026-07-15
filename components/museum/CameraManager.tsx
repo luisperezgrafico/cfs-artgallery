@@ -34,7 +34,9 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
   const getScaleFactor = useCallback(() => {
     const baseScale = 2.5;
+    const isLandscape = viewport.width > viewport.height;
     if (isMobile) {
+      if (isLandscape) return 3.0;
       if (viewport.width < 2) return 6.5;
       if (viewport.width < 4) return 5;
       return 4.5;
