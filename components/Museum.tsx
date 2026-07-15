@@ -71,8 +71,8 @@ const Museum: React.FC<MuseumProps> = () => {
                   onFrameClick={(idx) => {
                     if (setCurrentFrameIndex) {
                       if (idx === currentFrameIndex) {
-                        quitTour();
-                        setCurrentFrameIndex(-1);
+                        // Tapping the already-zoomed frame opens the info panel
+                        window.dispatchEvent(new CustomEvent('open-artwork-info'));
                       } else {
                         startTour();
                         setCurrentFrameIndex(idx);
