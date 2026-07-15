@@ -40,8 +40,8 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
 
   // In landscape, anchor to the left side so it doesn't float over the artwork
   const buttonWrapClass = isLandscape
-    ? 'fixed left-0 top-1/2 -translate-y-1/2 z-30 flex flex-col items-start pl-4'
-    : 'fixed bottom-0 left-0 right-0 z-30 flex justify-center';
+    ? 'fixed left-0 top-1/2 -translate-y-1/2 z-30 pointer-events-none flex flex-col items-start pl-4'
+    : 'fixed bottom-0 left-0 right-0 z-30 pointer-events-none flex justify-center';
 
   const buttonWrapStyle: React.CSSProperties = isLandscape
     ? { paddingLeft: 'max(1rem, env(safe-area-inset-left))' }
@@ -54,7 +54,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
         <button
           onClick={() => setIsOpen(true)}
           aria-label="Artwork information"
-          className="flex items-center gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md px-5 py-2.5 rounded-full text-white text-sm transition-colors shadow-lg border border-white/10"
+          className="pointer-events-auto flex items-center gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-md px-5 py-2.5 rounded-full text-white text-sm transition-colors shadow-lg border border-white/10"
         >
           <Info size={14} />
           <span>Artwork info</span>
