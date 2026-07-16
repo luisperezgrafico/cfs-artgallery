@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, forwardRef } from 'react';
-import { useTexture, Text, Html } from '@react-three/drei';
+import { useTexture, Text } from '@react-three/drei';
+import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ImageMetadata } from '../../types/museum';
 
@@ -46,11 +47,30 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
     const width = 1.5;
     const height = width / aspectRatio;
 
-    // Bottom edge of the frame box
+    // Y of the bottom edge of the frame box
     const frameBottom = (height + 0.1) / 2;
+
+    // Plaque geometry
+    const plaqueW = Math.min(width + 0.1, 1.4);
+    const plaqueH = 0.30;
+    const plaqueY = -(frameBottom + plaqueH / 2 + 0.04); // 0.04 gap below frame
+    const plaqueZ = 0.02; // slightly in front of the wall face
+
+    const handlePlaqueClick = (e: ThreeEvent<MouseEvent | PointerEvent>) => {
+      e.stopPropagation();
+      const native = e.nativeEvent as PointerEvent;
+      const x = native?.clientX ?? window.innerWidth / 2;
+      const y = native?.clientY ?? window.innerHeight * 0.75;
+      window.dispatchEvent(
+        new CustomEvent('open-artwork-info', { detail: { x, y } }),
+      );
+    };
+
+    const artistLine = [image.artist, image.date].filter(Boolean).join(' · ');
 
     return (
       <group position={position} rotation={rotation}>
+        {/* Frame box */}
         <mesh
           ref={internalRef}
           onClick={() => onFrameClick?.(index)}
@@ -80,52 +100,67 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
           </mesh>
         </mesh>
 
-        {/* Museum plaque — DOM overlay positioned below the frame */}
-        <Html
-          center
-          position={[0, -(frameBottom + 0.18), 0.06]}
-          zIndexRange={[10, 20]}
-          style={{ pointerEvents: 'auto' }}
+        {/* ── Museum plaque (pure 3D) ── */}
+
+        {/* Cream background */}
+        <mesh position={[0, plaqueY, plaqueZ]}>
+          <planeGeometry args={[plaqueW, plaqueH]} />
+          <meshBasicMaterial color="#ede6d8" transparent opacity={0.93} />
+        </mesh>
+
+        {/* Subtle shadow border */}
+        <mesh position={[0, plaqueY, plaqueZ - 0.001]}>
+          <planeGeometry args={[plaqueW + 0.02, plaqueH + 0.02]} />
+          <meshBasicMaterial color="#b8a890" transparent opacity={0.35} />
+        </mesh>
+
+        {/* Title */}
+        <Text
+          position={[0, plaqueY + 0.065, plaqueZ + 0.002]}
+          fontSize={0.065}
+          color="#2b3644"
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={plaqueW - 0.1}
+          textAlign="center"
+          font={undefined}
         >
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              const rect = e.currentTarget.getBoundingClientRect();
-              window.dispatchEvent(new CustomEvent('open-artwork-info', {
-                detail: {
-                  x: rect.left + rect.width / 2,
-                  y: rect.top + rect.height / 2,
-                },
-              }));
-            }}
-            style={{
-              background: 'rgba(238, 230, 215, 0.94)',
-              border: '1px solid rgba(175, 160, 138, 0.45)',
-              borderRadius: '3px',
-              padding: '7px 16px 9px',
-              cursor: 'pointer',
-              minWidth: '108px',
-              maxWidth: '200px',
-              textAlign: 'center',
-              userSelect: 'none',
-              backdropFilter: 'blur(12px)',
-              boxShadow: '0 1px 10px rgba(0,0,0,0.14)',
-              whiteSpace: 'nowrap',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-            }}
-          >
-            <p style={{ fontSize: '11px', fontWeight: 600, color: '#2b3644', lineHeight: 1.3, margin: 0 }}>
-              {image.title}
-            </p>
-            <p style={{ fontSize: '10px', color: '#5a6878', margin: '2px 0 0', lineHeight: 1.2 }}>
-              {image.artist}
-              {image.date ? <span style={{ color: '#8a9aa8' }}>{` · ${image.date}`}</span> : null}
-            </p>
-            <p style={{ fontSize: '8px', color: '#a0b0bc', margin: '6px 0 0', letterSpacing: '0.16em' }}>
-              · · ·
-            </p>
-          </div>
-        </Html>
+          {image.title}
+        </Text>
+
+        {/* Artist · Year */}
+        <Text
+          position={[0, plaqueY - 0.02, plaqueZ + 0.002]}
+          fontSize={0.05}
+          color="#5a6878"
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={plaqueW - 0.1}
+          textAlign="center"
+        >
+          {artistLine}
+        </Text>
+
+        {/* Indicator dots */}
+        <Text
+          position={[0, plaqueY - 0.095, plaqueZ + 0.002]}
+          fontSize={0.036}
+          color="#a8bcc8"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.25}
+        >
+          {'...'}
+        </Text>
+
+        {/* Invisible click surface for the plaque */}
+        <mesh
+          position={[0, plaqueY, plaqueZ + 0.003]}
+          onClick={handlePlaqueClick}
+        >
+          <planeGeometry args={[plaqueW, plaqueH]} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
       </group>
     );
   },
