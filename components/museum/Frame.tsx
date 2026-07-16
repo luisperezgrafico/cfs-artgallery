@@ -53,8 +53,11 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
     // Plaque geometry
     const plaqueW = Math.min(width + 0.1, 1.4);
     const plaqueH = 0.30;
-    const plaqueY = -(frameBottom + plaqueH / 2 + 0.04); // 0.04 gap below frame
-    const plaqueZ = 0.02; // slightly in front of the wall face
+    // 0.12 gap between frame bottom and plaque top
+    const plaqueY = -(frameBottom + plaqueH / 2 + 0.12);
+    // Wall surface is at local z ≈ -0.05 (back face of 0.1-deep frame box).
+    // Plaque at -0.03 sits flush on the wall with a tiny relief, no z-fighting.
+    const plaqueZ = -0.03;
 
     const handlePlaqueClick = (e: ThreeEvent<MouseEvent | PointerEvent>) => {
       e.stopPropagation();
