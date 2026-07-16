@@ -7,6 +7,7 @@ import TitleScreen from './TitleOverlay';
 import TourControls from './TourControls';
 import Controls from './Controls';
 import ArtworkInfoModal from './ArtworkInfoModal';
+import HamburgerMenu from './HamburgerMenu';
 
 const UIElements: React.FC = () => {
   const { currentScreen, assetsReady, handleLoadingComplete, handleTitleFading, handleTitleComplete } = useAnimation();
@@ -30,6 +31,7 @@ const UIElements: React.FC = () => {
         <>
           <TourControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
           <ArtworkInfoModal style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+          <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
           <Controls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
         </>
       )}
