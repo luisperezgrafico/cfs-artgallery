@@ -13,15 +13,26 @@ Things to revisit once the gallery is more defined. Keep this file updated.
 
 ---
 
-## UI — "Artwork Info" button (`ArtworkInfoModal.tsx`)
+## UX — Artwork interaction model (settled direction, pending implementation)
 
-**Status**: button removed; modal still opens via tap on the zoomed artwork (3D `CustomEvent`)
+Agreed interaction flow:
+- **Tap artwork (while zoomed)** → lightbox image viewer with pinch-to-zoom / pan
+- **Tap plaque (below frame in 3D)** → description modal (`ArtworkInfoModal`)
+- **Swipe down** → exit zoom (gesture not yet implemented; currently X button only)
 
-**Decision needed**: Is tap-to-open discoverable enough for users? Options:
-- Add a subtle hint label the first time ("Tap the artwork to learn more") — fade out after a few seconds
-- Add a small label below the frame in 3D space (less intrusive than the old floating button)
-- Re-add the button but in the HamburgerMenu or as part of the TourControls pill
-- Leave as-is and rely on onboarding copy
+**Plaque implementation plan** (`Frame.tsx`):
+- Add a `<Html>` drei element below each frame with title / artist / year
+- Include a subtle `···` or `+` indicator to suggest more content
+- On click/tap: dispatch `open-artwork-info` CustomEvent (same as current tap-on-frame)
+- Remove the current `open-artwork-info` dispatch from frame tap (repurpose for lightbox)
+
+**Lightbox implementation plan** (`ArtworkLightbox.tsx`, new):
+- Opens when user taps the zoomed artwork (receives the image URL)
+- Full-screen overlay, dark background
+- Pinch-to-zoom + pan via `touch-action: none` and pointer events
+- Double-tap to reset zoom
+- Library option: `react-medium-image-zoom` (simple) or custom (more control)
+- Documented in HamburgerMenu controls section ✓
 
 ---
 

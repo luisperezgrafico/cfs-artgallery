@@ -130,17 +130,17 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
             </p>
             {isMobile ? (
               <ul className="space-y-2 text-xs text-white/45">
-                <li><span className="text-white/65">Tap artwork</span> — opens the info panel</li>
+                <li><span className="text-white/65">Tap artwork</span> — zoom in</li>
+                <li><span className="text-white/65">Tap plaque</span> — read description</li>
                 <li><span className="text-white/65">Swipe left / right</span> — navigate artworks</li>
-                <li><span className="text-white/65">Tour button</span> — start guided tour</li>
-                <li><span className="text-white/65">✕ button</span> — exit tour</li>
+                <li><span className="text-white/65">Swipe down</span> — exit zoom</li>
               </ul>
             ) : (
               <ul className="space-y-2 text-xs text-white/45">
-                <li><span className="text-white/65">Click artwork</span> — zoom in / open info</li>
+                <li><span className="text-white/65">Click artwork</span> — zoom in</li>
+                <li><span className="text-white/65">Click plaque</span> — read description</li>
                 <li><span className="text-white/65">← → arrows</span> — navigate artworks</li>
-                <li><span className="text-white/65">Space / Enter</span> — start tour</li>
-                <li><span className="text-white/65">Escape</span> — exit tour</li>
+                <li><span className="text-white/65">Escape</span> — exit zoom</li>
               </ul>
             )}
           </div>
