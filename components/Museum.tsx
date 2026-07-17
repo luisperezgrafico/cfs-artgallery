@@ -71,8 +71,10 @@ const Museum: React.FC<MuseumProps> = () => {
                   onFrameClick={(idx) => {
                     if (setCurrentFrameIndex) {
                       if (idx === currentFrameIndex) {
-                        // Tapping the already-zoomed frame opens the image lightbox
-                        window.dispatchEvent(new CustomEvent('open-artwork-lightbox'));
+                        // Only open lightbox for frames with actual artwork
+                        if (!images[idx]?.isEmpty) {
+                          window.dispatchEvent(new CustomEvent('open-artwork-lightbox'));
+                        }
                       } else {
                         startTour();
                         setCurrentFrameIndex(idx);

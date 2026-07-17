@@ -21,4 +21,5 @@ export interface ImageMetadata {
   date: string;
   description: string;
   link: string;
+  isEmpty?: true;
 }

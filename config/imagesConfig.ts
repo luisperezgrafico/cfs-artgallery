@@ -70,4 +70,6 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     description: 'Orange and rose. The memory of warmth more than warmth itself.',
   },
+  { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
+  { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
 ];
