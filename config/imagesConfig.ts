@@ -45,31 +45,6 @@ export const drawingImages: ImageMetadata[] = [
     description:
       `Started as an exercise in staying present. I'd read that drawing at night, when you can't rely on colour, forces you to pay attention to shape and value.\n\nI did this in one sitting — which was unusual for me. Something about the constraints of nighttime made it easier to stay focused without pushing too hard.`,
   },
-  {
-    url: '/art/placeholder-abstract.svg',
-    title: 'Untitled I',
-    artist: 'Placeholder Artist',
-    date: '2023',
-    link: '#',
-    description: 'An open space. No title felt right.',
-  },
-  {
-    url: '/art/placeholder-horizon.svg',
-    title: 'Somewhere Flat',
-    artist: 'Placeholder Artist',
-    date: '2024',
-    link: '#',
-    description:
-      `I've never been to the place in this painting. I don't know where it is — it came out of a half-dream during a bad week. Flat land, wide sky, no people. It felt like the most restful place I'd ever been, even though I invented it.\n\nI kept coming back to it over a few weeks. Added a little more sky. Took some of it away. Eventually left it alone.`,
-  },
-  {
-    url: '/art/placeholder-ember.svg',
-    title: 'Warmth, Held',
-    artist: 'Placeholder Artist',
-    date: '2024',
-    link: '#',
-    description: 'Orange and rose. The memory of warmth more than warmth itself.',
-  },
   { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
   { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
 ];
