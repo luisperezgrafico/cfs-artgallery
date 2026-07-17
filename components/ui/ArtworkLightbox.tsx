@@ -54,6 +54,13 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
     if (!isTourStarted) setIsOpen(false);
   }, [isTourStarted]);
 
+  // Notify SwipeableContainer whenever lightbox closes for any reason
+  useEffect(() => {
+    if (!isOpen) {
+      window.dispatchEvent(new CustomEvent('close-artwork-lightbox'));
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const handler = () => {
       resetTransform();
@@ -63,7 +70,10 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
     return () => window.removeEventListener('open-artwork-lightbox', handler);
   }, [resetTransform]);
 
-  const close = useCallback(() => setIsOpen(false), []);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    window.dispatchEvent(new CustomEvent('close-artwork-lightbox'));
+  }, []);
 
   // ── Pointer gesture handlers ──────────────────────────────────────────────
 
