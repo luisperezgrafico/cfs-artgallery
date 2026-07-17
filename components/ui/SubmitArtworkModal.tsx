@@ -12,6 +12,7 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 interface FormValues {
   name: string;
   email: string;
+  year: string;
   description: string;
   file: File | null;
 }
@@ -67,7 +68,7 @@ const errorText: React.CSSProperties = {
 const SubmitArtworkModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [values, setValues] = useState<FormValues>({ name: '', email: '', description: '', file: null });
+  const [values, setValues] = useState<FormValues>({ name: '', email: '', year: '', description: '', file: null });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -76,7 +77,7 @@ const SubmitArtworkModal: React.FC = () => {
 
   const reset = useCallback(() => {
     setSubmitState('idle');
-    setValues({ name: '', email: '', description: '', file: null });
+    setValues({ name: '', email: '', year: '', description: '', file: null });
     setFieldErrors({});
     setSubmitError('');
     if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
@@ -231,6 +232,23 @@ const SubmitArtworkModal: React.FC = () => {
                   autoComplete="email"
                 />
                 {fieldErrors.email && <p style={errorText}>{fieldErrors.email}</p>}
+              </div>
+
+              {/* Year */}
+              <div>
+                <label style={labelStyle}>
+                  Year of the artwork{' '}
+                  <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={values.year}
+                  onChange={e => setValues(p => ({ ...p, year: e.target.value }))}
+                  style={{ ...inputStyle, maxWidth: '8rem' }}
+                  placeholder="2024"
+                  maxLength={4}
+                  disabled={busy}
+                />
               </div>
 
               {/* Description */}

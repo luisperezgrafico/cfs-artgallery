@@ -163,9 +163,9 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
               <planeGeometry args={[plaqueW + 0.02, plaqueH + 0.02]} />
               <meshBasicMaterial color="#b8a890" transparent opacity={0.35} />
             </mesh>
-            {/* Main label */}
+            {/* Main label — centered for 2-line layout */}
             <Text
-              position={[0, plaqueY + titleOffsetY, plaqueZ + 0.002]}
+              position={[0, plaqueY + 0.022, plaqueZ + 0.002]}
               fontSize={0.075}
               color="#2b3644"
               anchorX="center"
@@ -177,7 +177,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             </Text>
             {/* Subtitle */}
             <Text
-              position={[0, plaqueY + dotsOffsetY, plaqueZ + 0.002]}
+              position={[0, plaqueY - 0.063, plaqueZ + 0.002]}
               fontSize={0.042}
               color="#a8bcc8"
               anchorX="center"

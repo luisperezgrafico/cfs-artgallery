@@ -23,12 +23,11 @@ export default function Home() {
       <p className="door-tagline">
         A quiet place to be with art made by our community.
         <br />
-        Take it at your own pace — nothing here moves unless you ask it to.
+        Take it at your own pace.
       </p>
       <button className="door-enter" onClick={() => setEntered(true)}>
         Enter the gallery
       </button>
-      <p className="door-note">Phase 1 · placeholder artworks · lobby + 3 rooms</p>
     </main>
   );
 }

@@ -64,44 +64,46 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 2rem;
   padding: 2rem;
   text-align: center;
-  background: linear-gradient(180deg, #e8eef5 0%, var(--mist) 70%, #bcc9d8 100%);
+  background: linear-gradient(160deg, #f0ebe0 0%, #e6ddd0 55%, #d8cfc2 100%);
 }
 
 .door-title {
-  font-size: clamp(1.6rem, 4vw, 2.6rem);
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #2b3644;
 }
 
 .door-tagline {
-  max-width: 34rem;
-  color: var(--ink-soft);
-  line-height: 1.6;
+  max-width: 30rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  color: #6a5e52;
+  line-height: 1.75;
+  font-size: 1rem;
 }
 
 .door-enter {
-  padding: 0.9rem 2.2rem;
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
-  background: var(--glass);
-  color: var(--ink);
-  font-size: 1.05rem;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 12px rgba(43, 54, 68, 0.12);
+  padding: 0.85rem 2.4rem;
+  border: 1px solid rgba(160, 138, 108, 0.5);
+  border-radius: 2px;
+  background: rgba(238, 230, 214, 0.85);
+  color: #2b3644;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  box-shadow: 0 2px 14px rgba(60, 48, 32, 0.14);
 }
 
 .door-enter:hover {
+  background: rgba(238, 230, 214, 1);
   transform: translateY(-1px);
-  box-shadow: 0 4px 18px rgba(43, 54, 68, 0.18);
-}
-
-.door-note {
-  font-size: 0.8rem;
-  color: var(--ink-soft);
-  opacity: 0.75;
+  box-shadow: 0 4px 20px rgba(60, 48, 32, 0.2);
 }
 
 /* ---------- the gallery stage ---------- */

@@ -136,14 +136,18 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
     }
   }, []);
 
-  // Double-tap resets zoom
+  // Double-tap: zoom in to 2× when at 1×, reset when zoomed
   const onTap = useCallback(() => {
     const now = Date.now();
     if (now - lastTapAt.current < 280) {
-      resetTransform();
+      if (transformRef.current.scale > 1) {
+        resetTransform();
+      } else {
+        applyTransform({ scale: 2, x: 0, y: 0 });
+      }
     }
     lastTapAt.current = now;
-  }, [resetTransform]);
+  }, [resetTransform, applyTransform]);
 
   if (!artwork || !isOpen) return null;
 
@@ -222,9 +226,9 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
             </p>
           )}
         </div>
-        {scale > 1 && (
-          <p className="text-white/25 text-xs">Double-tap to reset</p>
-        )}
+        <p className="text-white/25 text-xs">
+          {scale > 1 ? 'Double-tap to reset' : 'Double-tap to zoom'}
+        </p>
       </div>
     </div>
   );
