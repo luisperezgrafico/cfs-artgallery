@@ -31,7 +31,7 @@ const UIElements: React.FC = () => {
       {currentScreen === 'scene' && (
         <>
           <TourControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-          <ArtworkInfoModal style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+          <ArtworkInfoModal />
           <ArtworkLightbox />
           <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
           <Controls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
