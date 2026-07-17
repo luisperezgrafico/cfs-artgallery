@@ -51,7 +51,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
       {/* Backdrop — fades in independently, captures outside clicks */}
       <div
         className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-        style={{ animation: 'fadeIn 0.2s ease-out' }}
+        style={{ animation: 'fadeIn 0.15s ease-out' }}
         onClick={close}
       />
 
@@ -65,7 +65,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
         style={{
           padding: safeAreaPadding,
           transformOrigin,
-          animation: 'scaleIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+          animation: 'scaleInSmooth 0.18s ease-out forwards',
         }}
       >
         {/* Panel — re-enables pointer events. Styled like the 3D plaque: cream, warm border, serif title */}
