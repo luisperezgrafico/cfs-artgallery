@@ -153,21 +153,21 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
         {image.isEmpty ? (
           /* ── Submit-artwork button (empty slot) ── */
           <>
-            {/* Background */}
+            {/* Cream background — same as filled plaque */}
             <mesh position={[0, plaqueY, plaqueZ]}>
               <planeGeometry args={[plaqueW, plaqueH]} />
-              <meshBasicMaterial color="#ddd5c8" transparent opacity={0.72} />
+              <meshBasicMaterial color="#ede6d8" transparent opacity={0.93} />
             </mesh>
-            {/* Border */}
+            {/* Shadow border — same as filled plaque */}
             <mesh position={[0, plaqueY, plaqueZ - 0.001]}>
               <planeGeometry args={[plaqueW + 0.02, plaqueH + 0.02]} />
-              <meshBasicMaterial color="#b4a08a" transparent opacity={0.28} />
+              <meshBasicMaterial color="#b8a890" transparent opacity={0.35} />
             </mesh>
             {/* Main label */}
             <Text
-              position={[0, plaqueY + 0.04, plaqueZ + 0.002]}
-              fontSize={0.062}
-              color="#7a6a58"
+              position={[0, plaqueY + titleOffsetY, plaqueZ + 0.002]}
+              fontSize={0.075}
+              color="#2b3644"
               anchorX="center"
               anchorY="middle"
               maxWidth={plaqueW - 0.1}
@@ -177,13 +177,13 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             </Text>
             {/* Subtitle */}
             <Text
-              position={[0, plaqueY - 0.065, plaqueZ + 0.002]}
-              fontSize={0.038}
-              color="#a89888"
+              position={[0, plaqueY + dotsOffsetY, plaqueZ + 0.002]}
+              fontSize={0.042}
+              color="#a8bcc8"
               anchorX="center"
               anchorY="middle"
             >
-              {'Tap to contribute'}
+              {'tap to contribute'}
             </Text>
             {/* Invisible click surface */}
             <mesh position={[0, plaqueY, plaqueZ + 0.003]} onClick={handleSubmitClick}>

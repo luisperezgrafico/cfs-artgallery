@@ -71,8 +71,9 @@ const Museum: React.FC<MuseumProps> = () => {
                   onFrameClick={(idx) => {
                     if (setCurrentFrameIndex) {
                       if (idx === currentFrameIndex) {
-                        // Only open lightbox for frames with actual artwork
-                        if (!images[idx]?.isEmpty) {
+                        if (images[idx]?.isEmpty) {
+                          window.dispatchEvent(new CustomEvent('open-submit-artwork'));
+                        } else {
                           window.dispatchEvent(new CustomEvent('open-artwork-lightbox'));
                         }
                       } else {

@@ -45,6 +45,14 @@ export const drawingImages: ImageMetadata[] = [
     description:
       `Started as an exercise in staying present. I'd read that drawing at night, when you can't rely on colour, forces you to pay attention to shape and value.\n\nI did this in one sitting — which was unusual for me. Something about the constraints of nighttime made it easier to stay focused without pushing too hard.`,
   },
+  {
+    url: '/art/placeholder-abstract.svg',
+    title: 'Untitled I',
+    artist: 'Placeholder Artist',
+    date: '2023',
+    link: '#',
+    description: 'An open space. No title felt right.',
+  },
   { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
   { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
 ];
