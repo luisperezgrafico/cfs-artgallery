@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Info } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 import { drawingImages } from '../../config/imagesConfig';
 
@@ -192,16 +192,6 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
           paddingRight: 'max(1rem, env(safe-area-inset-right))',
         }}
       >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('open-artwork-info'));
-          }}
-          aria-label="Artwork info"
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
-        >
-          <Info size={16} />
-        </button>
         <button
           onClick={(e) => {
             e.stopPropagation();

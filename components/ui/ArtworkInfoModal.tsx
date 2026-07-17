@@ -65,7 +65,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
         style={{
           padding: safeAreaPadding,
           transformOrigin,
-          animation: 'scaleIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+          animation: 'scaleIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
         }}
       >
         {/* Panel — re-enables pointer events. Styled like the 3D plaque: cream, warm border, serif title */}
