@@ -68,14 +68,34 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
           animation: 'scaleIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
         }}
       >
-        {/* Panel — re-enables pointer events */}
-        <div className="pointer-events-auto w-full max-w-lg bg-black/80 border border-white/15 rounded-2xl shadow-2xl flex flex-col max-h-[85dvh]">
+        {/* Panel — re-enables pointer events. Styled like the 3D plaque: cream, warm border, serif title */}
+        <div
+          className="pointer-events-auto w-full max-w-lg rounded-xl flex flex-col max-h-[85dvh]"
+          style={{
+            background: 'rgba(238, 230, 214, 0.97)',
+            border: '1px solid rgba(160, 138, 108, 0.45)',
+            boxShadow: '0 12px 40px rgba(60, 48, 32, 0.35), 0 2px 8px rgba(60, 48, 32, 0.2)',
+          }}
+        >
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
             <div>
-              <h2 className="text-white text-lg font-semibold leading-snug">{artwork.title}</h2>
-              <p className="text-white/55 text-sm mt-1">
+              <h2
+                className="text-lg leading-snug"
+                style={{
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  color: '#2b3644',
+                  fontWeight: 600,
+                  letterSpacing: '0.01em',
+                }}
+              >
+                {artwork.title}
+              </h2>
+              <p
+                className="text-sm mt-1 italic"
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: '#5a6878' }}
+              >
                 {artwork.artist}
                 {artwork.date ? ` · ${artwork.date}` : ''}
               </p>
@@ -83,19 +103,29 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
             <button
               onClick={close}
               aria-label="Close"
-              className="shrink-0 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[rgba(160,138,108,0.18)] hover:bg-[rgba(160,138,108,0.32)]"
+              style={{ color: '#5a4f3e' }}
             >
               <X size={16} />
             </button>
           </div>
 
           {/* Separator */}
-          {artwork.description && <div className="border-t border-white/10 mx-6" />}
+          {artwork.description && (
+            <div className="mx-6" style={{ borderTop: '1px solid rgba(160, 138, 108, 0.35)' }} />
+          )}
 
           {/* Scrollable description */}
           {artwork.description && (
             <div className="overflow-y-auto px-6 py-5 flex-1">
-              <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">
+              <p
+                className="text-sm whitespace-pre-line"
+                style={{
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  color: '#4a5563',
+                  lineHeight: 1.7,
+                }}
+              >
                 {artwork.description}
               </p>
             </div>
@@ -103,12 +133,19 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
 
           {/* Footer link */}
           {artwork.link && artwork.link !== '#' && (
-            <div className="px-6 pb-6 pt-3 border-t border-white/10">
+            <div
+              className="px-6 pb-6 pt-3"
+              style={{ borderTop: '1px solid rgba(160, 138, 108, 0.35)' }}
+            >
               <a
                 href={artwork.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-full bg-white/15 hover:bg-white/25 text-white text-sm transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm transition-colors bg-[rgba(160,138,108,0.18)] hover:bg-[rgba(160,138,108,0.3)]"
+                style={{
+                  color: '#2b3644',
+                  border: '1px solid rgba(160, 138, 108, 0.3)',
+                }}
               >
                 <ExternalLink size={14} />
                 View work

@@ -50,9 +50,14 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
     // Y of the bottom edge of the frame box
     const frameBottom = (height + 0.1) / 2;
 
-    // Plaque geometry
-    const plaqueW = Math.min(width + 0.1, 1.4);
-    const plaqueH = 0.30;
+    // Plaque geometry — narrower than the frame, balanced vertical padding
+    const plaqueW = 0.90;
+    const plaqueH = 0.28;
+    // Vertical positions (relative to plaqueY center) derived so top/bottom
+    // padding are approximately equal (~0.04u each):
+    const titleOffsetY  =  0.074;   // title center from plaque center
+    const artistOffsetY = -0.006;   // artist line center
+    const dotsOffsetY   = -0.079;   // indicator dots center
     // 0.12 gap between frame bottom and plaque top
     const plaqueY = -(frameBottom + plaqueH / 2 + 0.12);
     // Wall surface is at local z ≈ -0.05 (back face of 0.1-deep frame box).
@@ -119,7 +124,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
 
         {/* Title */}
         <Text
-          position={[0, plaqueY + 0.065, plaqueZ + 0.002]}
+          position={[0, plaqueY + titleOffsetY, plaqueZ + 0.002]}
           fontSize={0.065}
           color="#2b3644"
           anchorX="center"
@@ -133,7 +138,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
 
         {/* Artist · Year */}
         <Text
-          position={[0, plaqueY - 0.02, plaqueZ + 0.002]}
+          position={[0, plaqueY + artistOffsetY, plaqueZ + 0.002]}
           fontSize={0.05}
           color="#5a6878"
           anchorX="center"
@@ -146,7 +151,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
 
         {/* Indicator dots */}
         <Text
-          position={[0, plaqueY - 0.095, plaqueZ + 0.002]}
+          position={[0, plaqueY + dotsOffsetY, plaqueZ + 0.002]}
           fontSize={0.036}
           color="#a8bcc8"
           anchorX="center"
