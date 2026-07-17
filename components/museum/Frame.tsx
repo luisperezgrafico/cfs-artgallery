@@ -53,13 +53,13 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
     // Plaque geometry — narrower than the frame, balanced vertical padding
     const plaqueW = 0.90;
     const plaqueH = 0.28;
-    // Vertical positions (relative to plaqueY center) derived so top/bottom
-    // padding are approximately equal (~0.04u each):
-    const titleOffsetY  =  0.074;   // title center from plaque center
-    const artistOffsetY = -0.006;   // artist line center
-    const dotsOffsetY   = -0.079;   // indicator dots center
-    // 0.12 gap between frame bottom and plaque top
-    const plaqueY = -(frameBottom + plaqueH / 2 + 0.12);
+    // Shifted down slightly vs center so top/bottom padding look even
+    // (title has larger font so its visual top goes higher than center)
+    const titleOffsetY  =  0.062;
+    const artistOffsetY = -0.020;
+    const dotsOffsetY   = -0.088;
+    // 0.18 gap between frame bottom and plaque top (a bit more breathing room)
+    const plaqueY = -(frameBottom + plaqueH / 2 + 0.18);
     // Wall surface is at local z ≈ -0.05 (back face of 0.1-deep frame box).
     // Plaque at -0.03 sits flush on the wall with a tiny relief, no z-fighting.
     const plaqueZ = -0.03;
@@ -125,7 +125,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
         {/* Title */}
         <Text
           position={[0, plaqueY + titleOffsetY, plaqueZ + 0.002]}
-          fontSize={0.065}
+          fontSize={0.075}
           color="#2b3644"
           anchorX="center"
           anchorY="middle"
@@ -139,7 +139,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
         {/* Artist · Year */}
         <Text
           position={[0, plaqueY + artistOffsetY, plaqueZ + 0.002]}
-          fontSize={0.05}
+          fontSize={0.058}
           color="#5a6878"
           anchorX="center"
           anchorY="middle"
@@ -152,7 +152,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
         {/* Indicator dots */}
         <Text
           position={[0, plaqueY + dotsOffsetY, plaqueZ + 0.002]}
-          fontSize={0.036}
+          fontSize={0.042}
           color="#a8bcc8"
           anchorX="center"
           anchorY="middle"

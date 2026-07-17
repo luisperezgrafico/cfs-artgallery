@@ -70,11 +70,12 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
       >
         {/* Panel — re-enables pointer events. Styled like the 3D plaque: cream, warm border, serif title */}
         <div
-          className="pointer-events-auto w-full max-w-lg rounded-xl flex flex-col max-h-[85dvh]"
+          className="pointer-events-auto w-full max-w-lg flex flex-col max-h-[85dvh]"
           style={{
             background: 'rgba(238, 230, 214, 0.97)',
             border: '1px solid rgba(160, 138, 108, 0.45)',
             boxShadow: '0 12px 40px rgba(60, 48, 32, 0.35), 0 2px 8px rgba(60, 48, 32, 0.2)',
+            borderRadius: '2px',
           }}
         >
 
