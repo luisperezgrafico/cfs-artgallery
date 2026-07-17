@@ -153,6 +153,9 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onClick={onTap}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
