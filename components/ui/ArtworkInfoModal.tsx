@@ -51,7 +51,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
       {/* Backdrop — fades in independently, captures outside clicks */}
       <div
         className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-        style={{ animation: 'fadeIn 0.15s ease-out' }}
+        style={{ animation: 'fadeIn 0.08s ease-out' }}
         onClick={close}
       />
 
