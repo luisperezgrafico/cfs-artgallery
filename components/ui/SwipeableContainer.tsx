@@ -30,7 +30,7 @@ const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => 
     onSwipedLeft:  isTourStarted ? () => { if (!anyModalOpen.current) nextFrame();     } : undefined,
     onSwipedRight: isTourStarted ? () => { if (!anyModalOpen.current) previousFrame(); } : undefined,
     onSwipedDown:  isTourStarted ? () => { if (!anyModalOpen.current) quitTour();      } : undefined,
-    preventScrollOnSwipe: true,
+    preventScrollOnSwipe: false,
     trackMouse: false,
     delta: 10,
     swipeDuration: 500,

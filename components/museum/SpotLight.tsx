@@ -59,7 +59,7 @@ export default function SpotLight({
         penumbra={1}
         decay={2}
         distance={20}
-        castShadow
+        castShadow={false}
       />
     </group>
   );

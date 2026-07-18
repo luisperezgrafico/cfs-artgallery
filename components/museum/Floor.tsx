@@ -22,7 +22,7 @@ const Floor: React.FC<FloorProps> = ({ width, length, position, color = '#050505
         mirror={0.5}
         resolution={lowConfig ? 124 : 1024}
         mixBlur={1}
-        mixStrength={80}
+        mixStrength={15}
         roughness={1}
         depthScale={1.2}
         minDepthThreshold={0.4}
