@@ -7,7 +7,6 @@ import Room from './museum/Room';
 import { calculateFramePositions } from '../utils/framePositioning';
 import { defaultRoomDimensions } from '../config/roomConfig';
 import { ImageMetadata, RoomTheme } from '../types/museum';
-import { BakeShadows } from '@react-three/drei';
 import { ZoomProvider } from '../contexts/ZoomContext';
 import { CameraManager } from './museum/CameraManager';
 import SpotlightGroup from './museum/SpotlightGroup';
@@ -49,8 +48,6 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
         frameRefs={frameRefs as React.MutableRefObject<THREE.Mesh[]>}
         imagesCount={images.length}
       />
-      <BakeShadows />
-
       <group>
         <Room
           width={defaultRoomDimensions.width}

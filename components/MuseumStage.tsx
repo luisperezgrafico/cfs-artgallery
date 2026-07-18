@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { AdaptiveDpr, AdaptiveEvents, Environment, Preload } from '@react-three/drei';
+import { AdaptiveEvents, Environment, Preload } from '@react-three/drei';
 import Museum from './Museum';
 import { ImageMetadata, RoomTheme } from '../types/museum';
 import { useAnimation } from '../contexts/AnimationContext';
@@ -37,7 +37,6 @@ const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme }) => {
         dpr={[1.5, 2.5]}
       >
         <Preload all />
-        <AdaptiveDpr pixelated />
         <AdaptiveEvents />
         <color attach="background" args={['#000000']} />
         <Suspense fallback={<EmptyFallback onLoaded={handleAssetsLoaded} />}>
