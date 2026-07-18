@@ -35,6 +35,7 @@ const TitleScreen: React.FC<TitleScreenProps> = ({ onFading, onComplete }) => {
         <h1
           className="text-white text-5xl md:text-7xl font-light tracking-wider text-center px-4"
           style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
             transform:
               animationState === 'initial' ? 'translateY(100%)' :
               animationState === 'fading'  ? 'translateY(100%)' : 'translateY(0)',

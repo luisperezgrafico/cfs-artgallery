@@ -10,23 +10,26 @@ interface SwipeableContainerProps {
 
 const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => {
   const { isTourStarted, nextFrame, previousFrame, quitTour } = useTour();
-  const lightboxOpen = useRef(false);
+  // True whenever any overlay (lightbox, info modal, submit modal) is open
+  const anyModalOpen = useRef(false);
 
   useEffect(() => {
-    const open = () => { lightboxOpen.current = true; };
-    const close = () => { lightboxOpen.current = false; };
-    window.addEventListener('open-artwork-lightbox', open);
-    window.addEventListener('close-artwork-lightbox', close);
+    const open  = () => { anyModalOpen.current = true;  };
+    const close = () => { anyModalOpen.current = false; };
+    const OPEN_EVENTS  = ['open-artwork-lightbox',  'open-artwork-info',  'open-submit-artwork'];
+    const CLOSE_EVENTS = ['close-artwork-lightbox', 'close-artwork-info', 'close-submit-artwork'];
+    OPEN_EVENTS.forEach(e  => window.addEventListener(e, open));
+    CLOSE_EVENTS.forEach(e => window.addEventListener(e, close));
     return () => {
-      window.removeEventListener('open-artwork-lightbox', open);
-      window.removeEventListener('close-artwork-lightbox', close);
+      OPEN_EVENTS.forEach(e  => window.removeEventListener(e, open));
+      CLOSE_EVENTS.forEach(e => window.removeEventListener(e, close));
     };
   }, []);
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft:  isTourStarted ? () => { if (!lightboxOpen.current) nextFrame();     } : undefined,
-    onSwipedRight: isTourStarted ? () => { if (!lightboxOpen.current) previousFrame(); } : undefined,
-    onSwipedDown:  isTourStarted ? () => { if (!lightboxOpen.current) quitTour();      } : undefined,
+    onSwipedLeft:  isTourStarted ? () => { if (!anyModalOpen.current) nextFrame();     } : undefined,
+    onSwipedRight: isTourStarted ? () => { if (!anyModalOpen.current) previousFrame(); } : undefined,
+    onSwipedDown:  isTourStarted ? () => { if (!anyModalOpen.current) quitTour();      } : undefined,
     preventScrollOnSwipe: true,
     trackMouse: false,
     delta: 10,

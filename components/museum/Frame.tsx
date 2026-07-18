@@ -165,8 +165,8 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             </mesh>
             {/* Main label — centered for 2-line layout */}
             <Text
-              position={[0, plaqueY + 0.022, plaqueZ + 0.002]}
-              fontSize={0.075}
+              position={[0, plaqueY + 0.030, plaqueZ + 0.002]}
+              fontSize={0.092}
               color="#2b3644"
               anchorX="center"
               anchorY="middle"
@@ -177,7 +177,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             </Text>
             {/* Subtitle */}
             <Text
-              position={[0, plaqueY - 0.063, plaqueZ + 0.002]}
+              position={[0, plaqueY - 0.070, plaqueZ + 0.002]}
               fontSize={0.042}
               color="#a8bcc8"
               anchorX="center"

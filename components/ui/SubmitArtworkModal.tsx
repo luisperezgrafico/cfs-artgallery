@@ -90,6 +90,13 @@ const SubmitArtworkModal: React.FC = () => {
     return () => window.removeEventListener('open-submit-artwork', handler);
   }, [reset]);
 
+  // Notify SwipeableContainer whenever modal closes for any reason
+  useEffect(() => {
+    if (!isOpen) {
+      window.dispatchEvent(new CustomEvent('close-submit-artwork'));
+    }
+  }, [isOpen]);
+
   const close = useCallback(() => setIsOpen(false), []);
 
   // File selection
@@ -245,7 +252,7 @@ const SubmitArtworkModal: React.FC = () => {
                   value={values.year}
                   onChange={e => setValues(p => ({ ...p, year: e.target.value }))}
                   style={{ ...inputStyle, maxWidth: '8rem' }}
-                  placeholder="2024"
+                  placeholder=""
                   maxLength={4}
                   disabled={busy}
                 />

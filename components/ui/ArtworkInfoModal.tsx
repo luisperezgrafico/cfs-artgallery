@@ -22,10 +22,16 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   useEffect(() => { setIsOpen(false); }, [currentFrameIndex]);
   useEffect(() => { if (!isTourStarted) setIsOpen(false); }, [isTourStarted]);
 
+  // Notify SwipeableContainer whenever modal closes for any reason
+  useEffect(() => {
+    if (!isOpen) {
+      window.dispatchEvent(new CustomEvent('close-artwork-info'));
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<Origin | undefined>).detail;
-      // Store plaque coordinates if provided (used as animation origin)
       setOrigin(detail?.x !== undefined ? detail : null);
       setIsOpen(true);
     };

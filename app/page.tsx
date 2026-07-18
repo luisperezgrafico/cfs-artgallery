@@ -3,14 +3,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 
-const Gallery = dynamic(() => import('@/components/Gallery'), {
-  ssr: false,
-  loading: () => (
-    <div className="door" role="status">
-      <p className="door-tagline">Preparing the room…</p>
-    </div>
-  ),
-});
+const Gallery = dynamic(() => import('@/components/Gallery'), { ssr: false });
 
 export default function Home() {
   const [entered, setEntered] = useState(false);

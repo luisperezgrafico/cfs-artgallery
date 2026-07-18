@@ -9,7 +9,7 @@ interface LoadingScreenProps {
 }
 
 const LoadingScreen = ({ setIsLoading, assetsReady = false }: LoadingScreenProps) => {
-  const { progress, item, loaded, total } = useProgress();
+  const { progress } = useProgress();
   const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
@@ -29,26 +29,38 @@ const LoadingScreen = ({ setIsLoading, assetsReady = false }: LoadingScreenProps
       style={{ opacity, transition: 'opacity 1.5s ease-in-out', pointerEvents: opacity === 0 ? 'none' : 'auto' }}
       onTransitionEnd={handleTransitionEnd}
     >
-      <div className="flex items-center mb-8">
-        <h1 className="text-white text-3xl font-bold">ME/CFS Gallery</h1>
+      <div className="flex items-center mb-10">
+        <h1
+          style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            color: '#e8e0d4',
+            fontSize: '1.6rem',
+            fontWeight: 400,
+            letterSpacing: '0.05em',
+          }}
+        >
+          ME/CFS Community Gallery
+        </h1>
       </div>
 
-      <div className="w-64 h-2 bg-gray-800 rounded-full overflow-hidden">
+      <div className="w-56 overflow-hidden" style={{ height: '2px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }}>
         <div
-          className="h-full bg-white rounded-full transition-all duration-300 ease-out"
-          style={{ width: `${progress}%` }}
+          className="h-full transition-all duration-300 ease-out"
+          style={{ width: `${progress}%`, background: 'rgba(232, 224, 212, 0.7)', borderRadius: '1px' }}
         />
       </div>
 
-      <div className="mt-4 flex flex-col items-center text-white">
-        <div className="text-lg font-medium mb-2">{Math.round(progress)}% loaded</div>
-        {item && (
-          <div className="text-xs text-gray-400 max-w-xs text-center truncate">
-            Loading: {item}
-          </div>
-        )}
-        <div className="text-xs text-gray-500 mt-1">{loaded}/{total} assets loaded</div>
-      </div>
+      <p
+        className="mt-5"
+        style={{
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          color: 'rgba(232, 224, 212, 0.45)',
+          fontSize: '0.8rem',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {Math.round(progress)}%
+      </p>
     </div>
   );
 };

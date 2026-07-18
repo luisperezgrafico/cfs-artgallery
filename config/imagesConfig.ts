@@ -4,7 +4,7 @@ export const drawingImages: ImageMetadata[] = [
   {
     url: '/art/placeholder-horizon.svg',
     title: 'Lux Perpetua',
-    artist: 'Lorem I. Ipsum',
+    artist: 'Artist Placeholder',
     date: '2024',
     link: '#',
     description:
@@ -13,7 +13,7 @@ export const drawingImages: ImageMetadata[] = [
   {
     url: '/art/placeholder-ember.svg',
     title: 'Hora Incerta',
-    artist: 'Lorem I. Ipsum',
+    artist: 'Artist Placeholder',
     date: '2024',
     link: '#',
     description:
@@ -22,7 +22,7 @@ export const drawingImages: ImageMetadata[] = [
   {
     url: '/art/placeholder-thicket.svg',
     title: 'Silva Quieta',
-    artist: 'Lorem I. Ipsum',
+    artist: 'Artist Placeholder',
     date: '2024',
     link: '#',
     description: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.`,
@@ -30,7 +30,7 @@ export const drawingImages: ImageMetadata[] = [
   {
     url: '/art/placeholder-tide.svg',
     title: 'Aqua Lenis',
-    artist: 'Lorem I. Ipsum',
+    artist: 'Artist Placeholder',
     date: '2024',
     link: '#',
     description:
@@ -39,7 +39,7 @@ export const drawingImages: ImageMetadata[] = [
   {
     url: '/art/placeholder-night.svg',
     title: 'Noctis Figura',
-    artist: 'Lorem I. Ipsum',
+    artist: 'Artist Placeholder',
     date: '2024',
     link: '#',
     description:
@@ -48,7 +48,7 @@ export const drawingImages: ImageMetadata[] = [
   {
     url: '/art/placeholder-abstract.svg',
     title: 'Sine Titulo',
-    artist: 'Lorem I. Ipsum',
+    artist: 'Artist Placeholder',
     date: '2023',
     link: '#',
     description: 'Lorem ipsum dolor sit amet. Nihil molestiae consequatur.',
