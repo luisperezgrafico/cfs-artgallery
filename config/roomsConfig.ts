@@ -11,23 +11,23 @@ export interface RoomConfig {
 // ── Room themes ───────────────────────────────────────────────────────────────
 
 const THEME_INDIGO: RoomTheme = {
-  // Room I — original dark indigo / cinematic
+  // Dark indigo / cinematic — ceiling darkened to match other dark themes
   wallColor:        '#1A1637',
-  ceilingColor:     '#1a1538',
+  ceilingColor:     '#0e0c1e',
   floorColor:       '#050505',
-  hemisphereTop:    '#3d2b6b',
-  hemisphereBottom: '#0a0816',
+  hemisphereTop:    '#2a1f50',
+  hemisphereBottom: '#08060f',
   ambientIntensity: 0.2,
 };
 
-const THEME_BLANCHE: RoomTheme = {
-  // Room II — Galerie Blanche: warm ivory / classic Paris gallery
-  wallColor:        '#ede8dc',
-  ceilingColor:     '#e0dbd0',
-  floorColor:       '#b8a888',
-  hemisphereTop:    '#f5f0e8',
-  hemisphereBottom: '#c4b89a',
-  ambientIntensity: 0.55,
+const THEME_ARDOISE: RoomTheme = {
+  // Room II — Ardoise: deep blue-slate / contemporary museum
+  wallColor:        '#1c2230',
+  ceilingColor:     '#131824',
+  floorColor:       '#07080c',
+  hemisphereTop:    '#252e40',
+  hemisphereBottom: '#07080c',
+  ambientIntensity: 0.2,
 };
 
 const THEME_FORET: RoomTheme = {
@@ -41,7 +41,7 @@ const THEME_FORET: RoomTheme = {
 };
 
 const THEME_OCRE: RoomTheme = {
-  // Room IV — Ocre Profond: warm sienna / Wallace Collection / Spanish museums
+  // Ocre Profond: warm sienna / Wallace Collection / Spanish museums
   wallColor:        '#2a1c14',
   ceilingColor:     '#1c1410',
   floorColor:       '#0a0806',
@@ -53,8 +53,8 @@ const THEME_OCRE: RoomTheme = {
 // ── Rooms ─────────────────────────────────────────────────────────────────────
 
 export const rooms: RoomConfig[] = [
-  { id: 'room-1', name: 'Room I',   images: drawingImages, theme: THEME_INDIGO  },
-  { id: 'room-2', name: 'Room II',  images: [],            theme: THEME_BLANCHE },
+  { id: 'room-1', name: 'Room I',   images: drawingImages, theme: THEME_OCRE    },
+  { id: 'room-2', name: 'Room II',  images: [],            theme: THEME_ARDOISE },
   { id: 'room-3', name: 'Room III', images: [],            theme: THEME_FORET   },
-  { id: 'room-4', name: 'Room IV',  images: [],            theme: THEME_OCRE    },
+  { id: 'room-4', name: 'Room IV',  images: [],            theme: THEME_INDIGO  },
 ];
