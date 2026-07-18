@@ -1,6 +1,5 @@
 'use client';
 
-import { MeshReflectorMaterial, useDetectGPU } from '@react-three/drei';
 import React from 'react';
 
 interface FloorProps {
@@ -11,24 +10,14 @@ interface FloorProps {
 }
 
 const Floor: React.FC<FloorProps> = ({ width, length, position, color = '#050505' }) => {
-  const GPUTier = useDetectGPU();
-  const lowConfig = GPUTier.isMobile || GPUTier.tier <= 2;
-
   return (
-    <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh position={position} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[width, length]} />
-      <MeshReflectorMaterial
-        blur={[300, 100]}
-        mirror={0.5}
-        resolution={lowConfig ? 124 : 1024}
-        mixBlur={1}
-        mixStrength={15}
-        roughness={1}
-        depthScale={1.2}
-        minDepthThreshold={0.4}
-        maxDepthThreshold={1.4}
+      <meshStandardMaterial
         color={color}
-        metalness={0.4}
+        metalness={0.7}
+        roughness={0.25}
+        envMapIntensity={0.6}
       />
     </mesh>
   );
