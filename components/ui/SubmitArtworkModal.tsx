@@ -15,6 +15,7 @@ interface FormValues {
   year: string;
   description: string;
   file: File | null;
+  aspectRatio: number | null;
 }
 
 interface FieldErrors {
@@ -68,7 +69,7 @@ const errorText: React.CSSProperties = {
 const SubmitArtworkModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [values, setValues] = useState<FormValues>({ name: '', email: '', year: '', description: '', file: null });
+  const [values, setValues] = useState<FormValues>({ name: '', email: '', year: '', description: '', file: null, aspectRatio: null });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -77,7 +78,7 @@ const SubmitArtworkModal: React.FC = () => {
 
   const reset = useCallback(() => {
     setSubmitState('idle');
-    setValues({ name: '', email: '', year: '', description: '', file: null });
+    setValues({ name: '', email: '', year: '', description: '', file: null, aspectRatio: null });
     setFieldErrors({});
     setSubmitError('');
     if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
@@ -99,7 +100,7 @@ const SubmitArtworkModal: React.FC = () => {
 
   const close = useCallback(() => setIsOpen(false), []);
 
-  // File selection
+  // File selection — also computes aspectRatio from the image's natural dimensions
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -112,11 +113,20 @@ const SubmitArtworkModal: React.FC = () => {
       return;
     }
     setFieldErrors(p => ({ ...p, file: undefined }));
-    setValues(p => ({ ...p, file }));
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     const url = URL.createObjectURL(file);
     previewUrlRef.current = url;
     setPreview(url);
+
+    // Compute aspect ratio from the image's natural pixel dimensions
+    const img = new Image();
+    img.onload = () => {
+      const ratio = img.naturalWidth / img.naturalHeight;
+      setValues(p => ({ ...p, file, aspectRatio: ratio }));
+    };
+    img.src = url;
+    // Set file immediately (ratio updates asynchronously, typically < 50ms)
+    setValues(p => ({ ...p, file, aspectRatio: null }));
   };
 
   // Validation
