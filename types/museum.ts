@@ -21,5 +21,7 @@ export interface ImageMetadata {
   date: string;
   description: string;
   link: string;
+  /** width / height — used by Frame to set size before texture loads */
+  aspectRatio?: number;
   isEmpty?: true;
 }

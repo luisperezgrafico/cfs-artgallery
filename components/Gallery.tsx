@@ -11,7 +11,9 @@ import { ImageMetadata } from '../types/museum';
 
 const ROOM_CAPACITY = 8;
 const EMPTY_SLOT: ImageMetadata = {
-  url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true,
+  url: '', title: '', artist: '', date: '', link: '', description: '',
+  aspectRatio: 3 / 4,  // portrait canvas — matches tendency of submitted artworks
+  isEmpty: true,
 };
 
 // Pad any room to exactly ROOM_CAPACITY slots so empty rooms show submit canvases

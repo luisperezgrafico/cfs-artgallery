@@ -84,9 +84,12 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
 
     if (texture) texture.minFilter = THREE.LinearFilter;
 
-    const aspectRatio = (!image.isEmpty && texture?.image)
-      ? texture.image.width / texture.image.height
-      : 4 / 3;
+    // Priority: explicit metadata (deterministic, no async) → texture dimensions → 4:3 fallback
+    const aspectRatio =
+      image.aspectRatio ??
+      (texture?.image?.width && texture.image.height
+        ? texture.image.width / texture.image.height
+        : 4 / 3);
     const width = 1.5;
     const height = width / aspectRatio;
 
@@ -137,7 +140,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
           <mesh position={[0, 0, 0.051]}>
             <planeGeometry args={[width, height]} />
             {image.isEmpty ? (
-              <meshBasicMaterial map={linenTexture ?? undefined} color="#bbb" />
+              <meshBasicMaterial map={linenTexture ?? undefined} />
             ) : error ? (
               <meshBasicMaterial color="#444">
                 <Text position={[0, 0, 0.01]} fontSize={0.1} color="white" anchorX="center" anchorY="middle">
@@ -145,7 +148,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
                 </Text>
               </meshBasicMaterial>
             ) : (
-              <meshBasicMaterial map={texture} toneMapped={true} color="#ddd" />
+              <meshBasicMaterial map={texture} toneMapped={false} />
             )}
           </mesh>
         </mesh>
