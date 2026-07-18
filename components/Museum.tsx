@@ -14,15 +14,12 @@ import SpotlightGroup from './museum/SpotlightGroup';
 import { useTour } from '../contexts/TourContext';
 import CeilingLight from './museum/CeilingLight';
 import Bench from './museum/Bench';
-import { drawingImages } from '../config/imagesConfig';
 
 interface MuseumProps {
   images: ImageMetadata[];
 }
 
-const images = drawingImages;
-
-const Museum: React.FC<MuseumProps> = () => {
+const Museum: React.FC<MuseumProps> = ({ images }) => {
   const { currentFrameIndex, setCurrentFrameIndex, startTour, quitTour } = useTour();
   const frameRefs = useRef<(THREE.Mesh | null)[]>([]);
 

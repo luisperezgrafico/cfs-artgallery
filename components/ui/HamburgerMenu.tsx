@@ -2,16 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
-
-const PLACEHOLDER_ROOMS = [
-  { name: 'Room 1 — Quiet Landscapes', available: true },
-  { name: 'Room 2 — Portraits & Faces', available: false },
-  { name: 'Room 3 — Abstract & Texture', available: false },
-  { name: 'Room 4 — Night & Rest', available: false },
-];
-
-// Currently active room index (hardcoded until multi-room navigation exists)
-const ACTIVE_ROOM = 0;
+import { useRoom } from '../../contexts/RoomContext';
+import { useTour } from '../../contexts/TourContext';
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
@@ -28,6 +20,8 @@ function useIsMobile() {
 const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { rooms, activeRoomIndex, setActiveRoomIndex } = useRoom();
+  const { quitTour } = useTour();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -36,6 +30,13 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  const handleRoomSelect = (i: number) => {
+    if (i === activeRoomIndex) { setIsOpen(false); return; }
+    quitTour();
+    setActiveRoomIndex(i);
+    setIsOpen(false);
+  };
 
   return (
     <div style={style}>
@@ -48,16 +49,10 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
         />
       )}
 
-      {/*
-        Outer container slides as one unit: the tab button + the panel.
-        Button sits to the LEFT of the panel via absolute + -translate-x-full,
-        so when the whole container slides off-screen (translateX 100%) the
-        button naturally peeks out from the right viewport edge.
-      */}
       <div
         className={`fixed right-0 top-0 bottom-0 z-50 transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        {/* Tab button — left edge of the sliding container */}
+        {/* Tab button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
@@ -91,26 +86,19 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
               Rooms
             </p>
             <ul className="space-y-0.5">
-              {PLACEHOLDER_ROOMS.map((room, i) => {
-                const isActive = i === ACTIVE_ROOM;
+              {rooms.map((room, i) => {
+                const isActive = i === activeRoomIndex;
                 return (
-                  <li key={room.name}>
+                  <li key={room.id}>
                     <button
-                      disabled={!room.available}
+                      onClick={() => handleRoomSelect(i)}
                       className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
                         isActive
                           ? 'bg-white/12 text-white font-medium'
-                          : room.available
-                          ? 'text-white/75 hover:bg-white/8 hover:text-white'
-                          : 'text-white/25 cursor-not-allowed'
+                          : 'text-white/75 hover:bg-white/8 hover:text-white'
                       }`}
                     >
                       {room.name}
-                      {!room.available && (
-                        <span className="ml-2 text-[9px] text-white/20 uppercase tracking-wider">
-                          Soon
-                        </span>
-                      )}
                     </button>
                   </li>
                 );
@@ -120,7 +108,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
           <div className="flex-1" />
 
-          {/* Controls — adapts to device type */}
+          {/* Controls */}
           <div
             className="px-5 pt-4 border-t border-white/10"
             style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
