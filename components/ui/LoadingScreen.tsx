@@ -39,7 +39,7 @@ const LoadingScreen = ({ setIsLoading, assetsReady = false }: LoadingScreenProps
             letterSpacing: '0.05em',
           }}
         >
-          ME/CFS Community Gallery
+          Loading
         </h1>
       </div>
 

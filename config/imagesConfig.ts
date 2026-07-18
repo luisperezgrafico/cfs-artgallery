@@ -3,7 +3,7 @@ import { ImageMetadata } from '../types/museum';
 export const drawingImages: ImageMetadata[] = [
   {
     url: '/art/placeholder-horizon.svg',
-    aspectRatio: 800 / 800,   // 1.000 — square
+    aspectRatio: 800 / 1000,  // 0.800 — portrait
     title: 'Lux Perpetua',
     artist: 'Artist Placeholder',
     date: '2024',
@@ -23,7 +23,7 @@ export const drawingImages: ImageMetadata[] = [
   },
   {
     url: '/art/placeholder-thicket.svg',
-    aspectRatio: 800 / 1000,  // 0.800 — portrait
+    aspectRatio: 700 / 910,   // 0.769 — portrait
     title: 'Silva Quieta',
     artist: 'Artist Placeholder',
     date: '2024',
@@ -32,7 +32,7 @@ export const drawingImages: ImageMetadata[] = [
   },
   {
     url: '/art/placeholder-tide.svg',
-    aspectRatio: 730 / 920,   // 0.793 — portrait
+    aspectRatio: 910 / 700,   // 1.300 — landscape
     title: 'Aqua Lenis',
     artist: 'Artist Placeholder',
     date: '2024',
@@ -42,7 +42,7 @@ export const drawingImages: ImageMetadata[] = [
   },
   {
     url: '/art/placeholder-night.svg',
-    aspectRatio: 700 / 910,   // 0.769 — portrait
+    aspectRatio: 730 / 920,   // 0.793 — portrait
     title: 'Noctis Figura',
     artist: 'Artist Placeholder',
     date: '2024',
@@ -52,13 +52,13 @@ export const drawingImages: ImageMetadata[] = [
   },
   {
     url: '/art/placeholder-abstract.svg',
-    aspectRatio: 910 / 700,   // 1.300 — landscape
+    aspectRatio: 800 / 800,   // 1.000 — square
     title: 'Sine Titulo',
     artist: 'Artist Placeholder',
     date: '2023',
     link: '#',
     description: 'Lorem ipsum dolor sit amet. Nihil molestiae consequatur.',
   },
-  { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
-  { url: '', title: '', artist: '', date: '', link: '', description: '', isEmpty: true },
+  { url: '', title: '', artist: '', date: '', link: '', description: '', aspectRatio: 1, isEmpty: true },
+  { url: '', title: '', artist: '', date: '', link: '', description: '', aspectRatio: 1, isEmpty: true },
 ];

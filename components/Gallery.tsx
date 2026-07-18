@@ -12,7 +12,7 @@ import { ImageMetadata } from '../types/museum';
 const ROOM_CAPACITY = 8;
 const EMPTY_SLOT: ImageMetadata = {
   url: '', title: '', artist: '', date: '', link: '', description: '',
-  aspectRatio: 3 / 4,  // portrait canvas — matches tendency of submitted artworks
+  aspectRatio: 1,  // square — consistent default until a real artwork fills the slot
   isEmpty: true,
 };
 
