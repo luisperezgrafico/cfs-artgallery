@@ -6,7 +6,7 @@ import Frame from './museum/Frame';
 import Room from './museum/Room';
 import { calculateFramePositions } from '../utils/framePositioning';
 import { defaultRoomDimensions } from '../config/roomConfig';
-import { ImageMetadata } from '../types/museum';
+import { ImageMetadata, RoomTheme } from '../types/museum';
 import { BakeShadows } from '@react-three/drei';
 import { ZoomProvider } from '../contexts/ZoomContext';
 import { CameraManager } from './museum/CameraManager';
@@ -15,11 +15,17 @@ import { useTour } from '../contexts/TourContext';
 import CeilingLight from './museum/CeilingLight';
 import Bench from './museum/Bench';
 
+const DEFAULT_THEME: RoomTheme = {
+  wallColor: '#1A1637', ceilingColor: '#1a1538', floorColor: '#050505',
+  hemisphereTop: '#3d2b6b', hemisphereBottom: '#0a0816', ambientIntensity: 0.2,
+};
+
 interface MuseumProps {
   images: ImageMetadata[];
+  theme?: RoomTheme;
 }
 
-const Museum: React.FC<MuseumProps> = ({ images }) => {
+const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
   const { currentFrameIndex, setCurrentFrameIndex, startTour, quitTour } = useTour();
   const frameRefs = useRef<(THREE.Mesh | null)[]>([]);
 
@@ -51,6 +57,9 @@ const Museum: React.FC<MuseumProps> = ({ images }) => {
           length={defaultRoomDimensions.length}
           height={defaultRoomDimensions.height}
           wallTiltAngle={defaultRoomDimensions.wallTiltAngle}
+          wallColor={theme.wallColor}
+          ceilingColor={theme.ceilingColor}
+          floorColor={theme.floorColor}
         />
 
         {images.map((image, index) => {
@@ -86,8 +95,8 @@ const Museum: React.FC<MuseumProps> = ({ images }) => {
           return null;
         })}
 
-        <ambientLight intensity={0.2} />
-        <hemisphereLight args={['#3d2b6b', '#0a0816', 0.25]} />
+        <ambientLight intensity={theme.ambientIntensity} />
+        <hemisphereLight args={[theme.hemisphereTop, theme.hemisphereBottom, 0.25]} />
         <directionalLight intensity={2.5} position={[0, -100, 5]} />
 
         <SpotlightGroup roomHeight={defaultRoomDimensions.height} />

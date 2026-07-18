@@ -4,11 +4,12 @@ import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { AdaptiveDpr, AdaptiveEvents, Environment, Preload } from '@react-three/drei';
 import Museum from './Museum';
-import { ImageMetadata } from '../types/museum';
+import { ImageMetadata, RoomTheme } from '../types/museum';
 import { useAnimation } from '../contexts/AnimationContext';
 
 interface MuseumStageProps {
   images: ImageMetadata[];
+  theme?: RoomTheme;
 }
 
 const EmptyFallback = ({ onLoaded }: { onLoaded: () => void }) => {
@@ -18,7 +19,7 @@ const EmptyFallback = ({ onLoaded }: { onLoaded: () => void }) => {
   return null;
 };
 
-const MuseumStage: React.FC<MuseumStageProps> = ({ images }) => {
+const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme }) => {
   const { sceneOpacity, sceneBlur, handleAssetsLoaded } = useAnimation();
 
   return (
@@ -40,7 +41,7 @@ const MuseumStage: React.FC<MuseumStageProps> = ({ images }) => {
         <AdaptiveEvents />
         <color attach="background" args={['#000000']} />
         <Suspense fallback={<EmptyFallback onLoaded={handleAssetsLoaded} />}>
-          <Museum images={images} />
+          <Museum images={images} theme={theme} />
           <Environment preset="city" />
         </Suspense>
       </Canvas>

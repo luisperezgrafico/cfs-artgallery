@@ -14,6 +14,15 @@ export interface FramePositioningResult {
   frameRotations: FrameRotation[];
 }
 
+export interface RoomTheme {
+  wallColor: string;
+  ceilingColor: string;
+  floorColor: string;
+  hemisphereTop: string;
+  hemisphereBottom: string;
+  ambientIntensity: number;
+}
+
 export interface ImageMetadata {
   url: string;
   title: string;

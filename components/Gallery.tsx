@@ -30,7 +30,7 @@ function GalleryContent() {
     <AnimationProvider>
       <TourProvider totalFrames={images.length}>
         <SwipeableContainer>
-          <MuseumStage images={images} />
+          <MuseumStage images={images} theme={activeRoom.theme} />
           <UIElements />
         </SwipeableContainer>
       </TourProvider>

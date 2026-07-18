@@ -7,9 +7,10 @@ interface FloorProps {
   width: number;
   length: number;
   position: [number, number, number];
+  color?: string;
 }
 
-const Floor: React.FC<FloorProps> = ({ width, length, position }) => {
+const Floor: React.FC<FloorProps> = ({ width, length, position, color = '#050505' }) => {
   const GPUTier = useDetectGPU();
   const lowConfig = GPUTier.isMobile || GPUTier.tier <= 2;
 
@@ -26,7 +27,7 @@ const Floor: React.FC<FloorProps> = ({ width, length, position }) => {
         depthScale={1.2}
         minDepthThreshold={0.4}
         maxDepthThreshold={1.4}
-        color="#050505"
+        color={color}
         metalness={0.4}
       />
     </mesh>
