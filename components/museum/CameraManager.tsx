@@ -90,6 +90,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     restAnimationFrameRef.current = null;
   }, []);
 
+  useEffect(() => cancelRestAnimation, [cancelRestAnimation]);
+
   useEffect(() => {
     if (currentFrameIndex >= 0) {
       setZoomedFrameId(currentFrameIndex);

@@ -65,9 +65,15 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   }, [currentFrameIndexState]);
 
   const sitAtRestView = useCallback((viewpoint: RestViewpoint) => {
+    const [px, py, pz] = viewpoint.position;
+    const [tx, ty, tz] = viewpoint.target;
+
     setIsTourStarted(false);
     setCurrentFrameIndexState(-1);
-    setRestView(viewpoint);
+    setRestView({
+      position: [px, py, pz],
+      target: [tx, ty, tz],
+    });
   }, []);
 
   const quitTour = useCallback(() => {

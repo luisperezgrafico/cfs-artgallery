@@ -42,7 +42,11 @@ function GalleryContent() {
 
   return (
     <AnimationProvider>
-      <TourProvider totalFrames={images.length} initialFrameIndex={initialFrameIndex}>
+      <TourProvider
+        key={activeRoom.id}
+        totalFrames={images.length}
+        initialFrameIndex={initialFrameIndex}
+      >
         <VisitPositionPersistence roomId={activeRoom.id} />
         <SwipeableContainer>
           <MuseumStage images={images} theme={activeRoom.theme} />
