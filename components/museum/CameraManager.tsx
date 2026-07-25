@@ -18,10 +18,12 @@ interface CameraManagerProps {
 const CAMERA_SMOOTH_TIME = 0.85;
 const OVERVIEW_SMOOTH_TIME = 1.15;
 const REST_VIEW_DURATION_MS = 1800;
+const REST_SWITCH_DURATION_MS = 2600;
 const REST_LOOK_DISTANCE = 4;
 const REST_LOOK_SENSITIVITY = 0.003;
 const REST_LOOK_MIN_PITCH = -0.45;
 const REST_LOOK_MAX_PITCH = 0.45;
+const CAMERA_FORWARD = new THREE.Vector3(0, 0, -1);
 const DISABLED_MOUSE_BUTTONS = {
   left: CameraControlsImpl.ACTION.NONE,
   middle: CameraControlsImpl.ACTION.NONE,
@@ -52,6 +54,12 @@ const quadraticBezier = (
     inverseT * inverseT * start.y + 2 * inverseT * t * control.y + t * t * end.y,
     inverseT * inverseT * start.z + 2 * inverseT * t * control.z + t * t * end.z,
   );
+};
+
+const getDirection = (position: THREE.Vector3, target: THREE.Vector3) => {
+  const direction = target.clone().sub(position);
+  if (direction.lengthSq() < 0.0001) return CAMERA_FORWARD.clone();
+  return direction.normalize();
 };
 
 const CameraManager: React.FC<CameraManagerProps> = ({
@@ -214,26 +222,35 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const startTarget = controls.getTarget(new THREE.Vector3(), false);
     const endPosition = new THREE.Vector3(...viewpoint.position);
     const endTarget = new THREE.Vector3(...viewpoint.target);
+    const isBenchSwitch = (
+      Math.abs(startPosition.y - endPosition.y) < 0.25
+      && Math.abs(startPosition.z - endPosition.z) < 0.75
+      && Math.abs(startPosition.x - endPosition.x) > 1
+    );
+    const duration = isBenchSwitch ? REST_SWITCH_DURATION_MS : REST_VIEW_DURATION_MS;
     const positionControl = new THREE.Vector3(
       clamp((startPosition.x + endPosition.x) * 0.2, -0.7, 0.7),
       Math.max(startPosition.y, endPosition.y, 1.45),
       (startPosition.z + endPosition.z) / 2,
     );
-    const targetControl = new THREE.Vector3(
-      0,
-      Math.max(startTarget.y, endTarget.y, 1.35),
-      (startTarget.z + endTarget.z) / 2,
-    );
+    const startDirection = getDirection(startPosition, startTarget);
+    const endDirection = getDirection(endPosition, endTarget);
+    const startQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, startDirection);
+    const endQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, endDirection);
+    const quaternion = new THREE.Quaternion();
+    const direction = new THREE.Vector3();
     const position = new THREE.Vector3();
     const target = new THREE.Vector3();
     const startedAt = window.performance.now();
 
     const step = (now: number) => {
-      const progress = clamp((now - startedAt) / REST_VIEW_DURATION_MS, 0, 1);
+      const progress = clamp((now - startedAt) / duration, 0, 1);
       const eased = easeInOutCubic(progress);
 
       quadraticBezier(position, startPosition, positionControl, endPosition, eased);
-      quadraticBezier(target, startTarget, targetControl, endTarget, eased);
+      quaternion.slerpQuaternions(startQuaternion, endQuaternion, eased);
+      direction.copy(CAMERA_FORWARD).applyQuaternion(quaternion).normalize();
+      target.copy(position).addScaledVector(direction, REST_LOOK_DISTANCE);
       controls.setLookAt(
         position.x,
         position.y,
