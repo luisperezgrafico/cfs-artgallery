@@ -2,7 +2,7 @@
 
 import React, { useRef, useCallback, useContext, useEffect } from 'react';
 import * as THREE from 'three';
-import { CameraControls, useDetectGPU } from '@react-three/drei';
+import { CameraControls, CameraControlsImpl, useDetectGPU } from '@react-three/drei';
 import { ZoomContext } from '../../contexts/ZoomContext';
 import { useThree } from '@react-three/fiber';
 import { RestViewpoint } from '../../types/museum';
@@ -16,9 +16,30 @@ interface CameraManagerProps {
 }
 
 const CAMERA_SMOOTH_TIME = 0.85;
-const REST_TRAVEL_SMOOTH_TIME = 1.35;
-const REST_SETTLE_SMOOTH_TIME = 1.1;
+const REST_VIEW_SMOOTH_TIME = 1.45;
 const OVERVIEW_SMOOTH_TIME = 1.15;
+const DISABLED_MOUSE_BUTTONS = {
+  left: CameraControlsImpl.ACTION.NONE,
+  middle: CameraControlsImpl.ACTION.NONE,
+  right: CameraControlsImpl.ACTION.NONE,
+  wheel: CameraControlsImpl.ACTION.NONE,
+};
+const REST_MOUSE_BUTTONS = {
+  left: CameraControlsImpl.ACTION.ROTATE,
+  middle: CameraControlsImpl.ACTION.NONE,
+  right: CameraControlsImpl.ACTION.NONE,
+  wheel: CameraControlsImpl.ACTION.NONE,
+};
+const DISABLED_TOUCHES = {
+  one: CameraControlsImpl.ACTION.NONE,
+  two: CameraControlsImpl.ACTION.NONE,
+  three: CameraControlsImpl.ACTION.NONE,
+};
+const REST_TOUCHES = {
+  one: CameraControlsImpl.ACTION.TOUCH_ROTATE,
+  two: CameraControlsImpl.ACTION.NONE,
+  three: CameraControlsImpl.ACTION.NONE,
+};
 
 const CameraManager: React.FC<CameraManagerProps> = ({
   onFrameChange,
@@ -118,22 +139,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     setZoomedFrameId(null);
 
     const previousSmoothTime = controls.smoothTime;
-    const approachPosition: [number, number, number] = [
-      viewpoint.position[0],
-      viewpoint.position[1] + 0.4,
-      viewpoint.position[2] + 0.75,
-    ];
-
     try {
-      controls.smoothTime = REST_TRAVEL_SMOOTH_TIME;
-      await controls.setPosition(
-        approachPosition[0],
-        approachPosition[1],
-        approachPosition[2],
-        true,
-      );
-
-      controls.smoothTime = REST_SETTLE_SMOOTH_TIME;
+      controls.smoothTime = REST_VIEW_SMOOTH_TIME;
       await controls.setLookAt(
         viewpoint.position[0],
         viewpoint.position[1],
@@ -162,8 +169,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     <CameraControls
       ref={cameraControlsRef}
       smoothTime={CAMERA_SMOOTH_TIME}
-      mouseButtons={{ left: 0, middle: 0, right: 0, wheel: 0 }}
-      touches={{ one: 0, two: 0, three: 0 }}
+      mouseButtons={restView ? REST_MOUSE_BUTTONS : DISABLED_MOUSE_BUTTONS}
+      touches={restView ? REST_TOUCHES : DISABLED_TOUCHES}
     />
   );
 };
