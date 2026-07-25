@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { useSwipeable, SwipeEventData } from 'react-swipeable';
 import { useAnimation } from '../../contexts/AnimationContext';
 import { useTour } from '../../contexts/TourContext';
@@ -111,7 +112,30 @@ function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
   );
 }
 
+function RestControls({ style }: { style?: React.CSSProperties }) {
+  const { quitTour } = useTour();
+
+  return (
+    <div style={style}>
+      <div
+        className="fixed bottom-0 left-0 right-0 z-30 flex flex-col items-center"
+        style={{ paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
+      >
+        <button
+          onClick={quitTour}
+          aria-label="Exit rest view"
+          className="h-10 rounded-full bg-black/40 hover:bg-black/55 backdrop-blur-md px-4 text-white flex items-center gap-2 shadow-lg transition-colors"
+        >
+          <X size={17} />
+          <span className="text-sm font-medium">Exit rest</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const UIElements: React.FC = () => {
+  const { isResting } = useTour();
   const { currentScreen, assetsReady, handleLoadingComplete, handleTitleFading, handleTitleComplete } = useAnimation();
   const [isLoading, setIsLoading] = useState(true);
   const [isInterfaceHidden, setIsInterfaceHidden] = useState(false);
@@ -188,14 +212,20 @@ const UIElements: React.FC = () => {
               transition: `opacity ${HIDE_INTERFACE_FADE_MS}ms ease-out`,
             }}
           >
-            <TourControls
-              style={{ animation: 'fadeIn 1s ease-out forwards' }}
-              onHideInterface={hideInterface}
-            />
-            <ArtworkInfoModal />
-            <ArtworkLightbox />
-            <SubmitArtworkModal />
-            <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+            {isResting ? (
+              <RestControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+            ) : (
+              <>
+                <TourControls
+                  style={{ animation: 'fadeIn 1s ease-out forwards' }}
+                  onHideInterface={hideInterface}
+                />
+                <ArtworkInfoModal />
+                <ArtworkLightbox />
+                <SubmitArtworkModal />
+                <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+              </>
+            )}
           </div>
         )
       )}

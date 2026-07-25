@@ -16,6 +16,9 @@ interface CameraManagerProps {
 }
 
 const CAMERA_SMOOTH_TIME = 0.85;
+const REST_TRAVEL_SMOOTH_TIME = 1.35;
+const REST_SETTLE_SMOOTH_TIME = 1.1;
+const OVERVIEW_SMOOTH_TIME = 1.15;
 
 const CameraManager: React.FC<CameraManagerProps> = ({
   onFrameChange,
@@ -94,23 +97,55 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   );
 
   const resetCamera = useCallback(async () => {
-    if (!cameraControlsRef.current) return;
-    await cameraControlsRef.current.setLookAt(0, 2, 14, 0, 0, 0, true);
+    const controls = cameraControlsRef.current;
+    if (!controls) return;
+
+    const previousSmoothTime = controls.smoothTime;
+    try {
+      controls.smoothTime = OVERVIEW_SMOOTH_TIME;
+      await controls.setLookAt(0, 2, 14, 0, 0, 0, true);
+    } finally {
+      controls.smoothTime = previousSmoothTime;
+    }
+
     if (onFrameChange) onFrameChange(-1);
   }, [onFrameChange]);
 
   const moveToRestView = useCallback(async (viewpoint: RestViewpoint) => {
-    if (!cameraControlsRef.current) return;
+    const controls = cameraControlsRef.current;
+    if (!controls) return;
+
     setZoomedFrameId(null);
-    await cameraControlsRef.current.setLookAt(
+
+    const previousSmoothTime = controls.smoothTime;
+    const approachPosition: [number, number, number] = [
       viewpoint.position[0],
-      viewpoint.position[1],
-      viewpoint.position[2],
-      viewpoint.target[0],
-      viewpoint.target[1],
-      viewpoint.target[2],
-      true,
-    );
+      viewpoint.position[1] + 0.4,
+      viewpoint.position[2] + 0.75,
+    ];
+
+    try {
+      controls.smoothTime = REST_TRAVEL_SMOOTH_TIME;
+      await controls.setPosition(
+        approachPosition[0],
+        approachPosition[1],
+        approachPosition[2],
+        true,
+      );
+
+      controls.smoothTime = REST_SETTLE_SMOOTH_TIME;
+      await controls.setLookAt(
+        viewpoint.position[0],
+        viewpoint.position[1],
+        viewpoint.position[2],
+        viewpoint.target[0],
+        viewpoint.target[1],
+        viewpoint.target[2],
+        true,
+      );
+    } finally {
+      controls.smoothTime = previousSmoothTime;
+    }
   }, [setZoomedFrameId]);
 
   useEffect(() => {
