@@ -16,16 +16,14 @@ interface CameraManagerProps {
 }
 
 const CAMERA_SMOOTH_TIME = 0.85;
-const REST_VIEW_SMOOTH_TIME = 1.45;
 const OVERVIEW_SMOOTH_TIME = 1.15;
+const REST_VIEW_DURATION_MS = 1800;
+const REST_LOOK_DISTANCE = 4;
+const REST_LOOK_SENSITIVITY = 0.003;
+const REST_LOOK_MIN_PITCH = -0.45;
+const REST_LOOK_MAX_PITCH = 0.45;
 const DISABLED_MOUSE_BUTTONS = {
   left: CameraControlsImpl.ACTION.NONE,
-  middle: CameraControlsImpl.ACTION.NONE,
-  right: CameraControlsImpl.ACTION.NONE,
-  wheel: CameraControlsImpl.ACTION.NONE,
-};
-const REST_MOUSE_BUTTONS = {
-  left: CameraControlsImpl.ACTION.ROTATE,
   middle: CameraControlsImpl.ACTION.NONE,
   right: CameraControlsImpl.ACTION.NONE,
   wheel: CameraControlsImpl.ACTION.NONE,
@@ -35,10 +33,25 @@ const DISABLED_TOUCHES = {
   two: CameraControlsImpl.ACTION.NONE,
   three: CameraControlsImpl.ACTION.NONE,
 };
-const REST_TOUCHES = {
-  one: CameraControlsImpl.ACTION.TOUCH_ROTATE,
-  two: CameraControlsImpl.ACTION.NONE,
-  three: CameraControlsImpl.ACTION.NONE,
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const easeInOutCubic = (t: number) => (
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+);
+
+const quadraticBezier = (
+  out: THREE.Vector3,
+  start: THREE.Vector3,
+  control: THREE.Vector3,
+  end: THREE.Vector3,
+  t: number,
+) => {
+  const inverseT = 1 - t;
+  out.set(
+    inverseT * inverseT * start.x + 2 * inverseT * t * control.x + t * t * end.x,
+    inverseT * inverseT * start.y + 2 * inverseT * t * control.y + t * t * end.y,
+    inverseT * inverseT * start.z + 2 * inverseT * t * control.z + t * t * end.z,
+  );
 };
 
 const CameraManager: React.FC<CameraManagerProps> = ({
@@ -50,8 +63,24 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 }) => {
   const { isMobile } = useDetectGPU();
   const cameraControlsRef = useRef<CameraControls>(null);
+  const restAnimationFrameRef = useRef<number | null>(null);
+  const restLookRef = useRef({
+    active: false,
+    pointerId: null as number | null,
+    lastX: 0,
+    lastY: 0,
+    yaw: 0,
+    pitch: 0,
+    position: new THREE.Vector3(),
+  });
   const { setZoomedFrameId } = useContext(ZoomContext);
-  const { viewport } = useThree();
+  const { gl, viewport } = useThree();
+
+  const cancelRestAnimation = useCallback(() => {
+    if (restAnimationFrameRef.current === null) return;
+    window.cancelAnimationFrame(restAnimationFrameRef.current);
+    restAnimationFrameRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (currentFrameIndex >= 0) {
@@ -90,6 +119,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       const mesh = frameRefs.current[index];
       if (!mesh) return;
 
+      cancelRestAnimation();
+
       const frameWorldPosition = new THREE.Vector3();
       mesh.getWorldPosition(frameWorldPosition);
 
@@ -114,12 +145,14 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
       if (onFrameChange) onFrameChange(index);
     },
-    [frameRefs, onFrameChange, getScaleFactor, getYOffset],
+    [cancelRestAnimation, frameRefs, onFrameChange, getScaleFactor, getYOffset],
   );
 
   const resetCamera = useCallback(async () => {
     const controls = cameraControlsRef.current;
     if (!controls) return;
+
+    cancelRestAnimation();
 
     const previousSmoothTime = controls.smoothTime;
     try {
@@ -130,30 +163,159 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     }
 
     if (onFrameChange) onFrameChange(-1);
-  }, [onFrameChange]);
+  }, [cancelRestAnimation, onFrameChange]);
 
-  const moveToRestView = useCallback(async (viewpoint: RestViewpoint) => {
+  const applyRestLook = useCallback(() => {
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
-    setZoomedFrameId(null);
+    const look = restLookRef.current;
+    const horizontal = Math.cos(look.pitch);
+    const target = new THREE.Vector3(
+      look.position.x + Math.sin(look.yaw) * horizontal * REST_LOOK_DISTANCE,
+      look.position.y + Math.sin(look.pitch) * REST_LOOK_DISTANCE,
+      look.position.z + Math.cos(look.yaw) * horizontal * REST_LOOK_DISTANCE,
+    );
 
-    const previousSmoothTime = controls.smoothTime;
-    try {
-      controls.smoothTime = REST_VIEW_SMOOTH_TIME;
-      await controls.setLookAt(
-        viewpoint.position[0],
-        viewpoint.position[1],
-        viewpoint.position[2],
-        viewpoint.target[0],
-        viewpoint.target[1],
-        viewpoint.target[2],
-        true,
+    controls.setLookAt(
+      look.position.x,
+      look.position.y,
+      look.position.z,
+      target.x,
+      target.y,
+      target.z,
+      false,
+    );
+  }, []);
+
+  const syncRestLook = useCallback((viewpoint: RestViewpoint) => {
+    const position = new THREE.Vector3(...viewpoint.position);
+    const target = new THREE.Vector3(...viewpoint.target);
+    const direction = target.clone().sub(position).normalize();
+
+    restLookRef.current.position.copy(position);
+    restLookRef.current.yaw = Math.atan2(direction.x, direction.z);
+    restLookRef.current.pitch = clamp(
+      Math.asin(clamp(direction.y, -1, 1)),
+      REST_LOOK_MIN_PITCH,
+      REST_LOOK_MAX_PITCH,
+    );
+  }, []);
+
+  const moveToRestView = useCallback((viewpoint: RestViewpoint) => {
+    const controls = cameraControlsRef.current;
+    if (!controls) return;
+
+    cancelRestAnimation();
+    setZoomedFrameId(null);
+    syncRestLook(viewpoint);
+
+    const startPosition = controls.getPosition(new THREE.Vector3(), false);
+    const startTarget = controls.getTarget(new THREE.Vector3(), false);
+    const endPosition = new THREE.Vector3(...viewpoint.position);
+    const endTarget = new THREE.Vector3(...viewpoint.target);
+    const positionControl = new THREE.Vector3(
+      clamp((startPosition.x + endPosition.x) * 0.2, -0.7, 0.7),
+      Math.max(startPosition.y, endPosition.y, 1.45),
+      (startPosition.z + endPosition.z) / 2,
+    );
+    const targetControl = new THREE.Vector3(
+      0,
+      Math.max(startTarget.y, endTarget.y, 1.35),
+      (startTarget.z + endTarget.z) / 2,
+    );
+    const position = new THREE.Vector3();
+    const target = new THREE.Vector3();
+    const startedAt = window.performance.now();
+
+    const step = (now: number) => {
+      const progress = clamp((now - startedAt) / REST_VIEW_DURATION_MS, 0, 1);
+      const eased = easeInOutCubic(progress);
+
+      quadraticBezier(position, startPosition, positionControl, endPosition, eased);
+      quadraticBezier(target, startTarget, targetControl, endTarget, eased);
+      controls.setLookAt(
+        position.x,
+        position.y,
+        position.z,
+        target.x,
+        target.y,
+        target.z,
+        false,
       );
-    } finally {
-      controls.smoothTime = previousSmoothTime;
-    }
-  }, [setZoomedFrameId]);
+
+      if (progress < 1) {
+        restAnimationFrameRef.current = window.requestAnimationFrame(step);
+        return;
+      }
+
+      restAnimationFrameRef.current = null;
+      applyRestLook();
+    };
+
+    restAnimationFrameRef.current = window.requestAnimationFrame(step);
+  }, [applyRestLook, cancelRestAnimation, setZoomedFrameId, syncRestLook]);
+
+  useEffect(() => {
+    if (!restView) return;
+
+    const element = gl.domElement;
+    const previousTouchAction = element.style.touchAction;
+    element.style.touchAction = 'none';
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      restLookRef.current.active = true;
+      restLookRef.current.pointerId = e.pointerId;
+      restLookRef.current.lastX = e.clientX;
+      restLookRef.current.lastY = e.clientY;
+      if (!element.hasPointerCapture(e.pointerId)) {
+        element.setPointerCapture(e.pointerId);
+      }
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const look = restLookRef.current;
+      if (!look.active || look.pointerId !== e.pointerId) return;
+
+      e.preventDefault();
+      const dx = e.clientX - look.lastX;
+      const dy = e.clientY - look.lastY;
+      look.lastX = e.clientX;
+      look.lastY = e.clientY;
+      look.yaw -= dx * REST_LOOK_SENSITIVITY;
+      look.pitch = clamp(
+        look.pitch + dy * REST_LOOK_SENSITIVITY,
+        REST_LOOK_MIN_PITCH,
+        REST_LOOK_MAX_PITCH,
+      );
+      applyRestLook();
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+      const look = restLookRef.current;
+      if (look.pointerId !== e.pointerId) return;
+      look.active = false;
+      look.pointerId = null;
+      if (element.hasPointerCapture(e.pointerId)) {
+        element.releasePointerCapture(e.pointerId);
+      }
+    };
+
+    element.addEventListener('pointerdown', handlePointerDown);
+    element.addEventListener('pointermove', handlePointerMove);
+    element.addEventListener('pointerup', handlePointerUp);
+    element.addEventListener('pointercancel', handlePointerUp);
+    return () => {
+      element.removeEventListener('pointerdown', handlePointerDown);
+      element.removeEventListener('pointermove', handlePointerMove);
+      element.removeEventListener('pointerup', handlePointerUp);
+      element.removeEventListener('pointercancel', handlePointerUp);
+      element.style.touchAction = previousTouchAction;
+      restLookRef.current.active = false;
+      restLookRef.current.pointerId = null;
+    };
+  }, [applyRestLook, gl.domElement, restView]);
 
   useEffect(() => {
     if (restView) {
@@ -169,8 +331,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     <CameraControls
       ref={cameraControlsRef}
       smoothTime={CAMERA_SMOOTH_TIME}
-      mouseButtons={restView ? REST_MOUSE_BUTTONS : DISABLED_MOUSE_BUTTONS}
-      touches={restView ? REST_TOUCHES : DISABLED_TOUCHES}
+      mouseButtons={DISABLED_MOUSE_BUTTONS}
+      touches={DISABLED_TOUCHES}
     />
   );
 };

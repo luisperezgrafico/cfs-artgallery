@@ -35,7 +35,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 14 | Vertical-first, identical on wide screens | ✅ | 🟡 | Partially supported by responsive UI/camera framing | Needs explicit cross-viewport QA pass |
 | 15 | Distress / content tags | ✅ | 🟢 | Not built | Needs small curation policy first |
 | 16 | "Sit with this work" (hide all but the piece) | ✔️ | 🟢 | Implemented as quiet hide-interface mode | Text not exposed literally in UI |
-| 17 | Sit on the bench to rest / take the room in | ✅ | 🟡 | **Prototype:** two tappable benches move camera to a seated rest view with minimal rest UI + rest-only look controls | Needs HTML/menu entry and fixed-position look polish before accessible-complete |
+| 17 | Sit on the bench to rest / take the room in | ✅ | 🟡 | **Prototype:** two tappable benches move camera to a seated rest view with minimal rest UI + fixed-position look controls | Needs HTML/menu entry and interaction polish before accessible-complete |
 | 18 | Track where you are / left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` | = #7 |
 | 19 | Artist profiles | 🟡 | 🟡 | Not built | Read-only artist page later; self-managed profiles stay out |
 | 20 | "Blind" fully-audio experience | 🟡 | 🔴 | Not built | Screen-reader + list view first; recorded narration = 10a |

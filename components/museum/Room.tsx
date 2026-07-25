@@ -59,6 +59,12 @@ const Room: React.FC<RoomProps> = ({
         <planeGeometry args={[frontWidth, height]} />
         <meshStandardMaterial color={wallColor} metalness={0} roughness={0.75} />
       </mesh>
+
+      {/* Back Wall */}
+      <mesh position={[0, height / 2, length]} rotation={[0, Math.PI, 0]} receiveShadow>
+        <planeGeometry args={[ceilingWidth, height]} />
+        <meshStandardMaterial color={wallColor} metalness={0} roughness={0.85} />
+      </mesh>
     </group>
   );
 };
