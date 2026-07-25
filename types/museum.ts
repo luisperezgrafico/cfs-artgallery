@@ -23,6 +23,11 @@ export interface RoomTheme {
   ambientIntensity: number;
 }
 
+export interface RestViewpoint {
+  position: FramePosition;
+  target: FramePosition;
+}
+
 export interface ImageMetadata {
   url: string;
   title: string;

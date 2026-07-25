@@ -6,7 +6,7 @@ import Frame from './museum/Frame';
 import Room from './museum/Room';
 import { calculateFramePositions } from '../utils/framePositioning';
 import { defaultRoomDimensions } from '../config/roomConfig';
-import { ImageMetadata, RoomTheme } from '../types/museum';
+import { ImageMetadata, RestViewpoint, RoomTheme } from '../types/museum';
 import { ZoomProvider } from '../contexts/ZoomContext';
 import { CameraManager } from './museum/CameraManager';
 import SpotlightGroup from './museum/SpotlightGroup';
@@ -26,11 +26,24 @@ const rightWallBenchRotation: [number, number, number] = [0, -Math.PI / 2 + side
 const BENCH_LAYOUT: Array<{
   position: [number, number, number];
   rotation: [number, number, number];
+  restView: RestViewpoint;
 }> = [
-  { position: [-1.75, 0, 5.7], rotation: leftWallBenchRotation },
-  { position: [1.75, 0, 5.7], rotation: rightWallBenchRotation },
-  { position: [-1.75, 0, 10.4], rotation: leftWallBenchRotation },
-  { position: [1.75, 0, 10.4], rotation: rightWallBenchRotation },
+  {
+    position: [-1.75, 0, 5.7],
+    rotation: leftWallBenchRotation,
+    restView: {
+      position: [-1.75, 1.05, 5.7],
+      target: [1.6, 1.45, 5.2],
+    },
+  },
+  {
+    position: [1.75, 0, 5.7],
+    rotation: rightWallBenchRotation,
+    restView: {
+      position: [1.75, 1.05, 5.7],
+      target: [-1.6, 1.45, 5.2],
+    },
+  },
 ];
 
 interface MuseumProps {
@@ -39,7 +52,14 @@ interface MuseumProps {
 }
 
 const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
-  const { currentFrameIndex, setCurrentFrameIndex, startTour, quitTour } = useTour();
+  const {
+    currentFrameIndex,
+    restView,
+    setCurrentFrameIndex,
+    startTour,
+    sitAtRestView,
+    quitTour,
+  } = useTour();
   const frameRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   React.useEffect(() => {
@@ -59,6 +79,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
       <CameraManager
         onFrameChange={setCurrentFrameIndex}
         currentFrameIndex={currentFrameIndex}
+        restView={restView}
         frameRefs={frameRefs as React.MutableRefObject<THREE.Mesh[]>}
         imagesCount={images.length}
       />
@@ -124,6 +145,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
             key={bench.position.join(':')}
             position={bench.position}
             rotation={bench.rotation}
+            onClick={() => sitAtRestView(bench.restView)}
           />
         ))}
       </group>

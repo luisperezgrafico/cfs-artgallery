@@ -1,16 +1,20 @@
 'use client';
 
 // src/contexts/TourContext.tsx
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useCallback, useContext, useState, ReactNode } from "react";
+import { RestViewpoint } from "../types/museum";
 
 interface TourContextType {
   isTourStarted: boolean;
+  isResting: boolean;
+  restView: RestViewpoint | null;
   currentFrameIndex: number;
   setCurrentFrameIndex: (index: number) => void;
   totalFrames: number;
   startTour: () => void;
   nextFrame: () => void;
   previousFrame: () => void;
+  sitAtRestView: (viewpoint: RestViewpoint) => void;
   quitTour: () => void;
 }
 
@@ -30,40 +34,59 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   const initialIndex =
     initialFrameIndex >= 0 && initialFrameIndex < totalFrames ? initialFrameIndex : -1;
   const [isTourStarted, setIsTourStarted] = useState(initialIndex >= 0);
-  const [currentFrameIndex, setCurrentFrameIndex] = useState(initialIndex);
+  const [currentFrameIndexState, setCurrentFrameIndexState] = useState(initialIndex);
+  const [restView, setRestView] = useState<RestViewpoint | null>(null);
+
+  const setCurrentFrameIndex = useCallback((index: number) => {
+    setRestView(null);
+    setCurrentFrameIndexState(index);
+  }, []);
 
   // Tour control functions
-  const startTour = () => {
+  const startTour = useCallback(() => {
     if (totalFrames <= 0) return;
+    setRestView(null);
     setIsTourStarted(true);
-    setCurrentFrameIndex(0);
-  };
+    setCurrentFrameIndexState(0);
+  }, [totalFrames]);
 
-  const nextFrame = () => {
-    if (currentFrameIndex < totalFrames - 1) {
-      setCurrentFrameIndex((prev) => prev + 1);
+  const nextFrame = useCallback(() => {
+    if (currentFrameIndexState < totalFrames - 1) {
+      setRestView(null);
+      setCurrentFrameIndexState((prev) => prev + 1);
     }
-  };
+  }, [currentFrameIndexState, totalFrames]);
 
-  const previousFrame = () => {
-    if (currentFrameIndex > 0) {
-      setCurrentFrameIndex((prev) => prev - 1);
+  const previousFrame = useCallback(() => {
+    if (currentFrameIndexState > 0) {
+      setRestView(null);
+      setCurrentFrameIndexState((prev) => prev - 1);
     }
-  };
+  }, [currentFrameIndexState]);
 
-  const quitTour = () => {
+  const sitAtRestView = useCallback((viewpoint: RestViewpoint) => {
     setIsTourStarted(false);
-    setCurrentFrameIndex(-1);
-  };
+    setCurrentFrameIndexState(-1);
+    setRestView(viewpoint);
+  }, []);
+
+  const quitTour = useCallback(() => {
+    setRestView(null);
+    setIsTourStarted(false);
+    setCurrentFrameIndexState(-1);
+  }, []);
 
   const value = {
     isTourStarted,
-    currentFrameIndex,
+    isResting: restView !== null,
+    restView,
+    currentFrameIndex: currentFrameIndexState,
     setCurrentFrameIndex,
     totalFrames,
     startTour,
     nextFrame,
     previousFrame,
+    sitAtRestView,
     quitTour,
   };
 

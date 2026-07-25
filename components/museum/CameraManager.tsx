@@ -5,10 +5,12 @@ import * as THREE from 'three';
 import { CameraControls, useDetectGPU } from '@react-three/drei';
 import { ZoomContext } from '../../contexts/ZoomContext';
 import { useThree } from '@react-three/fiber';
+import { RestViewpoint } from '../../types/museum';
 
 interface CameraManagerProps {
   onFrameChange?: (index: number) => void;
   currentFrameIndex: number;
+  restView?: RestViewpoint | null;
   frameRefs: React.MutableRefObject<(THREE.Mesh | null)[]>;
   imagesCount: number;
 }
@@ -18,6 +20,7 @@ const CAMERA_SMOOTH_TIME = 0.85;
 const CameraManager: React.FC<CameraManagerProps> = ({
   onFrameChange,
   currentFrameIndex,
+  restView = null,
   frameRefs,
   imagesCount,
 }) => {
@@ -96,13 +99,29 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     if (onFrameChange) onFrameChange(-1);
   }, [onFrameChange]);
 
+  const moveToRestView = useCallback(async (viewpoint: RestViewpoint) => {
+    if (!cameraControlsRef.current) return;
+    setZoomedFrameId(null);
+    await cameraControlsRef.current.setLookAt(
+      viewpoint.position[0],
+      viewpoint.position[1],
+      viewpoint.position[2],
+      viewpoint.target[0],
+      viewpoint.target[1],
+      viewpoint.target[2],
+      true,
+    );
+  }, [setZoomedFrameId]);
+
   useEffect(() => {
-    if (currentFrameIndex >= 0 && currentFrameIndex < imagesCount) {
+    if (restView) {
+      moveToRestView(restView);
+    } else if (currentFrameIndex >= 0 && currentFrameIndex < imagesCount) {
       zoomToFrame(currentFrameIndex);
     } else if (currentFrameIndex === -1) {
       resetCamera();
     }
-  }, [currentFrameIndex, imagesCount, zoomToFrame, resetCamera]);
+  }, [currentFrameIndex, imagesCount, restView, zoomToFrame, resetCamera, moveToRestView]);
 
   return (
     <CameraControls
