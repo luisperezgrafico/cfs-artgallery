@@ -19,12 +19,18 @@ const DEFAULT_THEME: RoomTheme = {
   hemisphereTop: '#3d2b6b', hemisphereBottom: '#0a0816', ambientIntensity: 0.2,
 };
 
+const sideWallTilt = defaultRoomDimensions.wallTiltAngle;
+const leftWallBenchRotation: [number, number, number] = [0, Math.PI / 2 - sideWallTilt, 0];
+const rightWallBenchRotation: [number, number, number] = [0, -Math.PI / 2 + sideWallTilt, 0];
+
 const BENCH_LAYOUT: Array<{
   position: [number, number, number];
   rotation: [number, number, number];
 }> = [
-  { position: [-3.15, 0, 8.2], rotation: [0, Math.PI / 2, 0] },
-  { position: [3.15, 0, 8.2], rotation: [0, Math.PI / 2, 0] },
+  { position: [-1.75, 0, 5.7], rotation: leftWallBenchRotation },
+  { position: [1.75, 0, 5.7], rotation: rightWallBenchRotation },
+  { position: [-1.75, 0, 10.4], rotation: leftWallBenchRotation },
+  { position: [1.75, 0, 10.4], rotation: rightWallBenchRotation },
 ];
 
 interface MuseumProps {
@@ -112,7 +118,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
         <CeilingLight position={[-1.15, 3.95, 11]} />
         <CeilingLight position={[1.15, 3.95, 11]} />
 
-        {/* Benches — one quiet pair, aligned with the side walls and central viewing aisle */}
+        {/* Benches — quiet central pairs, rotated parallel to the tilted side walls */}
         {BENCH_LAYOUT.map((bench) => (
           <Bench
             key={bench.position.join(':')}
