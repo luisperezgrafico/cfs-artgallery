@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { rooms as allRooms, RoomConfig } from '../config/roomsConfig';
+import { getInitialRoomIndex } from '../utils/userPreferences';
 
 interface RoomContextValue {
   rooms: RoomConfig[];
@@ -12,7 +13,7 @@ interface RoomContextValue {
 const RoomContext = createContext<RoomContextValue | null>(null);
 
 export function RoomProvider({ children }: { children: React.ReactNode }) {
-  const [activeRoomIndex, setActiveRoomIndex] = useState(0);
+  const [activeRoomIndex, setActiveRoomIndex] = useState(() => getInitialRoomIndex(allRooms));
   return (
     <RoomContext.Provider value={{ rooms: allRooms, activeRoomIndex, setActiveRoomIndex }}>
       {children}

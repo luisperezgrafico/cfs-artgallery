@@ -19,17 +19,22 @@ const TourContext = createContext<TourContextType | undefined>(undefined);
 interface TourProviderProps {
   children: ReactNode;
   totalFrames: number;
+  initialFrameIndex?: number;
 }
 
 export const TourProvider: React.FC<TourProviderProps> = ({
   children,
   totalFrames,
+  initialFrameIndex = -1,
 }) => {
-  const [isTourStarted, setIsTourStarted] = useState(false);
-  const [currentFrameIndex, setCurrentFrameIndex] = useState(-1);
+  const initialIndex =
+    initialFrameIndex >= 0 && initialFrameIndex < totalFrames ? initialFrameIndex : -1;
+  const [isTourStarted, setIsTourStarted] = useState(initialIndex >= 0);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(initialIndex);
 
   // Tour control functions
   const startTour = () => {
+    if (totalFrames <= 0) return;
     setIsTourStarted(true);
     setCurrentFrameIndex(0);
   };

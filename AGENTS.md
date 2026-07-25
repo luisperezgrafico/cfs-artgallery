@@ -68,6 +68,13 @@ app/page.tsx (the "door")
 - **Scope (deliberate):** the theme only skins the **HTML chrome that used to be light** — the door and the two overlay modals (`ArtworkInfoModal`, `SubmitArtworkModal`). The **3D scene keeps its curated per-room atmosphere** regardless of theme. The `HamburgerMenu` and the HUD chips/plaques are **not yet theme-aware** (they stay as-is) — themable later if we want a full light mode.
 - **Adding a new overlay/panel:** reuse the `--panel-*` / `--field-*` variables instead of hardcoding cream/dark colors, and it will follow the theme for free.
 
+## Local preferences
+
+- **Source of truth:** browser `localStorage`, not cookies, while the app remains static export and the server does not need to read preferences.
+- **Visit resume:** `utils/userPreferences.ts` stores `{ roomId, frameIndex, updatedAt }` under `cfs-gallery:visit-position:v1`. This is deliberately a **room + slot position**, not artwork identity: `roomId` survives room reordering, and `frameIndex` matches the current eight-slot room model (including empty submit canvases).
+- **Failure mode:** storage access is optional and wrapped in `try/catch`; private mode, disabled storage, or malformed values fall back to Room I / overview.
+- **Future preference work:** add small typed helpers to `utils/userPreferences.ts` with versioned keys instead of scattering raw `localStorage` calls across components.
+
 ## Conventions
 
 - Docs shared with the Reddit collaborator stay in **English** (`SCOPE.md`, this file). Luis communicates in Spanish.

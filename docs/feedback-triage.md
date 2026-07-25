@@ -24,7 +24,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 4 | Slower, gentler motion | ✔️ | 🟢 | `prefers-reduced-motion` done; tuning left |
 | 5 | Readable text | ✔️ | 🟢 | Baseline |
 | 6 | Simple interface | ✔️ | 🟢 | Baseline |
-| 7 | Saves where you left off | ✅ | 🟢 | Device-local · = #18 |
+| 7 | Saves where you left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` · = #18 |
 | 8 | Design variation by room / piece | ✅ | 🟡 | Via a **data-driven theme kit** — no handmade rooms (perf + "system, not rooms") |
 | 9 | Randomize artwork / room order | 🗣️ | 🟡 | See **Discussion A** — pairs with resume-by-ID |
 | 10a | Optional artist audio commentary | 🟡 | 🟡 | Artist's own voice **+ TTS fallback**, off by default (later) |
@@ -36,7 +36,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 15 | Distress / content tags | ✅ | 🟢 | Needs a small curation policy (what's tagged, how revealed) |
 | 16 | "Sit with this work" (hide all but the piece) | ✅ | 🟢 | = #13 |
 | 17 | Sit on the bench to rest / take the room in | ✅ | 🟡 | A calm "rest" viewpoint on rails — very on-theme |
-| 18 | Track where you are / left off | ✅ | 🟢 | Device-local · = #7 |
+| 18 | Track where you are / left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` · = #7 |
 | 19 | Artist profiles | 🟡 | 🟡 | **Read-only** artist page later; self-managed profiles stay out |
 | 20 | "Blind" fully-audio experience | 🟡 | 🔴 | Screen-reader + list-view **first**; recorded narration = 10a |
 | 21 | Short and long descriptions | ✅ | 🟢 | One extra metadata field |
@@ -46,7 +46,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 25 | Landing = the front door to the gallery | ✔️ | 🟢 | Already the door |
 | 26 | Time estimation for the visit | ✅ | 🟢 | Reframe: *"how much is left, at your pace"* — not "completion" |
 
-**Free & possible now** (device-local): 7, 13/16, 17, 18, 23, 24 + descriptions/tags.
+**Free & possible now** (device-local): 13/16, 17, 23, 24 + descriptions/tags.
 **Groups with the Phase 2 backend:** read-only artist pages (19), any guest book (11).
 
 ---
