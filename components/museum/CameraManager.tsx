@@ -285,7 +285,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       look.lastY = e.clientY;
       look.yaw -= dx * REST_LOOK_SENSITIVITY;
       look.pitch = clamp(
-        look.pitch + dy * REST_LOOK_SENSITIVITY,
+        look.pitch - dy * REST_LOOK_SENSITIVITY,
         REST_LOOK_MIN_PITCH,
         REST_LOOK_MAX_PITCH,
       );

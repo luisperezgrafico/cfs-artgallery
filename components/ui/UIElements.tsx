@@ -2,6 +2,7 @@
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useDetectGPU } from '@react-three/drei';
 import { useSwipeable, SwipeEventData } from 'react-swipeable';
 import { useAnimation } from '../../contexts/AnimationContext';
 import { useTour } from '../../contexts/TourContext';
@@ -113,6 +114,7 @@ function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
 }
 
 function RestControls({ style }: { style?: React.CSSProperties }) {
+  const { isMobile } = useDetectGPU();
   const { quitTour } = useTour();
 
   return (
@@ -129,6 +131,9 @@ function RestControls({ style }: { style?: React.CSSProperties }) {
           <X size={17} />
           <span className="text-sm font-medium">Exit rest</span>
         </button>
+        <div className="text-white/60 text-xs mt-2">
+          {isMobile ? 'Drag your finger to look around' : 'Drag with the mouse to look around'}
+        </div>
       </div>
     </div>
   );

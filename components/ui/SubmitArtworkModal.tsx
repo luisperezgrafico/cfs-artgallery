@@ -313,7 +313,7 @@ const SubmitArtworkModal: React.FC = () => {
                     <Upload size={20} style={{ color: 'var(--field-icon)' }} />
                   )}
                   <span style={{ fontFamily: serif, fontSize: '0.8rem', color: 'var(--field-text)' }}>
-                    {values.file ? values.file.name : 'Tap to select image'}
+                    {values.file ? values.file.name : 'Choose image'}
                   </span>
                   {!preview && (
                     <span style={{ fontFamily: 'system-ui, sans-serif', fontSize: '0.68rem', color: 'var(--field-hint)' }}>
