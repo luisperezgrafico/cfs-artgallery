@@ -9,42 +9,42 @@ databases.
 **Sorting axis:** does it live **on the device** (`localStorage` — free, works with the current
 static export) or does it need a **backend** (the Phase 2 pivot)?
 
-**Status:** ✔️ already there/decided · ✅ adopt · 🟡 yes, later / with nuance · 🔴 out for now · 🗣️ discuss with you
+**Decision:** ✔️ already there/decided · ✅ adopt · 🟡 yes, later / with nuance · 🔴 out for now · 🗣️ discuss with you
 **Build effort:** 🟢 low · 🟡 medium · 🔴 high
 
 ---
 
 ## Master table
 
-| # | Suggestion | Status | Effort | Note |
-|---|---|:--:|:--:|---|
-| 1 | Dark mode by default | ✅ | 🟢 | Rooms/scene already dark; the **beige landing** still needs it |
-| 2 | Big simple buttons | ✔️ | 🟢 | Core design language |
-| 3 | Soft music, off by default | ✔️ | 🟡 | Decided (Phase 3); never autoplay |
-| 4 | Slower, gentler motion | ✔️ | 🟢 | `prefers-reduced-motion` done; camera/chrome timing tuned slower |
-| 5 | Readable text | ✔️ | 🟢 | Baseline |
-| 6 | Simple interface | ✔️ | 🟢 | Baseline |
-| 7 | Saves where you left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` · = #18 |
-| 8 | Design variation by room / piece | ✅ | 🟡 | Via a **data-driven theme kit** — no handmade rooms (perf + "system, not rooms") |
-| 9 | Randomize artwork / room order | 🗣️ | 🟡 | See **Discussion A** — pairs with resume-by-ID |
-| 10a | Optional artist audio commentary | 🟡 | 🟡 | Artist's own voice **+ TTS fallback**, off by default (later) |
-| 10b | Animated 3D artist avatar beside piece | 🔴 | 🔴 | Breaks perf budget; the audio (10a) covers the need |
-| 11 | Guest book / comments / mini-blog | 🗣️ | 🔴 | See **Discussion B** — backend + perpetual moderation |
-| 12 | Decent contrast | ✔️ | 🟢 | Baseline |
-| 13 | Hide interface / just swipe through | ✔️ | 🟢 | Implemented as an Eye-off button in the tour controls · = #16 |
-| 14 | Vertical-first, identical on wide screens | ✅ | 🟡 | Responsive accessibility guarantee |
-| 15 | Distress / content tags | ✅ | 🟢 | Needs a small curation policy (what's tagged, how revealed) |
-| 16 | "Sit with this work" (hide all but the piece) | ✔️ | 🟢 | Implemented as quiet hide-interface mode · = #13 |
-| 17 | Sit on the bench to rest / take the room in | ✅ | 🟡 | A calm "rest" viewpoint on rails — very on-theme |
-| 18 | Track where you are / left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` · = #7 |
-| 19 | Artist profiles | 🟡 | 🟡 | **Read-only** artist page later; self-managed profiles stay out |
-| 20 | "Blind" fully-audio experience | 🟡 | 🔴 | Screen-reader + list-view **first**; recorded narration = 10a |
-| 21 | Short and long descriptions | ✅ | 🟢 | One extra metadata field |
-| 22 | Visual-media vs written rooms | 🟡 | 🟡 | Good fit for the community; changes "artwork = text" model (later) |
-| 23 | ⭐ Visit presets (low energy / gentle / full / custom) | ✅ | 🟡 | Saved to device — the standout; extends the existing comfort controls |
-| 24 | "Add to my shelf" — private favourites | ✅ | 🟡 | Device-local, no account, non-social |
-| 25 | Landing = the front door to the gallery | ✔️ | 🟢 | Already the door |
-| 26 | Time estimation for the visit | ✅ | 🟢 | Reframe: *"how much is left, at your pace"* — not "completion" |
+| # | Suggestion | Decision | Effort | Current implementation | Notes |
+|---|---|:--:|:--:|---|---|
+| 1 | Dark mode by default | ✅ | 🟢 | **Partial:** default dark, persisted toggle, door + artwork/submit modals themed | Light-mode scope still open for hamburger/HUD; landing redesign will need polish |
+| 2 | Big simple buttons | ✔️ | 🟢 | Present in primary tour/menu controls | Keep as baseline |
+| 3 | Soft music, off by default | ✔️ | 🟡 | Not built | Decided for Phase 3; never autoplay |
+| 4 | Slower, gentler motion | ✔️ | 🟢 | `prefers-reduced-motion` baseline + slower camera/chrome timing | Continue tuning by feel |
+| 5 | Readable text | ✔️ | 🟢 | Baseline typography/contrast in current UI | Keep validating on mobile |
+| 6 | Simple interface | ✔️ | 🟢 | Minimal tour controls + drawer | Keep resisting extra chrome |
+| 7 | Saves where you left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` | = #18 |
+| 8 | Design variation by room / piece | ✅ | 🟡 | Room atmosphere is data-driven via `RoomTheme` | Future: richer theme kit, no handmade rooms |
+| 9 | Randomize artwork / room order | 🗣️ | 🟡 | Not built | See **Discussion A**; pairs with resume-by-ID |
+| 10a | Optional artist audio commentary | 🟡 | 🟡 | Not built | Artist voice + TTS fallback later, off by default |
+| 10b | Animated 3D artist avatar beside piece | 🔴 | 🔴 | Not built | Out for perf/cognitive load |
+| 11 | Guest book / comments / mini-blog | 🗣️ | 🔴 | Not built | See **Discussion B**; backend + moderation risk |
+| 12 | Decent contrast | ✔️ | 🟢 | Baseline contrast in dark UI; themed modals use tokens | Re-check if hamburger/HUD get light mode |
+| 13 | Hide interface / just swipe through | ✔️ | 🟢 | Implemented via Eye-off button; hidden mode supports swipe nav | = #16 |
+| 14 | Vertical-first, identical on wide screens | ✅ | 🟡 | Partially supported by responsive UI/camera framing | Needs explicit cross-viewport QA pass |
+| 15 | Distress / content tags | ✅ | 🟢 | Not built | Needs small curation policy first |
+| 16 | "Sit with this work" (hide all but the piece) | ✔️ | 🟢 | Implemented as quiet hide-interface mode | Text not exposed literally in UI |
+| 17 | Sit on the bench to rest / take the room in | ✅ | 🟡 | Benches exist visually; no rest viewpoint yet | Good next on-rails mode candidate |
+| 18 | Track where you are / left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` | = #7 |
+| 19 | Artist profiles | 🟡 | 🟡 | Not built | Read-only artist page later; self-managed profiles stay out |
+| 20 | "Blind" fully-audio experience | 🟡 | 🔴 | Not built | Screen-reader + list view first; recorded narration = 10a |
+| 21 | Short and long descriptions | ✅ | 🟢 | Not built | One extra metadata field; needs content model decision |
+| 22 | Visual-media vs written rooms | 🟡 | 🟡 | Not built | Good fit, but changes artwork model |
+| 23 | ⭐ Visit presets (low energy / gentle / full / custom) | ✅ | 🟡 | Not built | Saved to device; extends comfort controls |
+| 24 | "Add to my shelf" — private favourites | ✅ | 🟡 | Not built | Device-local, no account; should wait for stable artwork IDs |
+| 25 | Landing = the front door to the gallery | ✔️ | 🟢 | Current app starts at the door | Future landing redesign likely |
+| 26 | Time estimation for the visit | ✅ | 🟢 | Not built | Reframe: "how much is left, at your pace" |
 
 **Free & possible now** (device-local): 17, 23, 24 + descriptions/tags.
 **Groups with the Phase 2 backend:** read-only artist pages (19), any guest book (11).
