@@ -4,7 +4,10 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
-const Gallery = dynamic(() => import('@/components/Gallery'), { ssr: false });
+const Gallery = dynamic(() => import('@/components/Gallery'), {
+  ssr: false,
+  loading: () => <main className="door" aria-label="Entering gallery" />,
+});
 
 export default function Home() {
   const [entered, setEntered] = useState(false);

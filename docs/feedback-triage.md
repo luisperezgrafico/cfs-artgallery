@@ -31,7 +31,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 10b | Animated 3D artist avatar beside piece | 🔴 | 🔴 | Not built | Out for perf/cognitive load |
 | 11 | Guest book / comments / mini-blog | 🗣️ | 🔴 | Not built | See **Discussion B**; backend + moderation risk |
 | 12 | Decent contrast | ✔️ | 🟢 | Baseline contrast in dark UI; themed modals use tokens | Re-check if hamburger/HUD get light mode |
-| 13 | Hide interface / just swipe through | ✔️ | 🟢 | Implemented via Eye-off button; hidden mode supports swipe nav | = #16 |
+| 13 | Hide interface / just swipe through | ✔️ | 🟢 | Implemented via Eye-off button; hidden mode supports swipe nav, down to overview, up back to last frame | = #16 |
 | 14 | Vertical-first, identical on wide screens | ✅ | 🟡 | Partially supported by responsive UI/camera framing | Needs explicit cross-viewport QA pass |
 | 15 | Distress / content tags | ✅ | 🟢 | Not built | Needs small curation policy first |
 | 16 | "Sit with this work" (hide all but the piece) | ✔️ | 🟢 | Implemented as quiet hide-interface mode | Text not exposed literally in UI |

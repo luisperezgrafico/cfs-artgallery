@@ -96,7 +96,7 @@
   body {
     font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     color: var(--ink);
-    background: var(--mist);
+    background: var(--door-bg);
     -webkit-font-smoothing: antialiased;
   }
 

@@ -15,9 +15,19 @@ import HamburgerMenu from './HamburgerMenu';
 const HIDE_INTERFACE_FADE_MS = 520;
 
 function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
-  const { isTourStarted, nextFrame, previousFrame, quitTour } = useTour();
+  const {
+    isTourStarted,
+    currentFrameIndex,
+    setCurrentFrameIndex,
+    totalFrames,
+    startTour,
+    nextFrame,
+    previousFrame,
+    quitTour,
+  } = useTour();
   const swipedRecently = useRef(false);
   const swipeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastFrameIndex = useRef<number | null>(null);
 
   const markSwipe = useCallback((eventData: SwipeEventData) => {
     eventData.event.stopPropagation();
@@ -34,6 +44,12 @@ function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
       if (swipeTimer.current) clearTimeout(swipeTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (currentFrameIndex >= 0 && currentFrameIndex < totalFrames) {
+      lastFrameIndex.current = currentFrameIndex;
+    }
+  }, [currentFrameIndex, totalFrames]);
 
   const swipeHandlers = useSwipeable({
     onTouchStartOrOnMouseDown: ({ event }) => event.stopPropagation(),
@@ -56,6 +72,15 @@ function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
       ? (eventData) => {
           markSwipe(eventData);
           quitTour();
+        }
+      : undefined,
+    onSwipedUp: !isTourStarted && lastFrameIndex.current !== null
+      ? (eventData) => {
+          const targetFrameIndex = lastFrameIndex.current;
+          markSwipe(eventData);
+          if (targetFrameIndex === null || targetFrameIndex >= totalFrames) return;
+          startTour();
+          setCurrentFrameIndex(targetFrameIndex);
         }
       : undefined,
     preventScrollOnSwipe: true,
