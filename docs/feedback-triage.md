@@ -21,7 +21,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 1 | Dark mode by default | ✅ | 🟢 | Rooms/scene already dark; the **beige landing** still needs it |
 | 2 | Big simple buttons | ✔️ | 🟢 | Core design language |
 | 3 | Soft music, off by default | ✔️ | 🟡 | Decided (Phase 3); never autoplay |
-| 4 | Slower, gentler motion | ✔️ | 🟢 | `prefers-reduced-motion` done; tuning left |
+| 4 | Slower, gentler motion | ✔️ | 🟢 | `prefers-reduced-motion` done; camera/chrome timing tuned slower |
 | 5 | Readable text | ✔️ | 🟢 | Baseline |
 | 6 | Simple interface | ✔️ | 🟢 | Baseline |
 | 7 | Saves where you left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` · = #18 |

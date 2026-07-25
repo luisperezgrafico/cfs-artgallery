@@ -28,7 +28,7 @@ const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme }) => {
       style={{
         opacity: sceneOpacity,
         filter: `blur(${sceneBlur}px)`,
-        transition: 'opacity 1.5s ease-in-out, filter 1s ease-out',
+        transition: 'opacity 1.8s ease-in-out, filter 1.4s ease-out',
       }}
     >
       <Canvas

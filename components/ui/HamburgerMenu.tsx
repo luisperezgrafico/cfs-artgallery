@@ -106,13 +106,13 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-          style={{ animation: 'fadeIn 0.15s ease-out' }}
+          style={{ animation: 'fadeIn 0.24s ease-out' }}
           onClick={() => setIsOpen(false)}
         />
       )}
 
       <div
-        className={`fixed right-0 top-0 bottom-0 z-50 transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed right-0 top-0 bottom-0 z-50 transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Tab button */}
         <button

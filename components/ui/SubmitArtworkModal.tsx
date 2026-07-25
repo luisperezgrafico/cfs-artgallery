@@ -165,14 +165,14 @@ const SubmitArtworkModal: React.FC = () => {
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-        style={{ animation: 'fadeIn 0.15s ease-out' }}
+        style={{ animation: 'fadeIn 0.28s ease-out' }}
         onClick={close}
       />
 
       {/* Panel wrapper */}
       <div
         className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
-        style={{ padding: safeAreaPadding, animation: 'scaleInSmooth 0.18s ease-out forwards' }}
+        style={{ padding: safeAreaPadding, animation: 'scaleInSmooth 0.34s ease-out forwards' }}
       >
         <div className="pointer-events-auto w-full max-w-lg flex flex-col max-h-[92dvh]" style={panelStyle}>
 

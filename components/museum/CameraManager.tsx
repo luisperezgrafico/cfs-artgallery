@@ -13,6 +13,8 @@ interface CameraManagerProps {
   imagesCount: number;
 }
 
+const CAMERA_SMOOTH_TIME = 0.85;
+
 const CameraManager: React.FC<CameraManagerProps> = ({
   onFrameChange,
   currentFrameIndex,
@@ -105,6 +107,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   return (
     <CameraControls
       ref={cameraControlsRef}
+      smoothTime={CAMERA_SMOOTH_TIME}
       mouseButtons={{ left: 0, middle: 0, right: 0, wheel: 0 }}
       touches={{ one: 0, two: 0, three: 0 }}
     />

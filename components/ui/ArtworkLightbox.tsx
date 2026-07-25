@@ -156,7 +156,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
   return (
     <div
       className="fixed inset-0 flex items-center justify-center bg-black"
-      style={{ ...style, zIndex: 60, animation: 'fadeIn 0.18s ease-out' }}
+      style={{ ...style, zIndex: 60, animation: 'fadeIn 0.32s ease-out' }}
     >
       {/* Gesture / image area */}
       <div
