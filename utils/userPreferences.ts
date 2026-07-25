@@ -5,6 +5,10 @@ type StoredVisitPosition = {
 };
 
 const VISIT_POSITION_KEY = 'cfs-gallery:visit-position:v1';
+const MENU_TAB_Y_KEY = 'cfs-gallery:menu-tab-y:v1';
+const DEFAULT_MENU_TAB_Y = 0.5;
+const MIN_MENU_TAB_Y = 0.18;
+const MAX_MENU_TAB_Y = 0.82;
 
 function storage(): Storage | null {
   if (typeof window === 'undefined') return null;
@@ -77,4 +81,33 @@ export function getInitialFrameIndex(roomId: string, totalFrames: number): numbe
   }
 
   return Math.min(saved.frameIndex, totalFrames - 1);
+}
+
+export function clampMenuTabY(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_MENU_TAB_Y;
+  return Math.min(MAX_MENU_TAB_Y, Math.max(MIN_MENU_TAB_Y, value));
+}
+
+export function readMenuTabY(): number {
+  const localStorage = storage();
+  if (!localStorage) return DEFAULT_MENU_TAB_Y;
+
+  try {
+    const raw = localStorage.getItem(MENU_TAB_Y_KEY);
+    if (!raw) return DEFAULT_MENU_TAB_Y;
+    return clampMenuTabY(Number(raw));
+  } catch {
+    return DEFAULT_MENU_TAB_Y;
+  }
+}
+
+export function saveMenuTabY(value: number) {
+  const localStorage = storage();
+  if (!localStorage) return;
+
+  try {
+    localStorage.setItem(MENU_TAB_Y_KEY, String(clampMenuTabY(value)));
+  } catch {
+    /* storage disabled/full - preference persistence is optional */
+  }
 }

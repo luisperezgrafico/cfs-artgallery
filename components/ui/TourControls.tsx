@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Play, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight, EyeOff, X } from 'lucide-react';
 import { useDetectGPU } from '@react-three/drei';
 import { useTour } from '../../contexts/TourContext';
 
-const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
+const TourControls: React.FC<{
+  style?: React.CSSProperties;
+  onHideInterface?: () => void;
+}> = ({ style, onHideInterface }) => {
   const { isMobile } = useDetectGPU();
   const {
     isTourStarted, currentFrameIndex, totalFrames,
@@ -85,6 +88,15 @@ const TourControls: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
               ${currentFrameIndex === totalFrames - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
           >
             <ChevronRight size={20} />
+          </button>
+
+          <button
+            onClick={onHideInterface}
+            aria-label="Hide interface"
+            title="Hide interface"
+            className="bg-white/10 hover:bg-white/20 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors"
+          >
+            <EyeOff size={19} />
           </button>
 
           <button

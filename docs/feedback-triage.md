@@ -31,10 +31,10 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 10b | Animated 3D artist avatar beside piece | 🔴 | 🔴 | Breaks perf budget; the audio (10a) covers the need |
 | 11 | Guest book / comments / mini-blog | 🗣️ | 🔴 | See **Discussion B** — backend + perpetual moderation |
 | 12 | Decent contrast | ✔️ | 🟢 | Baseline |
-| 13 | Hide interface / just swipe through | ✅ | 🟢 | = #16 |
+| 13 | Hide interface / just swipe through | ✔️ | 🟢 | Implemented as an Eye-off button in the tour controls · = #16 |
 | 14 | Vertical-first, identical on wide screens | ✅ | 🟡 | Responsive accessibility guarantee |
 | 15 | Distress / content tags | ✅ | 🟢 | Needs a small curation policy (what's tagged, how revealed) |
-| 16 | "Sit with this work" (hide all but the piece) | ✅ | 🟢 | = #13 |
+| 16 | "Sit with this work" (hide all but the piece) | ✔️ | 🟢 | Implemented as quiet hide-interface mode · = #13 |
 | 17 | Sit on the bench to rest / take the room in | ✅ | 🟡 | A calm "rest" viewpoint on rails — very on-theme |
 | 18 | Track where you are / left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` · = #7 |
 | 19 | Artist profiles | 🟡 | 🟡 | **Read-only** artist page later; self-managed profiles stay out |
@@ -46,7 +46,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 25 | Landing = the front door to the gallery | ✔️ | 🟢 | Already the door |
 | 26 | Time estimation for the visit | ✅ | 🟢 | Reframe: *"how much is left, at your pace"* — not "completion" |
 
-**Free & possible now** (device-local): 13/16, 17, 23, 24 + descriptions/tags.
+**Free & possible now** (device-local): 17, 23, 24 + descriptions/tags.
 **Groups with the Phase 2 backend:** read-only artist pages (19), any guest book (11).
 
 ---

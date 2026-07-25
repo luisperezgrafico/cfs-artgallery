@@ -13,10 +13,29 @@ import HamburgerMenu from './HamburgerMenu';
 const UIElements: React.FC = () => {
   const { currentScreen, assetsReady, handleLoadingComplete, handleTitleFading, handleTitleComplete } = useAnimation();
   const [isLoading, setIsLoading] = useState(true);
+  const [isInterfaceHidden, setIsInterfaceHidden] = useState(false);
 
   useEffect(() => {
     if (!isLoading) handleLoadingComplete();
   }, [isLoading]);
+
+  useEffect(() => {
+    if (!isInterfaceHidden) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsInterfaceHidden(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isInterfaceHidden]);
+
+  useEffect(() => {
+    if (currentScreen !== 'scene') setIsInterfaceHidden(false);
+  }, [currentScreen]);
 
   return (
     <>
@@ -29,13 +48,26 @@ const UIElements: React.FC = () => {
       )}
 
       {currentScreen === 'scene' && (
-        <>
-          <TourControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-          <ArtworkInfoModal />
-          <ArtworkLightbox />
-          <SubmitArtworkModal />
-          <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-        </>
+        isInterfaceHidden ? (
+          <button
+            type="button"
+            aria-label="Show interface"
+            title="Show interface"
+            className="fixed inset-0 z-30 cursor-default bg-transparent"
+            onClick={() => setIsInterfaceHidden(false)}
+          />
+        ) : (
+          <>
+            <TourControls
+              style={{ animation: 'fadeIn 1s ease-out forwards' }}
+              onHideInterface={() => setIsInterfaceHidden(true)}
+            />
+            <ArtworkInfoModal />
+            <ArtworkLightbox />
+            <SubmitArtworkModal />
+            <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+          </>
+        )
       )}
     </>
   );

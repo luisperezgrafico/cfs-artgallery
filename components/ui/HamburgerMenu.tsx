@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
+import { clampMenuTabY, readMenuTabY, saveMenuTabY } from '../../utils/userPreferences';
 import ThemeToggle from './ThemeToggle';
 
 function useIsMobile() {
@@ -20,9 +21,18 @@ function useIsMobile() {
 
 const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [tabY, setTabY] = useState(() => readMenuTabY());
   const isMobile = useIsMobile();
   const { rooms, activeRoomIndex, setActiveRoomIndex } = useRoom();
   const { quitTour } = useTour();
+  const dragState = useRef<{
+    pointerId: number | null;
+    startY: number;
+    startTabY: number;
+    dragged: boolean;
+  }>({ pointerId: null, startY: 0, startTabY: tabY, dragged: false });
+  const tabYRef = useRef(tabY);
+  const suppressClick = useRef(false);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -32,11 +42,62 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  useEffect(() => {
+    tabYRef.current = tabY;
+  }, [tabY]);
+
   const handleRoomSelect = (i: number) => {
     if (i === activeRoomIndex) { setIsOpen(false); return; }
     quitTour();
     setActiveRoomIndex(i);
     setIsOpen(false);
+  };
+
+  const handleTabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    dragState.current = {
+      pointerId: e.pointerId,
+      startY: e.clientY,
+      startTabY: tabY,
+      dragged: false,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleTabPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const state = dragState.current;
+    if (state.pointerId !== e.pointerId) return;
+
+    const delta = e.clientY - state.startY;
+    if (Math.abs(delta) > 4) state.dragged = true;
+    if (!state.dragged) return;
+
+    e.preventDefault();
+    const nextTabY = clampMenuTabY(state.startTabY + delta / window.innerHeight);
+    tabYRef.current = nextTabY;
+    setTabY(nextTabY);
+  };
+
+  const finishTabDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const state = dragState.current;
+    if (state.pointerId !== e.pointerId) return;
+
+    if (state.dragged) {
+      suppressClick.current = true;
+      saveMenuTabY(tabYRef.current);
+    }
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    state.pointerId = null;
+  };
+
+  const handleTabClick = () => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    setIsOpen(!isOpen);
   };
 
   return (
@@ -55,17 +116,23 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
       >
         {/* Tab button */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleTabClick}
+          onPointerDown={handleTabPointerDown}
+          onPointerMove={handleTabPointerMove}
+          onPointerUp={finishTabDrag}
+          onPointerCancel={finishTabDrag}
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
-          className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 flex items-center justify-center bg-black/50 hover:bg-black/70 backdrop-blur-md text-white transition-colors shadow-lg rounded-l-2xl border-l border-t border-b border-white/15"
+          className="absolute left-0 -translate-x-full -translate-y-1/2 flex items-center justify-center bg-black/40 hover:bg-black/50 backdrop-blur-md text-white transition-colors shadow-lg rounded-l-xl border-l border-t border-b border-white/15 cursor-grab active:cursor-grabbing"
           style={{
-            paddingTop: '1.25rem',
-            paddingBottom: '1.25rem',
-            paddingLeft: '0.875rem',
-            paddingRight: '0.75rem',
+            top: `${tabY * 100}%`,
+            paddingTop: '1rem',
+            paddingBottom: '1rem',
+            paddingLeft: '0.75rem',
+            paddingRight: '0.65rem',
+            touchAction: 'none',
           }}
         >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          {isOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
 
         {/* Drawer panel */}
@@ -133,6 +200,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 <li><span className="text-white/65">Tap artwork</span> — zoom in</li>
                 <li><span className="text-white/65">Tap plaque</span> — read description</li>
                 <li><span className="text-white/65">Swipe left / right</span> — navigate artworks</li>
+                <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
                 <li><span className="text-white/65">Swipe down</span> — exit zoom</li>
               </ul>
             ) : (
@@ -140,6 +208,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 <li><span className="text-white/65">Click artwork</span> — zoom in</li>
                 <li><span className="text-white/65">Click plaque</span> — read description</li>
                 <li><span className="text-white/65">← → arrows</span> — navigate artworks</li>
+                <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
                 <li><span className="text-white/65">Escape</span> — exit zoom</li>
               </ul>
             )}
