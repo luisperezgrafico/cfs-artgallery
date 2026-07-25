@@ -19,6 +19,14 @@ const DEFAULT_THEME: RoomTheme = {
   hemisphereTop: '#3d2b6b', hemisphereBottom: '#0a0816', ambientIntensity: 0.2,
 };
 
+const BENCH_LAYOUT: Array<{
+  position: [number, number, number];
+  rotation: [number, number, number];
+}> = [
+  { position: [-3.15, 0, 8.2], rotation: [0, Math.PI / 2, 0] },
+  { position: [3.15, 0, 8.2], rotation: [0, Math.PI / 2, 0] },
+];
+
 interface MuseumProps {
   images: ImageMetadata[];
   theme?: RoomTheme;
@@ -104,11 +112,14 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
         <CeilingLight position={[-1.15, 3.95, 11]} />
         <CeilingLight position={[1.15, 3.95, 11]} />
 
-        {/* Gallery benches — against side walls, long axis runs depth-wise */}
-        <Bench position={[-2.8, 0, 5.5]} rotation={[0, Math.PI / 2, 0]} />
-        <Bench position={[ 2.8, 0, 5.5]} rotation={[0, Math.PI / 2, 0]} />
-        <Bench position={[-2.8, 0, 10]} rotation={[0, Math.PI / 2, 0]} />
-        <Bench position={[ 2.8, 0, 10]} rotation={[0, Math.PI / 2, 0]} />
+        {/* Benches — one quiet pair, aligned with the side walls and central viewing aisle */}
+        {BENCH_LAYOUT.map((bench) => (
+          <Bench
+            key={bench.position.join(':')}
+            position={bench.position}
+            rotation={bench.rotation}
+          />
+        ))}
       </group>
     </ZoomProvider>
   );
