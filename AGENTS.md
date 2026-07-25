@@ -60,6 +60,14 @@ app/page.tsx (the "door")
 - **Floor reflection flicker** (`MeshReflectorMaterial` on the floor) is a known issue — parked, not being worked on right now.
 - Rooms II–IV have no artworks yet; filled with submit canvases.
 
+## Theming (dark / light)
+
+- **Source of truth:** the `data-theme` attribute on `<html>` (`"dark"` | `"light"`), **default dark**, persisted in `localStorage` under the key `theme`. An inline script in `app/layout.tsx` applies it before first paint (no flash); `<html>` is rendered with `data-theme="dark"` + `suppressHydrationWarning`.
+- **Tokens live in `app/globals.css`:** dark values are the defaults in `:root`; light values override under `:root[data-theme='light']`. Three groups — `--door-*` (landing), `--panel-*` (overlay modals: surface/border/shadow/title/subtitle/text/separator/button), `--field-*` (form inputs inside modals). There's also a global `::placeholder` rule using `--field-hint`.
+- **Toggle:** `components/ui/ThemeToggle.tsx` — an icon button (lucide `Sun`/`Moon`) that just flips the attribute + writes `localStorage`. Mounted in the door (`app/page.tsx`, styled via `.door-toggle`) and in the `HamburgerMenu` "Appearance" section. Never mounted twice at once, so it holds no shared state.
+- **Scope (deliberate):** the theme only skins the **HTML chrome that used to be light** — the door and the two overlay modals (`ArtworkInfoModal`, `SubmitArtworkModal`). The **3D scene keeps its curated per-room atmosphere** regardless of theme. The `HamburgerMenu` and the HUD chips/plaques are **not yet theme-aware** (they stay as-is) — themable later if we want a full light mode.
+- **Adding a new overlay/panel:** reuse the `--panel-*` / `--field-*` variables instead of hardcoding cream/dark colors, and it will follow the theme for free.
+
 ## Conventions
 
 - Docs shared with the Reddit collaborator stay in **English** (`SCOPE.md`, this file). Luis communicates in Spanish.

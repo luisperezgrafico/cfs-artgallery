@@ -13,12 +13,79 @@
   }
 
   :root {
+    /* HUD chrome — left as-is for now (already reads fine over the dark scene) */
     --ink: #2b3644;
     --ink-soft: #5a6878;
     --glass: rgba(250, 249, 246, 0.88);
     --glass-border: rgba(43, 54, 68, 0.14);
     --accent: #4a708f;
     --mist: #cfd9e5;
+
+    /* Theme tokens — door + overlay panels. Default = dark. */
+    --door-bg: linear-gradient(160deg, #1a1611 0%, #14110d 55%, #0d0b08 100%);
+    --door-title: #ece6da;
+    --door-tagline: #a99e8c;
+    --door-btn-bg: rgba(60, 52, 40, 0.55);
+    --door-btn-bg-hover: rgba(74, 64, 50, 0.85);
+    --door-btn-border: rgba(180, 160, 128, 0.28);
+    --door-btn-text: #ece6da;
+    --door-btn-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+
+    --panel-bg: rgba(30, 27, 22, 0.98);
+    --panel-border: rgba(180, 160, 128, 0.18);
+    --panel-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+    --panel-title: #ece6da;
+    --panel-subtitle: #b3a894;
+    --panel-text: #c9c1b2;
+    --panel-separator: rgba(180, 160, 128, 0.18);
+    --panel-btn-bg: rgba(180, 160, 128, 0.14);
+    --panel-btn-bg-hover: rgba(180, 160, 128, 0.26);
+    --panel-btn-text: #ece6da;
+
+    /* form fields inside overlay panels */
+    --field-bg: rgba(255, 255, 255, 0.06);
+    --field-bg-soft: rgba(255, 255, 255, 0.03);
+    --field-border: rgba(180, 160, 128, 0.28);
+    --field-text: #ece6da;
+    --field-label: #b3a894;
+    --field-hint: #8a8272;
+    --field-icon: #b3a894;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--field-hint);
+    opacity: 1;
+  }
+
+  :root[data-theme='light'] {
+    --door-bg: linear-gradient(160deg, #f0ebe0 0%, #e6ddd0 55%, #d8cfc2 100%);
+    --door-title: #2b3644;
+    --door-tagline: #6a5e52;
+    --door-btn-bg: rgba(238, 230, 214, 0.85);
+    --door-btn-bg-hover: rgba(238, 230, 214, 1);
+    --door-btn-border: rgba(160, 138, 108, 0.5);
+    --door-btn-text: #2b3644;
+    --door-btn-shadow: 0 2px 14px rgba(60, 48, 32, 0.14);
+
+    --panel-bg: rgba(238, 230, 214, 0.97);
+    --panel-border: rgba(160, 138, 108, 0.45);
+    --panel-shadow: 0 12px 40px rgba(60, 48, 32, 0.35), 0 2px 8px rgba(60, 48, 32, 0.2);
+    --panel-title: #2b3644;
+    --panel-subtitle: #5a6878;
+    --panel-text: #4a5563;
+    --panel-separator: rgba(160, 138, 108, 0.35);
+    --panel-btn-bg: rgba(160, 138, 108, 0.18);
+    --panel-btn-bg-hover: rgba(160, 138, 108, 0.32);
+    --panel-btn-text: #2b3644;
+
+    --field-bg: rgba(255, 255, 255, 0.55);
+    --field-bg-soft: rgba(255, 255, 255, 0.22);
+    --field-border: rgba(160, 138, 108, 0.4);
+    --field-text: #2b3644;
+    --field-label: #8a7a68;
+    --field-hint: #b0a898;
+    --field-icon: #a08a6c;
   }
 
   html,
@@ -59,6 +126,7 @@
 /* ---------- the door ---------- */
 
 .door {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -67,7 +135,7 @@
   gap: 2rem;
   padding: 2rem;
   text-align: center;
-  background: linear-gradient(160deg, #f0ebe0 0%, #e6ddd0 55%, #d8cfc2 100%);
+  background: var(--door-bg);
 }
 
 .door-title {
@@ -75,35 +143,57 @@
   font-size: clamp(1.7rem, 4vw, 2.8rem);
   font-weight: 400;
   letter-spacing: 0.04em;
-  color: #2b3644;
+  color: var(--door-title);
 }
 
 .door-tagline {
   max-width: 30rem;
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
-  color: #6a5e52;
+  color: var(--door-tagline);
   line-height: 1.75;
   font-size: 1rem;
 }
 
 .door-enter {
   padding: 0.85rem 2.4rem;
-  border: 1px solid rgba(160, 138, 108, 0.5);
+  border: 1px solid var(--door-btn-border);
   border-radius: 2px;
-  background: rgba(238, 230, 214, 0.85);
-  color: #2b3644;
+  background: var(--door-btn-bg);
+  color: var(--door-btn-text);
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 0.95rem;
   letter-spacing: 0.04em;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-  box-shadow: 0 2px 14px rgba(60, 48, 32, 0.14);
+  box-shadow: var(--door-btn-shadow);
 }
 
 .door-enter:hover {
-  background: rgba(238, 230, 214, 1);
+  background: var(--door-btn-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(60, 48, 32, 0.2);
+}
+
+/* theme toggle — top-right on the door */
+.door-toggle {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--door-btn-border);
+  background: var(--door-btn-bg);
+  color: var(--door-btn-text);
+  box-shadow: var(--door-btn-shadow);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.door-toggle:hover {
+  background: var(--door-btn-bg-hover);
+  transform: translateY(-1px);
 }
 
 /* ---------- the gallery stage ---------- */

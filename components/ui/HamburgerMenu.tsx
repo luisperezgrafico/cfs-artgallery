@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
+import ThemeToggle from './ThemeToggle';
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
@@ -107,6 +108,17 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
           </div>
 
           <div className="flex-1" />
+
+          {/* Appearance */}
+          <div className="px-5 pt-4 border-t border-white/10">
+            <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
+              Appearance
+            </p>
+            <div className="flex items-center justify-between">
+              <span className="text-white/75 text-sm">Theme</span>
+              <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors" />
+            </div>
+          </div>
 
           {/* Controls */}
           <div

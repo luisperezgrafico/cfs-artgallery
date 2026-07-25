@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const Gallery = dynamic(() => import('@/components/Gallery'), { ssr: false });
 
@@ -12,6 +13,7 @@ export default function Home() {
 
   return (
     <main className="door">
+      <ThemeToggle className="door-toggle" />
       <h1 className="door-title">ME/CFS Community Gallery</h1>
       <p className="door-tagline">
         A quiet place to be with art made by our community.

@@ -27,9 +27,9 @@ interface FieldErrors {
 // ── Shared style tokens ────────────────────────────────────────────────────
 
 const panelStyle: React.CSSProperties = {
-  background: 'rgba(238, 230, 214, 0.97)',
-  border: '1px solid rgba(160, 138, 108, 0.45)',
-  boxShadow: '0 12px 40px rgba(60, 48, 32, 0.35), 0 2px 8px rgba(60, 48, 32, 0.2)',
+  background: 'var(--panel-bg)',
+  border: '1px solid var(--panel-border)',
+  boxShadow: 'var(--panel-shadow)',
   borderRadius: '2px',
 };
 
@@ -38,12 +38,12 @@ const serif = "Georgia, 'Times New Roman', serif";
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.55rem 0.75rem',
-  background: 'rgba(255,255,255,0.55)',
-  border: '1px solid rgba(160, 138, 108, 0.4)',
+  background: 'var(--field-bg)',
+  border: '1px solid var(--field-border)',
   borderRadius: '2px',
   fontFamily: serif,
   fontSize: '0.875rem',
-  color: '#2b3644',
+  color: 'var(--field-text)',
   outline: 'none',
 };
 
@@ -51,7 +51,7 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
   fontFamily: serif,
   fontSize: '0.7rem',
-  color: '#8a7a68',
+  color: 'var(--field-label)',
   marginBottom: '0.35rem',
   letterSpacing: '0.06em',
   textTransform: 'uppercase' as const,
@@ -179,40 +179,40 @@ const SubmitArtworkModal: React.FC = () => {
           {/* Header */}
           <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
             <div>
-              <h2 style={{ fontFamily: serif, color: '#2b3644', fontSize: '1.1rem', fontWeight: 600 }}>
+              <h2 style={{ fontFamily: serif, color: 'var(--panel-title)', fontSize: '1.1rem', fontWeight: 600 }}>
                 Submit your artwork
               </h2>
-              <p style={{ fontFamily: serif, color: '#8a7a68', fontSize: '0.8rem', marginTop: '0.25rem', fontStyle: 'italic' }}>
+              <p style={{ fontFamily: serif, color: 'var(--panel-subtitle)', fontSize: '0.8rem', marginTop: '0.25rem', fontStyle: 'italic' }}>
                 Reviewed before appearing in the gallery.
               </p>
             </div>
             <button
               onClick={close}
               aria-label="Close"
-              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[rgba(160,138,108,0.18)] hover:bg-[rgba(160,138,108,0.32)]"
-              style={{ color: '#5a4f3e' }}
+              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+              style={{ color: 'var(--panel-btn-text)' }}
             >
               <X size={16} />
             </button>
           </div>
 
-          <div className="mx-6" style={{ borderTop: '1px solid rgba(160,138,108,0.35)' }} />
+          <div className="mx-6" style={{ borderTop: '1px solid var(--panel-separator)' }} />
 
           {/* ── Success state ── */}
           {submitState === 'success' ? (
             <div className="flex flex-col items-center justify-center px-8 py-10 gap-4 text-center">
               <CheckCircle size={38} style={{ color: '#7a9e6e' }} />
-              <p style={{ fontFamily: serif, color: '#2b3644', fontSize: '1rem', fontWeight: 600 }}>
+              <p style={{ fontFamily: serif, color: 'var(--panel-title)', fontSize: '1rem', fontWeight: 600 }}>
                 Thank you!
               </p>
-              <p style={{ fontFamily: serif, color: '#5a6878', fontSize: '0.875rem', lineHeight: 1.7 }}>
+              <p style={{ fontFamily: serif, color: 'var(--panel-subtitle)', fontSize: '0.875rem', lineHeight: 1.7 }}>
                 Your artwork has been submitted and is awaiting review.<br />
                 We'll be in touch at <strong>{values.email}</strong>.
               </p>
               <button
                 onClick={close}
                 className="mt-1 px-6 py-2.5 text-sm transition-colors"
-                style={{ fontFamily: serif, background: 'rgba(160,138,108,0.22)', color: '#2b3644', border: '1px solid rgba(160,138,108,0.38)', borderRadius: '2px' }}
+                style={{ fontFamily: serif, background: 'var(--panel-btn-bg)', color: 'var(--panel-btn-text)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
               >
                 Close
               </button>
@@ -300,8 +300,8 @@ const SubmitArtworkModal: React.FC = () => {
                   disabled={busy}
                   className="w-full flex flex-col items-center gap-2 py-4 transition-colors"
                   style={{
-                    background: preview ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.22)',
-                    border: `1px dashed rgba(160,138,108,${preview ? '0.6' : '0.38'})`,
+                    background: preview ? 'var(--field-bg)' : 'var(--field-bg-soft)',
+                    border: '1px dashed var(--field-border)',
                     borderRadius: '2px',
                     cursor: busy ? 'not-allowed' : 'pointer',
                   }}
@@ -310,13 +310,13 @@ const SubmitArtworkModal: React.FC = () => {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={preview} alt="Preview" style={{ maxHeight: '90px', maxWidth: '100%', objectFit: 'contain', borderRadius: '2px' }} />
                   ) : (
-                    <Upload size={20} style={{ color: '#a08a6c' }} />
+                    <Upload size={20} style={{ color: 'var(--field-icon)' }} />
                   )}
-                  <span style={{ fontFamily: serif, fontSize: '0.8rem', color: '#7a6a58' }}>
+                  <span style={{ fontFamily: serif, fontSize: '0.8rem', color: 'var(--field-text)' }}>
                     {values.file ? values.file.name : 'Tap to select image'}
                   </span>
                   {!preview && (
-                    <span style={{ fontFamily: 'system-ui, sans-serif', fontSize: '0.68rem', color: '#b0a898' }}>
+                    <span style={{ fontFamily: 'system-ui, sans-serif', fontSize: '0.68rem', color: 'var(--field-hint)' }}>
                       {ACCEPTED_LABEL}
                     </span>
                   )}
@@ -344,9 +344,9 @@ const SubmitArtworkModal: React.FC = () => {
                 className="w-full py-3 text-sm transition-colors"
                 style={{
                   fontFamily: serif,
-                  background: busy ? 'rgba(160,138,108,0.15)' : 'rgba(160,138,108,0.32)',
-                  color: busy ? '#9a8a78' : '#2b3644',
-                  border: '1px solid rgba(160,138,108,0.42)',
+                  background: busy ? 'var(--panel-btn-bg)' : 'var(--panel-btn-bg-hover)',
+                  color: busy ? 'var(--panel-subtitle)' : 'var(--panel-btn-text)',
+                  border: '1px solid var(--panel-border)',
                   borderRadius: '2px',
                   cursor: busy ? 'not-allowed' : 'pointer',
                   letterSpacing: '0.03em',

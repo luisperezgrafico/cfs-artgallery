@@ -78,9 +78,9 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
         <div
           className="pointer-events-auto w-full max-w-lg flex flex-col max-h-[85dvh]"
           style={{
-            background: 'rgba(238, 230, 214, 0.97)',
-            border: '1px solid rgba(160, 138, 108, 0.45)',
-            boxShadow: '0 12px 40px rgba(60, 48, 32, 0.35), 0 2px 8px rgba(60, 48, 32, 0.2)',
+            background: 'var(--panel-bg)',
+            border: '1px solid var(--panel-border)',
+            boxShadow: 'var(--panel-shadow)',
             borderRadius: '2px',
           }}
         >
@@ -92,7 +92,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                 className="text-lg leading-snug"
                 style={{
                   fontFamily: "Georgia, 'Times New Roman', serif",
-                  color: '#2b3644',
+                  color: 'var(--panel-title)',
                   fontWeight: 600,
                   letterSpacing: '0.01em',
                 }}
@@ -101,7 +101,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
               </h2>
               <p
                 className="text-sm mt-1 italic"
-                style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: '#5a6878' }}
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: 'var(--panel-subtitle)' }}
               >
                 {artwork.artist}
                 {artwork.date ? ` · ${artwork.date}` : ''}
@@ -110,8 +110,8 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
             <button
               onClick={close}
               aria-label="Close"
-              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[rgba(160,138,108,0.18)] hover:bg-[rgba(160,138,108,0.32)]"
-              style={{ color: '#5a4f3e' }}
+              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+              style={{ color: 'var(--panel-btn-text)' }}
             >
               <X size={16} />
             </button>
@@ -119,7 +119,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
 
           {/* Separator */}
           {artwork.description && (
-            <div className="mx-6" style={{ borderTop: '1px solid rgba(160, 138, 108, 0.35)' }} />
+            <div className="mx-6" style={{ borderTop: '1px solid var(--panel-separator)' }} />
           )}
 
           {/* Scrollable description */}
@@ -129,7 +129,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                 className="text-sm whitespace-pre-line"
                 style={{
                   fontFamily: "Georgia, 'Times New Roman', serif",
-                  color: '#4a5563',
+                  color: 'var(--panel-text)',
                   lineHeight: 1.7,
                 }}
               >
@@ -142,16 +142,16 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
           {artwork.link && artwork.link !== '#' && (
             <div
               className="px-6 pb-6 pt-3"
-              style={{ borderTop: '1px solid rgba(160, 138, 108, 0.35)' }}
+              style={{ borderTop: '1px solid var(--panel-separator)' }}
             >
               <a
                 href={artwork.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm transition-colors bg-[rgba(160,138,108,0.18)] hover:bg-[rgba(160,138,108,0.3)]"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
                 style={{
-                  color: '#2b3644',
-                  border: '1px solid rgba(160, 138, 108, 0.3)',
+                  color: 'var(--panel-btn-text)',
+                  border: '1px solid var(--panel-border)',
                 }}
               >
                 <ExternalLink size={14} />
