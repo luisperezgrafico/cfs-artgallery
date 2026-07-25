@@ -7,3 +7,5 @@ next-env.d.ts
 .DS_Store
 phase*.jpeg
 docs/screenshots/
+.vercel/
+.env.local
