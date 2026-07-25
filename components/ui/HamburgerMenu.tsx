@@ -110,7 +110,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
           <div className="flex-1" />
 
           {/* Appearance */}
-          <div className="px-5 pt-4 border-t border-white/10">
+          <div className="px-5 pt-4 pb-4 border-t border-white/10">
             <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
               Appearance
             </p>
