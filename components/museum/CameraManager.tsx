@@ -91,10 +91,10 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     restAnimationFrameRef.current = null;
   }, []);
 
-  const beginCameraTransition = useCallback(() => {
+  const beginCameraTransition = useCallback((stopActiveTransition = false) => {
     cameraTransitionIdRef.current += 1;
     cancelRestAnimation();
-    cameraControlsRef.current?.stop();
+    if (stopActiveTransition) cameraControlsRef.current?.stop();
     return cameraTransitionIdRef.current;
   }, [cancelRestAnimation]);
 
@@ -226,7 +226,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
-    const transitionId = beginCameraTransition();
+    const transitionId = beginCameraTransition(true);
     setZoomedFrameId(null);
     syncRestLook(viewpoint);
 
