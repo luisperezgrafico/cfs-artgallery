@@ -16,8 +16,9 @@ interface FrameProps {
 
 // Tiny 1×1 white PNG used as placeholder URL so useTexture always gets a valid string
 const BLANK_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-const PLAQUE_FONT = '/fonts/Inter_28pt-SemiBold.ttf';
-const PLAQUE_SDF_GLYPH_SIZE = 128;
+const PLAQUE_TEXTURE_WIDTH = 768;
+const PLAQUE_TEXTURE_HEIGHT = 240;
+const PLAQUE_FONT_STACK = 'Inter, "Segoe UI", Arial, sans-serif';
 
 function createLinenTexture(): THREE.CanvasTexture {
   const size = 256;
@@ -42,6 +43,72 @@ function createLinenTexture(): THREE.CanvasTexture {
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(4, 4);
+  return tex;
+}
+
+function drawFittedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  y: number,
+  fontSize: number,
+  fontWeight: number,
+  color: string,
+  maxWidth: number,
+) {
+  let size = fontSize;
+  do {
+    ctx.font = `${fontWeight} ${size}px ${PLAQUE_FONT_STACK}`;
+    if (ctx.measureText(text).width <= maxWidth || size <= 18) break;
+    size -= 1;
+  } while (size > 18);
+
+  ctx.fillStyle = color;
+  ctx.fillText(text, PLAQUE_TEXTURE_WIDTH / 2, y);
+}
+
+function createPlaqueTexture({
+  title,
+  subtitle,
+  footer,
+  isSubmit,
+}: {
+  title: string;
+  subtitle: string;
+  footer?: string;
+  isSubmit: boolean;
+}): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = PLAQUE_TEXTURE_WIDTH;
+  canvas.height = PLAQUE_TEXTURE_HEIGHT;
+  const ctx = canvas.getContext('2d')!;
+  const maxTextWidth = PLAQUE_TEXTURE_WIDTH - 96;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ede6d8';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = 'rgba(184, 168, 144, 0.35)';
+  ctx.lineWidth = 5;
+  ctx.strokeRect(2.5, 2.5, canvas.width - 5, canvas.height - 5);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (isSubmit) {
+    drawFittedText(ctx, title, 92, 50, 600, '#2b3644', maxTextWidth);
+    drawFittedText(ctx, subtitle, 154, 36, 500, '#637687', maxTextWidth);
+  } else {
+    drawFittedText(ctx, title, 70, 46, 600, '#2b3644', maxTextWidth);
+    drawFittedText(ctx, subtitle, 122, 35, 500, '#5a6878', maxTextWidth);
+    if (footer) {
+      drawFittedText(ctx, footer, 172, 28, 500, '#a8bcc8', maxTextWidth);
+    }
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.anisotropy = 4;
+  tex.generateMipmaps = true;
   return tex;
 }
 
@@ -99,13 +166,18 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
 
     const plaqueW = 0.90;
     const plaqueH = 0.28;
-    const titleOffsetY  =  0.062;
-    const artistOffsetY = -0.020;
-    const dotsOffsetY   = -0.088;
-    const submitTitleOffsetY = 0.042;
-    const submitSubtitleOffsetY = -0.052;
     const plaqueY = -(frameBottom + plaqueH / 2 + 0.18);
     const plaqueZ = -0.03;
+    const artistLine = [image.artist, image.date].filter(Boolean).join(' · ');
+    const plaqueTexture = useMemo(
+      () => createPlaqueTexture({
+        title: image.isEmpty ? 'Submit Your Artwork' : image.title,
+        subtitle: image.isEmpty ? 'Tap to Contribute' : artistLine,
+        footer: image.isEmpty ? undefined : '...',
+        isSubmit: Boolean(image.isEmpty),
+      }),
+      [artistLine, image.isEmpty, image.title],
+    );
 
     const handlePlaqueClick = (e: ThreeEvent<MouseEvent | PointerEvent>) => {
       e.stopPropagation();
@@ -127,7 +199,9 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
       );
     };
 
-    const artistLine = [image.artist, image.date].filter(Boolean).join(' · ');
+    useEffect(() => {
+      return () => { plaqueTexture.dispose(); };
+    }, [plaqueTexture]);
 
     return (
       <group position={position} rotation={rotation}>
@@ -160,44 +234,16 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
         {image.isEmpty ? (
           /* ── Submit-artwork button (empty slot) ── */
           <>
-            {/* Cream background — same as filled plaque */}
+            {/* Plaque texture — stable raster text avoids SDF weight shifts at distance */}
             <mesh position={[0, plaqueY, plaqueZ]}>
               <planeGeometry args={[plaqueW, plaqueH]} />
-              <meshBasicMaterial color="#ede6d8" transparent opacity={0.93} />
+              <meshBasicMaterial map={plaqueTexture} transparent opacity={0.96} toneMapped={false} />
             </mesh>
             {/* Shadow border — same as filled plaque */}
             <mesh position={[0, plaqueY, plaqueZ - 0.001]}>
               <planeGeometry args={[plaqueW + 0.02, plaqueH + 0.02]} />
               <meshBasicMaterial color="#b8a890" transparent opacity={0.35} />
             </mesh>
-            {/* Main label — centered for 2-line layout */}
-            <Text
-              position={[0, plaqueY + submitTitleOffsetY, plaqueZ + 0.002]}
-              font={PLAQUE_FONT}
-              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
-              fontSize={0.078}
-              color="#2b3644"
-              anchorX="center"
-              anchorY="middle"
-              maxWidth={plaqueW - 0.1}
-              textAlign="center"
-            >
-              {'Submit Artwork'}
-            </Text>
-            {/* Subtitle */}
-            <Text
-              position={[0, plaqueY + submitSubtitleOffsetY, plaqueZ + 0.002]}
-              font={PLAQUE_FONT}
-              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
-              fontSize={0.050}
-              color="#637687"
-              anchorX="center"
-              anchorY="middle"
-              maxWidth={plaqueW - 0.1}
-              textAlign="center"
-            >
-              {'contribute your work'}
-            </Text>
             {/* Invisible click surface */}
             <mesh position={[0, plaqueY, plaqueZ + 0.003]} onClick={handleSubmitClick}>
               <planeGeometry args={[plaqueW, plaqueH]} />
@@ -207,57 +253,16 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
         ) : (
           /* ── Museum plaque (filled slot) ── */
           <>
-            {/* Cream background */}
+            {/* Plaque texture — stable raster text avoids SDF weight shifts at distance */}
             <mesh position={[0, plaqueY, plaqueZ]}>
               <planeGeometry args={[plaqueW, plaqueH]} />
-              <meshBasicMaterial color="#ede6d8" transparent opacity={0.93} />
+              <meshBasicMaterial map={plaqueTexture} transparent opacity={0.96} toneMapped={false} />
             </mesh>
             {/* Subtle shadow border */}
             <mesh position={[0, plaqueY, plaqueZ - 0.001]}>
               <planeGeometry args={[plaqueW + 0.02, plaqueH + 0.02]} />
               <meshBasicMaterial color="#b8a890" transparent opacity={0.35} />
             </mesh>
-            {/* Title */}
-            <Text
-              position={[0, plaqueY + titleOffsetY, plaqueZ + 0.002]}
-              font={PLAQUE_FONT}
-              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
-              fontSize={0.075}
-              color="#2b3644"
-              anchorX="center"
-              anchorY="middle"
-              maxWidth={plaqueW - 0.1}
-              textAlign="center"
-            >
-              {image.title}
-            </Text>
-            {/* Artist · Year */}
-            <Text
-              position={[0, plaqueY + artistOffsetY, plaqueZ + 0.002]}
-              font={PLAQUE_FONT}
-              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
-              fontSize={0.058}
-              color="#5a6878"
-              anchorX="center"
-              anchorY="middle"
-              maxWidth={plaqueW - 0.1}
-              textAlign="center"
-            >
-              {artistLine}
-            </Text>
-            {/* Indicator dots */}
-            <Text
-              position={[0, plaqueY + dotsOffsetY, plaqueZ + 0.002]}
-              font={PLAQUE_FONT}
-              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
-              fontSize={0.042}
-              color="#a8bcc8"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.25}
-            >
-              {'...'}
-            </Text>
             {/* Invisible click surface for the plaque */}
             <mesh position={[0, plaqueY, plaqueZ + 0.003]} onClick={handlePlaqueClick}>
               <planeGeometry args={[plaqueW, plaqueH]} />
