@@ -258,16 +258,21 @@ function SubmissionCard({
 
 // ── Submissions tab ───────────────────────────────────────────────────────────
 
-function SubmissionsTab() {
+function SubmissionsTab({ onApproved }: { onApproved: () => void }) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [activeModal, setActiveModal] = useState<{ submission: Submission; type: 'approve' | 'reject' } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const res = await fetch('/api/admin/submissions');
+      if (!res.ok) { setLoadError(`Error ${res.status}`); return; }
       setSubmissions(await res.json());
+    } catch {
+      setLoadError('Failed to load submissions.');
     } finally {
       setLoading(false);
     }
@@ -286,6 +291,7 @@ function SubmissionsTab() {
     if (!res.ok || !data.ok) throw new Error(data.error ?? 'Approval failed.');
     setActiveModal(null);
     await load();
+    onApproved();
   };
 
   const handleRejectConfirm = async (reason: string) => {
@@ -302,7 +308,12 @@ function SubmissionsTab() {
   };
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
-
+  if (loadError) return (
+    <div className="flex flex-col items-center gap-3 py-20">
+      <p className="text-red-400 text-sm">{loadError}</p>
+      <button onClick={load} className="text-white/50 text-xs underline">Retry</button>
+    </div>
+  );
   if (submissions.length === 0) return <div className="text-center py-20 text-white/35 text-sm">No pending submissions.</div>;
 
   return (
@@ -327,40 +338,62 @@ function SubmissionsTab() {
 
 // ── Approved tab ──────────────────────────────────────────────────────────────
 
-function ApprovedTab() {
+function ApprovedTab({ refreshKey }: { refreshKey: number }) {
   const [artworks, setArtworks] = useState<Record<string, ImageMetadata[]>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [removing, setRemoving] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState('');
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ roomId: string; index: number; title: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const res = await fetch('/api/admin/artworks');
+      if (!res.ok) { setLoadError(`Error ${res.status}`); return; }
       setArtworks(await res.json());
+    } catch {
+      setLoadError('Failed to load artworks.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshKey]);
 
   const handleRemove = async (roomId: string, index: number) => {
     const key = `${roomId}-${index}`;
     setRemoving(key);
+    setRemoveError('');
     try {
-      await fetch(`/api/admin/artworks/${roomId}`, {
+      const res = await fetch(`/api/admin/artworks/${roomId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ index }),
       });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        setRemoveError(data.error ?? `Error ${res.status}`);
+        return;
+      }
       await load();
+    } catch {
+      setRemoveError('Failed to remove artwork.');
     } finally {
       setRemoving(null);
+      setConfirmDelete(null);
     }
   };
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
+  if (loadError) return (
+    <div className="flex flex-col items-center gap-3 py-20">
+      <p className="text-red-400 text-sm">{loadError}</p>
+      <button onClick={load} className="text-white/50 text-xs underline">Retry</button>
+    </div>
+  );
 
   const hasAny = rooms.some(r => artworks[r.id]?.length > 0);
 
@@ -371,6 +404,36 @@ function ApprovedTab() {
   return (
     <>
       {lightbox && <Lightbox url={lightbox} onClose={() => setLightbox(null)} />}
+
+      {/* Confirm delete modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-white font-semibold text-base">Remove artwork?</h3>
+            <p className="text-white/60 text-sm">&ldquo;{confirmDelete.title}&rdquo; will be removed from the gallery. This cannot be undone.</p>
+            {removeError && (
+              <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+                <AlertCircle size={13} /> {removeError}
+              </div>
+            )}
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => handleRemove(confirmDelete.roomId, confirmDelete.index)}
+                disabled={!!removing}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm font-medium transition-colors"
+              >
+                {removing ? <Loader2 size={14} className="animate-spin" /> : null}
+                {removing ? 'Removing…' : 'Remove'}
+              </button>
+              <button onClick={() => { setConfirmDelete(null); setRemoveError(''); }} disabled={!!removing}
+                className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-8">
         {rooms.map(room => {
           const list = artworks[room.id] ?? [];
@@ -395,12 +458,12 @@ function ApprovedTab() {
                       </p>
                     </div>
                     <button
-                      onClick={() => handleRemove(room.id, i)}
-                      disabled={removing === `${room.id}-${i}`}
+                      onClick={() => setConfirmDelete({ roomId: room.id, index: i, title: artwork.title })}
+                      disabled={!!removing}
                       className="shrink-0 text-white/30 hover:text-red-400 disabled:opacity-40 transition-colors p-1"
                       title="Remove from gallery"
                     >
-                      {removing === `${room.id}-${i}` ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 ))}
@@ -568,6 +631,12 @@ type Tab = 'submissions' | 'approved' | 'settings';
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>('submissions');
+  const [approvedRefreshKey, setApprovedRefreshKey] = useState(0);
+
+  const handleApproved = () => {
+    setApprovedRefreshKey(k => k + 1);
+    setTab('approved');
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -589,8 +658,8 @@ export default function AdminDashboard() {
       </nav>
 
       <main className="px-6 py-6">
-        {tab === 'submissions' && <SubmissionsTab />}
-        {tab === 'approved' && <ApprovedTab />}
+        {tab === 'submissions' && <SubmissionsTab onApproved={handleApproved} />}
+        {tab === 'approved' && <ApprovedTab refreshKey={approvedRefreshKey} />}
         {tab === 'settings' && <SettingsTab />}
       </main>
     </div>

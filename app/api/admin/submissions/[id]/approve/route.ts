@@ -26,6 +26,7 @@ export async function POST(
     }
 
     const roomId = body.roomId || submission.preferredRoom;
+    console.log(`[approve] id=${id} roomId=${roomId} preferredRoom=${submission.preferredRoom}`);
     if (!roomId) {
       return NextResponse.json({ error: 'roomId is required.' }, { status: 400 });
     }
@@ -44,7 +45,9 @@ export async function POST(
     };
 
     await addArtworkToRoom(roomId, artwork);
+    console.log(`[approve] artwork added to ${roomId}`);
     await updateSubmissionStatus(id, 'approved');
+    console.log(`[approve] submission ${id} marked approved`);
 
     const origin = request.headers.get('origin') ?? '';
     const settings = await getSettings();

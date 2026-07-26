@@ -8,8 +8,11 @@ export async function GET() {
   try {
     const roomIds = rooms.map(r => r.id);
     const artworks = await getAllRoomArtworks(roomIds);
+    const counts = Object.entries(artworks).map(([id, list]) => `${id}:${list.length}`).join(' ');
+    console.log(`[artworks] counts: ${counts}`);
     return NextResponse.json(artworks);
-  } catch {
+  } catch (err) {
+    console.error('[artworks] GET failed:', err);
     return NextResponse.json({}, { status: 200 });
   }
 }

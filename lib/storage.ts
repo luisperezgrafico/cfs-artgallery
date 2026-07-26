@@ -51,21 +51,29 @@ function blobUrl(pathname: string): string {
 }
 
 async function readJson<T>(pathname: string, fallback: T): Promise<T> {
+  // Append timestamp to bypass CDN cache — Blob CDN may serve stale content
+  // for up to several minutes after a write without this.
+  const url = `${blobUrl(pathname)}?_=${Date.now()}`;
   try {
-    const res = await fetch(blobUrl(pathname), { cache: 'no-store' });
-    if (!res.ok) return fallback;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.warn(`[storage] read ${pathname} → HTTP ${res.status}`);
+      return fallback;
+    }
     return res.json() as Promise<T>;
-  } catch {
+  } catch (err) {
+    console.warn(`[storage] read ${pathname} failed:`, err);
     return fallback;
   }
 }
 
 async function writeJson(pathname: string, data: unknown): Promise<void> {
-  await put(pathname, JSON.stringify(data), {
+  const result = await put(pathname, JSON.stringify(data), {
     access: 'public',
     contentType: 'application/json',
     allowOverwrite: true,
   });
+  console.log(`[storage] wrote ${pathname} → ${result.url}`);
 }
 
 // ── Data paths ────────────────────────────────────────────────────────────────
