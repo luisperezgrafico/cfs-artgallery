@@ -72,6 +72,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   const { isMobile } = useDetectGPU();
   const cameraControlsRef = useRef<CameraControls>(null);
   const restAnimationFrameRef = useRef<number | null>(null);
+  const cameraTransitionIdRef = useRef(0);
   const restLookRef = useRef({
     active: false,
     pointerId: null as number | null,
@@ -89,6 +90,13 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     window.cancelAnimationFrame(restAnimationFrameRef.current);
     restAnimationFrameRef.current = null;
   }, []);
+
+  const beginCameraTransition = useCallback(() => {
+    cameraTransitionIdRef.current += 1;
+    cancelRestAnimation();
+    cameraControlsRef.current?.stop();
+    return cameraTransitionIdRef.current;
+  }, [cancelRestAnimation]);
 
   useEffect(() => cancelRestAnimation, [cancelRestAnimation]);
 
@@ -129,7 +137,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       const mesh = frameRefs.current[index];
       if (!mesh) return;
 
-      cancelRestAnimation();
+      const transitionId = beginCameraTransition();
 
       const frameWorldPosition = new THREE.Vector3();
       mesh.getWorldPosition(frameWorldPosition);
@@ -153,16 +161,17 @@ const CameraManager: React.FC<CameraManagerProps> = ({
         true,
       );
 
+      if (transitionId !== cameraTransitionIdRef.current) return;
       if (onFrameChange) onFrameChange(index);
     },
-    [cancelRestAnimation, frameRefs, onFrameChange, getScaleFactor, getYOffset],
+    [beginCameraTransition, frameRefs, onFrameChange, getScaleFactor, getYOffset],
   );
 
   const resetCamera = useCallback(async () => {
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
-    cancelRestAnimation();
+    const transitionId = beginCameraTransition();
 
     const previousSmoothTime = controls.smoothTime;
     try {
@@ -172,8 +181,9 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       controls.smoothTime = previousSmoothTime;
     }
 
+    if (transitionId !== cameraTransitionIdRef.current) return;
     if (onFrameChange) onFrameChange(-1);
-  }, [cancelRestAnimation, onFrameChange]);
+  }, [beginCameraTransition, onFrameChange]);
 
   const applyRestLook = useCallback(() => {
     const controls = cameraControlsRef.current;
@@ -216,7 +226,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
-    cancelRestAnimation();
+    const transitionId = beginCameraTransition();
     setZoomedFrameId(null);
     syncRestLook(viewpoint);
 
@@ -246,6 +256,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const startedAt = window.performance.now();
 
     const step = (now: number) => {
+      if (transitionId !== cameraTransitionIdRef.current) return;
+
       const progress = clamp((now - startedAt) / duration, 0, 1);
       const eased = easeInOutCubic(progress);
 
@@ -273,7 +285,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     };
 
     restAnimationFrameRef.current = window.requestAnimationFrame(step);
-  }, [applyRestLook, cancelRestAnimation, setZoomedFrameId, syncRestLook]);
+  }, [applyRestLook, beginCameraTransition, setZoomedFrameId, syncRestLook]);
 
   useEffect(() => {
     if (!restView) return;
