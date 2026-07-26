@@ -199,6 +199,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
               <ul className="space-y-2 text-xs text-white/45">
                 <li><span className="text-white/65">Tap artwork</span> — zoom in</li>
                 <li><span className="text-white/65">Tap plaque</span> — read description</li>
+                <li><span className="text-white/65">Tap bench</span> — sit and look around</li>
                 <li><span className="text-white/65">Swipe left / right</span> — navigate artworks</li>
                 <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
                 <li><span className="text-white/65">Swipe down</span> — exit zoom</li>
@@ -207,6 +208,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
               <ul className="space-y-2 text-xs text-white/45">
                 <li><span className="text-white/65">Click artwork</span> — zoom in</li>
                 <li><span className="text-white/65">Click plaque</span> — read description</li>
+                <li><span className="text-white/65">Click bench</span> — sit and look around</li>
                 <li><span className="text-white/65">← → arrows</span> — navigate artworks</li>
                 <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
                 <li><span className="text-white/65">Escape</span> — exit zoom</li>
