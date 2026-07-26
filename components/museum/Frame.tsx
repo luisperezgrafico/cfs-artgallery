@@ -16,6 +16,7 @@ interface FrameProps {
 
 // Tiny 1×1 white PNG used as placeholder URL so useTexture always gets a valid string
 const BLANK_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+const PLAQUE_FONT = '/fonts/Inter_28pt-SemiBold.ttf';
 
 function createLinenTexture(): THREE.CanvasTexture {
   const size = 256;
@@ -100,6 +101,8 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
     const titleOffsetY  =  0.062;
     const artistOffsetY = -0.020;
     const dotsOffsetY   = -0.088;
+    const submitTitleOffsetY = 0.042;
+    const submitSubtitleOffsetY = -0.046;
     const plaqueY = -(frameBottom + plaqueH / 2 + 0.18);
     const plaqueZ = -0.03;
 
@@ -168,30 +171,34 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             </mesh>
             {/* Main label — centered for 2-line layout */}
             <Text
-              position={[0, plaqueY + 0.030, plaqueZ + 0.002]}
-              fontSize={0.092}
+              position={[0, plaqueY + submitTitleOffsetY, plaqueZ + 0.002]}
+              font={PLAQUE_FONT}
+              fontSize={0.078}
               color="#2b3644"
               anchorX="center"
               anchorY="middle"
               maxWidth={plaqueW - 0.1}
               textAlign="center"
             >
-              {'Submit artwork'}
+              {'Submit Artwork'}
             </Text>
             {/* Subtitle */}
             <Text
-              position={[0, plaqueY - 0.070, plaqueZ + 0.002]}
+              position={[0, plaqueY + submitSubtitleOffsetY, plaqueZ + 0.002]}
+              font={PLAQUE_FONT}
               fontSize={0.042}
               color="#a8bcc8"
               anchorX="center"
               anchorY="middle"
+              maxWidth={plaqueW - 0.1}
+              textAlign="center"
             >
-              {'tap to contribute'}
+              {'contribute your work'}
             </Text>
             {/* Invisible click surface */}
             <mesh position={[0, plaqueY, plaqueZ + 0.003]} onClick={handleSubmitClick}>
               <planeGeometry args={[plaqueW, plaqueH]} />
-              <meshBasicMaterial transparent opacity={0} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
           </>
         ) : (
@@ -210,19 +217,20 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             {/* Title */}
             <Text
               position={[0, plaqueY + titleOffsetY, plaqueZ + 0.002]}
+              font={PLAQUE_FONT}
               fontSize={0.075}
               color="#2b3644"
               anchorX="center"
               anchorY="middle"
               maxWidth={plaqueW - 0.1}
               textAlign="center"
-              font={undefined}
             >
               {image.title}
             </Text>
             {/* Artist · Year */}
             <Text
               position={[0, plaqueY + artistOffsetY, plaqueZ + 0.002]}
+              font={PLAQUE_FONT}
               fontSize={0.058}
               color="#5a6878"
               anchorX="center"
@@ -235,6 +243,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             {/* Indicator dots */}
             <Text
               position={[0, plaqueY + dotsOffsetY, plaqueZ + 0.002]}
+              font={PLAQUE_FONT}
               fontSize={0.042}
               color="#a8bcc8"
               anchorX="center"
@@ -246,7 +255,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             {/* Invisible click surface for the plaque */}
             <mesh position={[0, plaqueY, plaqueZ + 0.003]} onClick={handlePlaqueClick}>
               <planeGeometry args={[plaqueW, plaqueH]} />
-              <meshBasicMaterial transparent opacity={0} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
             </mesh>
           </>
         )}
