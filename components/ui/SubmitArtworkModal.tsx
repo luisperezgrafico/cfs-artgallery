@@ -77,6 +77,7 @@ const SubmitArtworkModal: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
+  const [preferredRoom, setPreferredRoom] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
 
@@ -90,7 +91,12 @@ const SubmitArtworkModal: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handler = () => { reset(); setIsOpen(true); };
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ roomId?: string }>).detail;
+      setPreferredRoom(detail?.roomId ?? '');
+      reset();
+      setIsOpen(true);
+    };
     window.addEventListener('open-submit-artwork', handler);
     return () => window.removeEventListener('open-submit-artwork', handler);
   }, [reset]);
@@ -163,6 +169,7 @@ const SubmitArtworkModal: React.FC = () => {
       body.append('shortDescription', values.shortDescription.trim());
       body.append('statement', values.statement.trim());
       body.append('aspectRatio', String(values.aspectRatio ?? 1));
+      if (preferredRoom) body.append('preferredRoom', preferredRoom);
       body.append('file', values.file);
 
       const res = await fetch('/api/submit', { method: 'POST', body });

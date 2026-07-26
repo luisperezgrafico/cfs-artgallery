@@ -11,6 +11,7 @@ interface FrameProps {
   rotation: [number, number, number];
   image: ImageMetadata;
   index: number;
+  roomId?: string;
   onFrameClick?: (index: number) => void;
 }
 
@@ -113,7 +114,7 @@ function createPlaqueTexture({
 }
 
 const Frame = forwardRef<THREE.Mesh, FrameProps>(
-  ({ position, rotation, image, index, onFrameClick }, ref) => {
+  ({ position, rotation, image, index, roomId, onFrameClick }, ref) => {
     const [error, setError] = useState(false);
     const internalRef = useRef<THREE.Mesh>(null);
 
@@ -195,7 +196,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
       const x = native?.clientX ?? window.innerWidth / 2;
       const y = native?.clientY ?? window.innerHeight * 0.75;
       window.dispatchEvent(
-        new CustomEvent('open-submit-artwork', { detail: { x, y } }),
+        new CustomEvent('open-submit-artwork', { detail: { x, y, roomId } }),
       );
     };
 

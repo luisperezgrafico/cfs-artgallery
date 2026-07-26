@@ -29,6 +29,8 @@ export interface RestViewpoint {
 }
 
 export interface ImageMetadata {
+  /** Stable identifier (copied from submission.id at approval time) — used for favourites */
+  id?: string;
   url: string;
   title: string;
   artist: string;

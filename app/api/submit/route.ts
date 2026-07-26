@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const year = (form.get('year') as string | null)?.trim() ?? '';
     const shortDescription = (form.get('shortDescription') as string | null)?.trim() ?? '';
     const statement = (form.get('statement') as string | null)?.trim() ?? '';
+    const preferredRoom = (form.get('preferredRoom') as string | null)?.trim() ?? '';
     const aspectRatio = parseFloat((form.get('aspectRatio') as string) ?? '1');
     const file = form.get('file') as File | null;
 
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
       aspectRatio: isFinite(aspectRatio) ? aspectRatio : 1,
       submittedAt: new Date().toISOString(),
       status: 'pending',
+      preferredRoom: preferredRoom || undefined,
     };
 
     await saveSubmission(submission);

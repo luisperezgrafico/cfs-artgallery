@@ -49,9 +49,10 @@ const BENCH_LAYOUT: Array<{
 interface MuseumProps {
   images: ImageMetadata[];
   theme?: RoomTheme;
+  roomId?: string;
 }
 
-const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
+const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }) => {
   const {
     currentFrameIndex,
     restView,
@@ -103,6 +104,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
                   rotation={frameRotations[index]}
                   image={image}
                   index={index}
+                  roomId={roomId}
                   ref={(el) => {
                     frameRefs.current[index] = el;
                   }}
@@ -110,7 +112,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME }) => {
                     if (setCurrentFrameIndex) {
                       if (idx === currentFrameIndex) {
                         if (images[idx]?.isEmpty) {
-                          window.dispatchEvent(new CustomEvent('open-submit-artwork'));
+                          window.dispatchEvent(new CustomEvent('open-submit-artwork', { detail: { roomId } }));
                         } else {
                           window.dispatchEvent(new CustomEvent('open-artwork-lightbox'));
                         }

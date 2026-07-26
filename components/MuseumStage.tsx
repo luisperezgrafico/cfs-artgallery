@@ -10,6 +10,7 @@ import { useAnimation } from '../contexts/AnimationContext';
 interface MuseumStageProps {
   images: ImageMetadata[];
   theme?: RoomTheme;
+  roomId?: string;
 }
 
 const EmptyFallback = ({ onLoaded }: { onLoaded: () => void }) => {
@@ -19,7 +20,7 @@ const EmptyFallback = ({ onLoaded }: { onLoaded: () => void }) => {
   return null;
 };
 
-const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme }) => {
+const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme, roomId }) => {
   const { sceneOpacity, sceneBlur, handleAssetsLoaded } = useAnimation();
 
   return (
@@ -40,7 +41,7 @@ const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme }) => {
         <AdaptiveEvents />
         <color attach="background" args={['#000000']} />
         <Suspense fallback={<EmptyFallback onLoaded={handleAssetsLoaded} />}>
-          <Museum images={images} theme={theme} />
+          <Museum images={images} theme={theme} roomId={roomId} />
           <Environment preset="city" />
         </Suspense>
       </Canvas>

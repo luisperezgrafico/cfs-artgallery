@@ -16,6 +16,8 @@ export interface Submission {
   aspectRatio: number;
   submittedAt: string;
   status: 'pending' | 'approved' | 'rejected';
+  /** Room the artist was viewing when they clicked "Submit your work" */
+  preferredRoom?: string;
 }
 
 export interface GallerySettings {

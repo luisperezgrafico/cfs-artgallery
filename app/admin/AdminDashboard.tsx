@@ -52,7 +52,7 @@ function ApproveModal({
   onConfirm: (roomId: string) => Promise<void>;
   onClose: () => void;
 }) {
-  const [roomId, setRoomId] = useState(rooms[0]?.id ?? '');
+  const [roomId, setRoomId] = useState(submission.preferredRoom ?? rooms[0]?.id ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -77,7 +77,12 @@ function ApproveModal({
         )}
 
         <div>
-          <label className="block text-xs text-white/50 mb-1 uppercase tracking-wider">Assign to room</label>
+          <label className="block text-xs text-white/50 mb-1 uppercase tracking-wider">
+            Assign to room
+            {submission.preferredRoom && (
+              <span className="ml-2 normal-case text-white/30 tracking-normal">· artist&rsquo;s preference</span>
+            )}
+          </label>
           <select
             value={roomId}
             onChange={e => setRoomId(e.target.value)}

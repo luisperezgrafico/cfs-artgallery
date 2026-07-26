@@ -52,7 +52,7 @@ function GalleryContent({ liveArtworks }: { liveArtworks: Record<string, ImageMe
       >
         <VisitPositionPersistence roomId={activeRoom.id} />
         <SwipeableContainer>
-          <MuseumStage images={images} theme={activeRoom.theme} />
+          <MuseumStage images={images} theme={activeRoom.theme} roomId={activeRoom.id} />
           <UIElements />
         </SwipeableContainer>
       </TourProvider>

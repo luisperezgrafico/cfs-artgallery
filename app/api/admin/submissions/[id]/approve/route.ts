@@ -16,13 +16,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json() as { roomId: string };
-    const { roomId } = body;
-
-    if (!roomId) {
-      return NextResponse.json({ error: 'roomId is required.' }, { status: 400 });
-    }
-
+    const body = await request.json() as { roomId?: string };
     const submission = await getSubmission(id);
     if (!submission) {
       return NextResponse.json({ error: 'Submission not found.' }, { status: 404 });
@@ -31,7 +25,13 @@ export async function POST(
       return NextResponse.json({ error: 'Submission already processed.' }, { status: 409 });
     }
 
+    const roomId = body.roomId || submission.preferredRoom;
+    if (!roomId) {
+      return NextResponse.json({ error: 'roomId is required.' }, { status: 400 });
+    }
+
     const artwork: ImageMetadata = {
+      id: submission.id,
       url: submission.imageUrl,
       title: submission.title,
       artist: submission.artist,
