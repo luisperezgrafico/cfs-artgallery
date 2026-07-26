@@ -17,6 +17,7 @@ interface FrameProps {
 // Tiny 1×1 white PNG used as placeholder URL so useTexture always gets a valid string
 const BLANK_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 const PLAQUE_FONT = '/fonts/Inter_28pt-SemiBold.ttf';
+const PLAQUE_SDF_GLYPH_SIZE = 128;
 
 function createLinenTexture(): THREE.CanvasTexture {
   const size = 256;
@@ -102,7 +103,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
     const artistOffsetY = -0.020;
     const dotsOffsetY   = -0.088;
     const submitTitleOffsetY = 0.042;
-    const submitSubtitleOffsetY = -0.046;
+    const submitSubtitleOffsetY = -0.052;
     const plaqueY = -(frameBottom + plaqueH / 2 + 0.18);
     const plaqueZ = -0.03;
 
@@ -173,6 +174,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             <Text
               position={[0, plaqueY + submitTitleOffsetY, plaqueZ + 0.002]}
               font={PLAQUE_FONT}
+              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
               fontSize={0.078}
               color="#2b3644"
               anchorX="center"
@@ -186,8 +188,9 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             <Text
               position={[0, plaqueY + submitSubtitleOffsetY, plaqueZ + 0.002]}
               font={PLAQUE_FONT}
-              fontSize={0.042}
-              color="#a8bcc8"
+              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
+              fontSize={0.050}
+              color="#637687"
               anchorX="center"
               anchorY="middle"
               maxWidth={plaqueW - 0.1}
@@ -218,6 +221,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             <Text
               position={[0, plaqueY + titleOffsetY, plaqueZ + 0.002]}
               font={PLAQUE_FONT}
+              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
               fontSize={0.075}
               color="#2b3644"
               anchorX="center"
@@ -231,6 +235,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             <Text
               position={[0, plaqueY + artistOffsetY, plaqueZ + 0.002]}
               font={PLAQUE_FONT}
+              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
               fontSize={0.058}
               color="#5a6878"
               anchorX="center"
@@ -244,6 +249,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
             <Text
               position={[0, plaqueY + dotsOffsetY, plaqueZ + 0.002]}
               font={PLAQUE_FONT}
+              sdfGlyphSize={PLAQUE_SDF_GLYPH_SIZE}
               fontSize={0.042}
               color="#a8bcc8"
               anchorX="center"
