@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     const email = (form.get('email') as string)?.trim();
     const medium = (form.get('medium') as string | null)?.trim() ?? '';
     const year = (form.get('year') as string | null)?.trim() ?? '';
+    const shortDescription = (form.get('shortDescription') as string | null)?.trim() ?? '';
     const statement = (form.get('statement') as string | null)?.trim() ?? '';
     const aspectRatio = parseFloat((form.get('aspectRatio') as string) ?? '1');
     const file = form.get('file') as File | null;
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
       email,
       medium,
       year,
+      shortDescription,
       statement,
       imageUrl: blob.url,
       aspectRatio: isFinite(aspectRatio) ? aspectRatio : 1,

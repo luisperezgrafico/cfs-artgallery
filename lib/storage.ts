@@ -1,4 +1,4 @@
-import { put, list } from '@vercel/blob';
+import { put } from '@vercel/blob';
 import { ImageMetadata } from '../types/museum';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -10,6 +10,7 @@ export interface Submission {
   email: string;
   medium: string;
   year: string;
+  shortDescription: string;
   statement: string;
   imageUrl: string;
   aspectRatio: number;
@@ -35,26 +36,21 @@ export const DEFAULT_SETTINGS: GallerySettings = {
     `Hi {{artist}},\n\nThank you for submitting "{{title}}" to the ME/CFS Community Gallery. We really appreciate you sharing your work with us.\n\nAfter careful review, we're unable to include this piece in the current exhibition. We hope you'll consider submitting again in the future.\n\n— The Gallery Team`,
 };
 
-// ── Blob JSON helpers ─────────────────────────────────────────────────────────
-// Small JSON documents stored at predictable pathnames.
-// We use `list({ prefix })` to resolve the URL (Vercel Blob assigns a content-
-// addressed URL; we find it by listing with the pathname prefix).
+// ── Deterministic Blob URL ────────────────────────────────────────────────────
+// With access:'public' + allowOverwrite:true, Vercel Blob stores files at a
+// stable URL: https://{storeId}.public.blob.vercel-storage.com/{pathname}
+// The storeId lives between the 3rd and 4th underscore in BLOB_READ_WRITE_TOKEN.
 
-async function resolveUrl(pathname: string): Promise<string | null> {
-  try {
-    const { blobs } = await list({ prefix: pathname, limit: 1 });
-    const match = blobs.find(b => b.pathname === pathname);
-    return match?.url ?? null;
-  } catch {
-    return null;
-  }
+function blobUrl(pathname: string): string {
+  const token = process.env.BLOB_READ_WRITE_TOKEN ?? '';
+  const match = token.match(/^vercel_blob_rw_([^_]+)/);
+  const storeId = match?.[1] ?? '';
+  return `https://${storeId}.public.blob.vercel-storage.com/${pathname}`;
 }
 
 async function readJson<T>(pathname: string, fallback: T): Promise<T> {
   try {
-    const url = await resolveUrl(pathname);
-    if (!url) return fallback;
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(blobUrl(pathname), { cache: 'no-store' });
     if (!res.ok) return fallback;
     return res.json() as Promise<T>;
   } catch {
@@ -70,49 +66,62 @@ async function writeJson(pathname: string, data: unknown): Promise<void> {
   });
 }
 
-// ── Submissions ───────────────────────────────────────────────────────────────
+// ── Data paths ────────────────────────────────────────────────────────────────
 
-const DATA = 'gallery/data';
+const SUBMISSIONS_PATH = 'gallery/data/submissions.json';
+const artworksPath = (roomId: string) => `gallery/data/artworks-${roomId}.json`;
+const SETTINGS_PATH = 'gallery/data/settings.json';
+
+// ── Submissions ───────────────────────────────────────────────────────────────
+// All submissions live in a single JSON file. Fine at this scale.
+
+async function readAllSubmissions(): Promise<Submission[]> {
+  return readJson<Submission[]>(SUBMISSIONS_PATH, []);
+}
+
+async function writeAllSubmissions(submissions: Submission[]): Promise<void> {
+  await writeJson(SUBMISSIONS_PATH, submissions);
+}
 
 export async function saveSubmission(submission: Submission): Promise<void> {
-  await writeJson(`${DATA}/submission-${submission.id}.json`, submission);
-  const index = await readJson<string[]>(`${DATA}/submissions-index.json`, []);
-  if (!index.includes(submission.id)) {
-    await writeJson(`${DATA}/submissions-index.json`, [...index, submission.id]);
-  }
+  const all = await readAllSubmissions();
+  await writeAllSubmissions([...all, submission]);
 }
 
 export async function getSubmission(id: string): Promise<Submission | null> {
-  return readJson<Submission | null>(`${DATA}/submission-${id}.json`, null);
+  const all = await readAllSubmissions();
+  return all.find(s => s.id === id) ?? null;
 }
 
 export async function getPendingSubmissions(): Promise<Submission[]> {
-  const index = await readJson<string[]>(`${DATA}/submissions-index.json`, []);
-  const all = await Promise.all(index.map(id => getSubmission(id)));
-  return all.filter((s): s is Submission => s !== null && s.status === 'pending');
+  const all = await readAllSubmissions();
+  return all.filter(s => s.status === 'pending');
 }
 
 export async function updateSubmissionStatus(
   id: string,
   status: 'approved' | 'rejected',
 ): Promise<void> {
-  const sub = await getSubmission(id);
-  if (!sub) return;
-  await writeJson(`${DATA}/submission-${id}.json`, { ...sub, status });
+  const all = await readAllSubmissions();
+  const updated = all.map(s => s.id === id ? { ...s, status } : s);
+  await writeAllSubmissions(updated);
 }
 
 // ── Live artworks (per room) ──────────────────────────────────────────────────
 
 export async function getRoomArtworks(roomId: string): Promise<ImageMetadata[] | null> {
-  const pathname = `${DATA}/artworks-${roomId}.json`;
-  const url = await resolveUrl(pathname);
-  if (!url) return null;
-  return readJson<ImageMetadata[]>(pathname, []);
+  const data = await readJson<ImageMetadata[] | null>(artworksPath(roomId), null);
+  return data;
 }
 
 export async function addArtworkToRoom(roomId: string, artwork: ImageMetadata): Promise<void> {
-  const existing = (await getRoomArtworks(roomId)) ?? [];
-  await writeJson(`${DATA}/artworks-${roomId}.json`, [...existing, artwork]);
+  const existing: ImageMetadata[] = (await getRoomArtworks(roomId)) ?? [];
+  await writeJson(artworksPath(roomId), [...existing, artwork]);
+}
+
+export async function removeArtworkFromRoom(roomId: string, index: number): Promise<void> {
+  const existing: ImageMetadata[] = (await getRoomArtworks(roomId)) ?? [];
+  await writeJson(artworksPath(roomId), existing.filter((_, i) => i !== index));
 }
 
 export async function getAllRoomArtworks(
@@ -127,10 +136,10 @@ export async function getAllRoomArtworks(
 // ── Settings ─────────────────────────────────────────────────────────────────
 
 export async function getSettings(): Promise<GallerySettings> {
-  const stored = await readJson<Partial<GallerySettings>>(`${DATA}/settings.json`, {});
+  const stored = await readJson<Partial<GallerySettings>>(SETTINGS_PATH, {});
   return { ...DEFAULT_SETTINGS, ...stored };
 }
 
 export async function saveSettings(settings: GallerySettings): Promise<void> {
-  await writeJson(`${DATA}/settings.json`, settings);
+  await writeJson(SETTINGS_PATH, settings);
 }

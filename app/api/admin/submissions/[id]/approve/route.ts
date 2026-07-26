@@ -16,8 +16,8 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json() as { roomId: string; shortDescription?: string };
-    const { roomId, shortDescription } = body;
+    const body = await request.json() as { roomId: string };
+    const { roomId } = body;
 
     if (!roomId) {
       return NextResponse.json({ error: 'roomId is required.' }, { status: 400 });
@@ -37,7 +37,7 @@ export async function POST(
       artist: submission.artist,
       date: submission.year || new Date().getFullYear().toString(),
       medium: submission.medium || undefined,
-      shortDescription: shortDescription || undefined,
+      shortDescription: submission.shortDescription || undefined,
       longDescription: submission.statement || undefined,
       link: '',
       aspectRatio: submission.aspectRatio,

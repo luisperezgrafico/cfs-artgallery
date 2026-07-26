@@ -15,6 +15,7 @@ interface FormValues {
   email: string;
   medium: string;
   year: string;
+  shortDescription: string;
   statement: string;
   file: File | null;
   aspectRatio: number | null;
@@ -72,7 +73,7 @@ const errorText: React.CSSProperties = {
 const SubmitArtworkModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [values, setValues] = useState<FormValues>({ title: '', name: '', email: '', medium: '', year: '', statement: '', file: null, aspectRatio: null });
+  const [values, setValues] = useState<FormValues>({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', file: null, aspectRatio: null });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -81,7 +82,7 @@ const SubmitArtworkModal: React.FC = () => {
 
   const reset = useCallback(() => {
     setSubmitState('idle');
-    setValues({ title: '', name: '', email: '', medium: '', year: '', statement: '', file: null, aspectRatio: null });
+    setValues({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', file: null, aspectRatio: null });
     setFieldErrors({});
     setSubmitError('');
     if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
@@ -159,6 +160,7 @@ const SubmitArtworkModal: React.FC = () => {
       body.append('email', values.email.trim());
       body.append('medium', values.medium.trim());
       body.append('year', values.year.trim());
+      body.append('shortDescription', values.shortDescription.trim());
       body.append('statement', values.statement.trim());
       body.append('aspectRatio', String(values.aspectRatio ?? 1));
       body.append('file', values.file);
@@ -321,17 +323,33 @@ const SubmitArtworkModal: React.FC = () => {
                 </div>
               </div>
 
+              {/* Short description */}
+              <div>
+                <label style={labelStyle}>
+                  Brief summary{' '}
+                  <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={values.shortDescription}
+                  onChange={e => setValues(p => ({ ...p, shortDescription: e.target.value }))}
+                  style={inputStyle}
+                  placeholder="One sentence visitors see first when they open the plaque…"
+                  disabled={busy}
+                />
+              </div>
+
               {/* Statement */}
               <div>
                 <label style={labelStyle}>
-                  About this piece{' '}
+                  Full statement{' '}
                   <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
                 </label>
                 <textarea
                   value={values.statement}
                   onChange={e => setValues(p => ({ ...p, statement: e.target.value }))}
                   style={{ ...inputStyle, minHeight: '4.5rem', resize: 'vertical' }}
-                  placeholder="Your process, what it means to you, when it was made…"
+                  placeholder="Your process, what this piece means to you…"
                   disabled={busy}
                 />
               </div>
