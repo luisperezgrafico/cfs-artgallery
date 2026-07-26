@@ -93,13 +93,13 @@ function createPlaqueTexture({
   ctx.textBaseline = 'middle';
 
   if (isSubmit) {
-    drawFittedText(ctx, title, 92, 50, 600, '#2b3644', maxTextWidth);
-    drawFittedText(ctx, subtitle, 154, 36, 500, '#637687', maxTextWidth);
+    drawFittedText(ctx, title, 88, 64, 600, '#2b3644', maxTextWidth);
+    drawFittedText(ctx, subtitle, 158, 44, 500, '#637687', maxTextWidth);
   } else {
-    drawFittedText(ctx, title, 70, 46, 600, '#2b3644', maxTextWidth);
-    drawFittedText(ctx, subtitle, 122, 35, 500, '#5a6878', maxTextWidth);
+    drawFittedText(ctx, title, 62, 62, 600, '#2b3644', maxTextWidth);
+    drawFittedText(ctx, subtitle, 124, 48, 500, '#5a6878', maxTextWidth);
     if (footer) {
-      drawFittedText(ctx, footer, 172, 28, 500, '#a8bcc8', maxTextWidth);
+      drawFittedText(ctx, footer, 180, 36, 500, '#a8bcc8', maxTextWidth);
     }
   }
 
