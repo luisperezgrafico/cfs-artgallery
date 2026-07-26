@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ExternalLink, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
-import { drawingImages } from '../../config/imagesConfig';
+import { useRoom } from '../../contexts/RoomContext';
+import { useShelf } from '../../contexts/ShelfContext';
 
 interface Origin {
   x: number;
@@ -11,19 +12,36 @@ interface Origin {
 }
 
 const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
-  const { isTourStarted, currentFrameIndex } = useTour();
+  const { isTourStarted, currentFrameIndex, images } = useTour();
+  const { rooms, activeRoomIndex } = useRoom();
+  const { isShelved, toggle } = useShelf();
   const [isOpen, setIsOpen] = useState(false);
   const [origin, setOrigin] = useState<Origin | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   const artwork = isTourStarted && currentFrameIndex >= 0
-    ? drawingImages[currentFrameIndex]
+    ? images[currentFrameIndex]
     : null;
+
+  const activeRoom = rooms[activeRoomIndex];
+  const canShelf = !!(artwork?.id);
+  const shelved = canShelf ? isShelved(artwork!.id!) : false;
+
+  const handleToggleShelf = () => {
+    if (!artwork?.id) return;
+    toggle({
+      id: artwork.id,
+      title: artwork.title,
+      artist: artwork.artist,
+      url: artwork.url,
+      roomId: activeRoom.id,
+      frameIndex: currentFrameIndex,
+    });
+  };
 
   useEffect(() => { setIsOpen(false); setExpanded(false); }, [currentFrameIndex]);
   useEffect(() => { if (!isTourStarted) setIsOpen(false); }, [isTourStarted]);
 
-  // Notify SwipeableContainer whenever modal closes for any reason
   useEffect(() => {
     if (!isOpen) {
       window.dispatchEvent(new CustomEvent('close-artwork-info'));
@@ -44,29 +62,17 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
 
   const close = () => setIsOpen(false);
 
-  // transform-origin for the panel-wrapper (which is fixed inset-0):
-  // viewport coordinates map directly because the wrapper spans the full viewport.
-  // Fallback: roughly where the plaque would be (center-bottom area).
-  const transformOrigin = origin
-    ? `${origin.x}px ${origin.y}px`
-    : '50% 75%';
-
+  const transformOrigin = origin ? `${origin.x}px ${origin.y}px` : '50% 75%';
   const safeAreaPadding = 'max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left))';
 
   return (
     <div style={style}>
-      {/* Backdrop — fades in independently, captures outside clicks */}
       <div
         className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
         style={{ animation: 'fadeIn 0.28s ease-out' }}
         onClick={close}
       />
 
-      {/*
-        Panel wrapper — same fixed inset-0 layer but pointer-events-none so
-        the backdrop above captures clicks outside the panel.
-        Scales from the plaque's viewport coordinates via transform-origin.
-      */}
       <div
         className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
         style={{
@@ -75,7 +81,6 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
           animation: 'scaleInSmooth 0.34s ease-out forwards',
         }}
       >
-        {/* Panel — re-enables pointer events. Styled like the 3D plaque: cream, warm border, serif title */}
         <div
           className="pointer-events-auto w-full max-w-lg flex flex-col max-h-[85dvh]"
           style={{
@@ -85,10 +90,9 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
             borderRadius: '2px',
           }}
         >
-
           {/* Header */}
-          <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
-            <div>
+          <div className="flex items-start justify-between gap-3 px-6 pt-6 pb-4">
+            <div className="flex-1 min-w-0">
               <h2
                 className="text-lg leading-snug"
                 style={{
@@ -109,14 +113,28 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                 {artwork.medium ? ` · ${artwork.medium}` : ''}
               </p>
             </div>
-            <button
-              onClick={close}
-              aria-label="Close"
-              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
-              style={{ color: 'var(--panel-btn-text)' }}
-            >
-              <X size={16} />
-            </button>
+
+            <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
+              {canShelf && (
+                <button
+                  onClick={handleToggleShelf}
+                  aria-label={shelved ? 'Remove from shelf' : 'Add to shelf'}
+                  title={shelved ? 'Remove from shelf' : 'Add to shelf'}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                  style={{ color: shelved ? '#c0665a' : 'var(--panel-btn-text)' }}
+                >
+                  <Heart size={15} fill={shelved ? 'currentColor' : 'none'} />
+                </button>
+              )}
+              <button
+                onClick={close}
+                aria-label="Close"
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                style={{ color: 'var(--panel-btn-text)' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Separator */}

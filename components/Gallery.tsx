@@ -9,6 +9,7 @@ import MuseumStage from './MuseumStage';
 import UIElements from './ui/UIElements';
 import { ImageMetadata } from '../types/museum';
 import { getInitialFrameIndex, saveVisitPosition } from '../utils/userPreferences';
+import { ShelfProvider } from '../contexts/ShelfContext';
 
 const ROOM_CAPACITY = 8;
 const EMPTY_SLOT: ImageMetadata = {
@@ -49,6 +50,7 @@ function GalleryContent({ liveArtworks }: { liveArtworks: Record<string, ImageMe
         key={activeRoom.id}
         totalFrames={images.length}
         initialFrameIndex={initialFrameIndex}
+        images={images}
       >
         <VisitPositionPersistence roomId={activeRoom.id} />
         <SwipeableContainer>
@@ -72,9 +74,11 @@ export default function Gallery() {
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-black">
-      <RoomProvider>
-        <GalleryContent liveArtworks={liveArtworks} />
-      </RoomProvider>
+      <ShelfProvider>
+        <RoomProvider>
+          <GalleryContent liveArtworks={liveArtworks} />
+        </RoomProvider>
+      </ShelfProvider>
     </div>
   );
 }

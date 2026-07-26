@@ -2,7 +2,7 @@
 
 // src/contexts/TourContext.tsx
 import React, { createContext, useCallback, useContext, useState, ReactNode } from "react";
-import { RestViewpoint } from "../types/museum";
+import { ImageMetadata, RestViewpoint } from "../types/museum";
 
 interface TourContextType {
   isTourStarted: boolean;
@@ -11,6 +11,7 @@ interface TourContextType {
   currentFrameIndex: number;
   setCurrentFrameIndex: (index: number) => void;
   totalFrames: number;
+  images: ImageMetadata[];
   startTour: () => void;
   nextFrame: () => void;
   previousFrame: () => void;
@@ -24,12 +25,14 @@ interface TourProviderProps {
   children: ReactNode;
   totalFrames: number;
   initialFrameIndex?: number;
+  images?: ImageMetadata[];
 }
 
 export const TourProvider: React.FC<TourProviderProps> = ({
   children,
   totalFrames,
   initialFrameIndex = -1,
+  images = [],
 }) => {
   const initialIndex =
     initialFrameIndex >= 0 && initialFrameIndex < totalFrames ? initialFrameIndex : -1;
@@ -89,6 +92,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     currentFrameIndex: currentFrameIndexState,
     setCurrentFrameIndex,
     totalFrames,
+    images,
     startTour,
     nextFrame,
     previousFrame,

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Heart } from 'lucide-react';
 import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
-import { clampMenuTabY, readMenuTabY, saveMenuTabY } from '../../utils/userPreferences';
+import { useShelf } from '../../contexts/ShelfContext';
+import { clampMenuTabY, readMenuTabY, saveMenuTabY, saveVisitPosition } from '../../utils/userPreferences';
 import ThemeToggle from './ThemeToggle';
 
 function useIsMobile() {
@@ -24,7 +25,8 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [tabY, setTabY] = useState(() => readMenuTabY());
   const isMobile = useIsMobile();
   const { rooms, activeRoomIndex, setActiveRoomIndex } = useRoom();
-  const { quitTour } = useTour();
+  const { quitTour, startTour, setCurrentFrameIndex } = useTour();
+  const { items: shelfItems } = useShelf();
   const dragState = useRef<{
     pointerId: number | null;
     startY: number;
@@ -50,6 +52,21 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     if (i === activeRoomIndex) { setIsOpen(false); return; }
     quitTour();
     setActiveRoomIndex(i);
+    setIsOpen(false);
+  };
+
+  const handleShelfNavigate = (item: typeof shelfItems[0]) => {
+    const targetRoomIndex = rooms.findIndex(r => r.id === item.roomId);
+    if (targetRoomIndex === -1) return;
+
+    if (targetRoomIndex === activeRoomIndex) {
+      startTour();
+      setCurrentFrameIndex(item.frameIndex);
+    } else {
+      saveVisitPosition(item.roomId, item.frameIndex);
+      quitTour();
+      setActiveRoomIndex(targetRoomIndex);
+    }
     setIsOpen(false);
   };
 
@@ -137,19 +154,19 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
         {/* Drawer panel */}
         <div
-          className="h-full w-[75vw] max-w-sm bg-black/90 backdrop-blur-xl border-l border-white/10 flex flex-col"
+          className="h-full w-[75vw] max-w-sm bg-black/90 backdrop-blur-xl border-l border-white/10 flex flex-col overflow-y-auto"
           style={{ paddingRight: 'env(safe-area-inset-right)' }}
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 pb-5 border-b border-white/10"
+            className="flex items-center justify-between px-5 pb-5 border-b border-white/10 shrink-0"
             style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))' }}
           >
             <span className="text-white font-semibold text-base tracking-wide">Gallery</span>
           </div>
 
           {/* Rooms */}
-          <div className="px-4 pt-5 pb-3">
+          <div className="px-4 pt-5 pb-3 shrink-0">
             <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1">
               Rooms
             </p>
@@ -174,10 +191,33 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
             </ul>
           </div>
 
+          {/* My shelf */}
+          {shelfItems.length > 0 && (
+            <div className="px-4 pt-2 pb-3 border-t border-white/10 shrink-0">
+              <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 flex items-center gap-1.5">
+                My shelf
+                <span className="text-white/20 font-normal normal-case tracking-normal text-[9px]">{shelfItems.length}</span>
+              </p>
+              <ul className="space-y-0.5">
+                {shelfItems.map(item => (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => handleShelfNavigate(item)}
+                      className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-white/8 group"
+                    >
+                      <p className="text-white/80 text-sm leading-snug group-hover:text-white truncate">{item.title}</p>
+                      <p className="text-white/35 text-xs truncate">{item.artist}</p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="flex-1" />
 
           {/* Appearance */}
-          <div className="px-5 pt-4 pb-4 border-t border-white/10">
+          <div className="px-5 pt-4 pb-4 border-t border-white/10 shrink-0">
             <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
               Appearance
             </p>
@@ -189,7 +229,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
           {/* Controls */}
           <div
-            className="px-5 pt-4 border-t border-white/10"
+            className="px-5 pt-4 border-t border-white/10 shrink-0"
             style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
           >
             <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">

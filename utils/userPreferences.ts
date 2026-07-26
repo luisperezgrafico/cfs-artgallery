@@ -4,8 +4,18 @@ type StoredVisitPosition = {
   updatedAt: number;
 };
 
+export interface ShelfItem {
+  id: string;
+  title: string;
+  artist: string;
+  url: string;
+  roomId: string;
+  frameIndex: number;
+}
+
 const VISIT_POSITION_KEY = 'cfs-gallery:visit-position:v1';
 const MENU_TAB_Y_KEY = 'cfs-gallery:menu-tab-y:v1';
+const SHELF_KEY = 'cfs-gallery:shelf:v1';
 const DEFAULT_MENU_TAB_Y = 0.5;
 const MIN_MENU_TAB_Y = 0.18;
 const MAX_MENU_TAB_Y = 0.82;
@@ -109,5 +119,37 @@ export function saveMenuTabY(value: number) {
     localStorage.setItem(MENU_TAB_Y_KEY, String(clampMenuTabY(value)));
   } catch {
     /* storage disabled/full - preference persistence is optional */
+  }
+}
+
+export function readShelf(): ShelfItem[] {
+  const ls = storage();
+  if (!ls) return [];
+  try {
+    const raw = ls.getItem(SHELF_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is ShelfItem =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof item.id === 'string' &&
+        typeof item.title === 'string' &&
+        typeof item.roomId === 'string' &&
+        typeof item.frameIndex === 'number',
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function writeShelf(items: ShelfItem[]): void {
+  const ls = storage();
+  if (!ls) return;
+  try {
+    ls.setItem(SHELF_KEY, JSON.stringify(items));
+  } catch {
+    /* storage disabled/full */
   }
 }
