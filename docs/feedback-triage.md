@@ -1,6 +1,6 @@
 # Feedback Triage — Collaborator Suggestions
 
-Every suggestion, mapped point by point. Judged against the project's non-negotiables (`SCOPE.md`):
+Every suggestion, mapped point by point. Judged against the project's non-negotiables:
 energy-first accessibility as the value prop · on rails · all UI as HTML over the canvas ·
 performance budget (old mid-range Android) · a *sustainable* pace for two maintainers with ME/CFS
 (perpetual moderation is a risk, not a feature) · already out of scope: accounts, comments/likes,

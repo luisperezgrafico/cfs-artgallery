@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimationProvider } from '../contexts/AnimationContext';
 import { TourProvider, useTour } from '../contexts/TourContext';
 import { RoomProvider, useRoom } from '../contexts/RoomContext';
@@ -12,8 +12,8 @@ import { getInitialFrameIndex, saveVisitPosition } from '../utils/userPreference
 
 const ROOM_CAPACITY = 8;
 const EMPTY_SLOT: ImageMetadata = {
-  url: '', title: '', artist: '', date: '', link: '', description: '',
-  aspectRatio: 1,  // square — consistent default until a real artwork fills the slot
+  url: '', title: '', artist: '', date: '', link: '',
+  aspectRatio: 1,
   isEmpty: true,
 };
 
@@ -34,10 +34,13 @@ function VisitPositionPersistence({ roomId }: { roomId: string }) {
   return null;
 }
 
-function GalleryContent() {
+function GalleryContent({ liveArtworks }: { liveArtworks: Record<string, ImageMetadata[]> }) {
   const { rooms, activeRoomIndex } = useRoom();
   const activeRoom = rooms[activeRoomIndex];
-  const images = padImages(activeRoom.images);
+  const roomLive = liveArtworks[activeRoom.id];
+  // KV artworks replace static config for that room; fall back to static if KV has none
+  const baseImages = roomLive && roomLive.length > 0 ? roomLive : activeRoom.images;
+  const images = padImages(baseImages);
   const initialFrameIndex = getInitialFrameIndex(activeRoom.id, images.length);
 
   return (
@@ -58,10 +61,19 @@ function GalleryContent() {
 }
 
 export default function Gallery() {
+  const [liveArtworks, setLiveArtworks] = useState<Record<string, ImageMetadata[]>>({});
+
+  useEffect(() => {
+    fetch('/api/artworks')
+      .then(r => r.json())
+      .then(data => setLiveArtworks(data))
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-black">
       <RoomProvider>
-        <GalleryContent />
+        <GalleryContent liveArtworks={liveArtworks} />
       </RoomProvider>
     </div>
   );

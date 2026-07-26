@@ -9,3 +9,4 @@ phase*.jpeg
 docs/screenshots/
 .vercel/
 .env.local
+.env*

@@ -32,8 +32,14 @@ export interface ImageMetadata {
   url: string;
   title: string;
   artist: string;
+  /** Year or date of the work (e.g. "2024", "March 2024") */
   date: string;
-  description: string;
+  /** Technique or material (e.g. "Watercolour on paper") — shown on the plaque */
+  medium?: string;
+  /** One or two sentences shown immediately when the plaque is opened */
+  shortDescription?: string;
+  /** Full artist statement — shown behind a "Read more" toggle */
+  longDescription?: string;
   link: string;
   /** width / height — used by Frame to set size before texture loads */
   aspectRatio?: number;

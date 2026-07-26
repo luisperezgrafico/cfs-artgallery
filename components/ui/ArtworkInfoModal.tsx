@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 import { drawingImages } from '../../config/imagesConfig';
 
@@ -14,12 +14,13 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const { isTourStarted, currentFrameIndex } = useTour();
   const [isOpen, setIsOpen] = useState(false);
   const [origin, setOrigin] = useState<Origin | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const artwork = isTourStarted && currentFrameIndex >= 0
     ? drawingImages[currentFrameIndex]
     : null;
 
-  useEffect(() => { setIsOpen(false); }, [currentFrameIndex]);
+  useEffect(() => { setIsOpen(false); setExpanded(false); }, [currentFrameIndex]);
   useEffect(() => { if (!isTourStarted) setIsOpen(false); }, [isTourStarted]);
 
   // Notify SwipeableContainer whenever modal closes for any reason
@@ -105,6 +106,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
               >
                 {artwork.artist}
                 {artwork.date ? ` · ${artwork.date}` : ''}
+                {artwork.medium ? ` · ${artwork.medium}` : ''}
               </p>
             </div>
             <button
@@ -118,23 +120,52 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
           </div>
 
           {/* Separator */}
-          {artwork.description && (
+          {(artwork.shortDescription || artwork.longDescription) && (
             <div className="mx-6" style={{ borderTop: '1px solid var(--panel-separator)' }} />
           )}
 
-          {/* Scrollable description */}
-          {artwork.description && (
+          {/* Descriptions */}
+          {(artwork.shortDescription || artwork.longDescription) && (
             <div className="overflow-y-auto px-6 py-5 flex-1">
-              <p
-                className="text-sm whitespace-pre-line"
-                style={{
-                  fontFamily: "Georgia, 'Times New Roman', serif",
-                  color: 'var(--panel-text)',
-                  lineHeight: 1.7,
-                }}
-              >
-                {artwork.description}
-              </p>
+              {artwork.shortDescription && (
+                <p
+                  className="text-sm whitespace-pre-line"
+                  style={{
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    color: 'var(--panel-text)',
+                    lineHeight: 1.7,
+                  }}
+                >
+                  {artwork.shortDescription}
+                </p>
+              )}
+
+              {artwork.longDescription && (
+                <>
+                  {artwork.shortDescription && (
+                    <button
+                      onClick={() => setExpanded(e => !e)}
+                      className="flex items-center gap-1 mt-3 text-xs transition-colors"
+                      style={{ color: 'var(--panel-subtitle)' }}
+                    >
+                      {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      {expanded ? 'Less' : 'Read more'}
+                    </button>
+                  )}
+                  {(!artwork.shortDescription || expanded) && (
+                    <p
+                      className="text-sm whitespace-pre-line mt-3"
+                      style={{
+                        fontFamily: "Georgia, 'Times New Roman', serif",
+                        color: 'var(--panel-text)',
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      {artwork.longDescription}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           )}
 

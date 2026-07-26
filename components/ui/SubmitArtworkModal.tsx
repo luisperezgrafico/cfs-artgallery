@@ -10,15 +10,18 @@ const ACCEPTED_LABEL = 'JPG, PNG or WEBP · max 5 MB';
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
 interface FormValues {
+  title: string;
   name: string;
   email: string;
+  medium: string;
   year: string;
-  description: string;
+  statement: string;
   file: File | null;
   aspectRatio: number | null;
 }
 
 interface FieldErrors {
+  title?: string;
   name?: string;
   email?: string;
   file?: string;
@@ -69,7 +72,7 @@ const errorText: React.CSSProperties = {
 const SubmitArtworkModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [values, setValues] = useState<FormValues>({ name: '', email: '', year: '', description: '', file: null, aspectRatio: null });
+  const [values, setValues] = useState<FormValues>({ title: '', name: '', email: '', medium: '', year: '', statement: '', file: null, aspectRatio: null });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -78,7 +81,7 @@ const SubmitArtworkModal: React.FC = () => {
 
   const reset = useCallback(() => {
     setSubmitState('idle');
-    setValues({ name: '', email: '', year: '', description: '', file: null, aspectRatio: null });
+    setValues({ title: '', name: '', email: '', medium: '', year: '', statement: '', file: null, aspectRatio: null });
     setFieldErrors({});
     setSubmitError('');
     if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
@@ -132,6 +135,7 @@ const SubmitArtworkModal: React.FC = () => {
   // Validation
   const validate = (): boolean => {
     const errs: FieldErrors = {};
+    if (!values.title.trim()) errs.title = 'Title is required.';
     if (!values.name.trim()) errs.name = 'Name is required.';
     if (!values.email.trim()) {
       errs.email = 'Email is required.';
@@ -143,16 +147,35 @@ const SubmitArtworkModal: React.FC = () => {
     return Object.keys(errs).length === 0;
   };
 
-  // Mock submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate() || !values.file) return;
     setSubmitState('submitting');
     setSubmitError('');
-    await new Promise(r => setTimeout(r, 1400));
-    // Mock: always succeeds (uncomment the else to test error path)
-    setSubmitState('success');
-    // else { setSubmitState('error'); setSubmitError('Something went wrong. Please try again.'); }
+    try {
+      const body = new FormData();
+      body.append('title', values.title.trim());
+      body.append('artist', values.name.trim());
+      body.append('email', values.email.trim());
+      body.append('medium', values.medium.trim());
+      body.append('year', values.year.trim());
+      body.append('statement', values.statement.trim());
+      body.append('aspectRatio', String(values.aspectRatio ?? 1));
+      body.append('file', values.file);
+
+      const res = await fetch('/api/submit', { method: 'POST', body });
+      const data = await res.json() as { ok?: boolean; error?: string };
+
+      if (!res.ok || !data.ok) {
+        setSubmitError(data.error ?? 'Something went wrong. Please try again.');
+        setSubmitState('error');
+      } else {
+        setSubmitState('success');
+      }
+    } catch {
+      setSubmitError('Something went wrong. Please try again.');
+      setSubmitState('error');
+    }
   };
 
   if (!isOpen) return null;
@@ -221,15 +244,29 @@ const SubmitArtworkModal: React.FC = () => {
             /* ── Form ── */
             <form onSubmit={handleSubmit} noValidate className="overflow-y-auto px-6 py-5 flex flex-col gap-4">
 
+              {/* Title */}
+              <div>
+                <label style={labelStyle}>Title of the artwork *</label>
+                <input
+                  type="text"
+                  value={values.title}
+                  onChange={e => setValues(p => ({ ...p, title: e.target.value }))}
+                  style={inputStyle}
+                  placeholder="What is this piece called?"
+                  disabled={busy}
+                />
+                {fieldErrors.title && <p style={errorText}>{fieldErrors.title}</p>}
+              </div>
+
               {/* Name */}
               <div>
-                <label style={labelStyle}>Full name *</label>
+                <label style={labelStyle}>Your name or handle *</label>
                 <input
                   type="text"
                   value={values.name}
                   onChange={e => setValues(p => ({ ...p, name: e.target.value }))}
                   style={inputStyle}
-                  placeholder="Your name"
+                  placeholder="How you'd like to be credited"
                   disabled={busy}
                   autoComplete="name"
                 />
@@ -251,32 +288,48 @@ const SubmitArtworkModal: React.FC = () => {
                 {fieldErrors.email && <p style={errorText}>{fieldErrors.email}</p>}
               </div>
 
-              {/* Year */}
-              <div>
-                <label style={labelStyle}>
-                  Year of the artwork{' '}
-                  <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={values.year}
-                  onChange={e => setValues(p => ({ ...p, year: e.target.value }))}
-                  style={{ ...inputStyle, maxWidth: '8rem' }}
-                  placeholder=""
-                  maxLength={4}
-                  disabled={busy}
-                />
+              {/* Medium + Year row */}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>
+                    Medium{' '}
+                    <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={values.medium}
+                    onChange={e => setValues(p => ({ ...p, medium: e.target.value }))}
+                    style={inputStyle}
+                    placeholder="e.g. Watercolour"
+                    disabled={busy}
+                  />
+                </div>
+                <div style={{ width: '6rem' }}>
+                  <label style={labelStyle}>
+                    Year{' '}
+                    <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(opt.)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={values.year}
+                    onChange={e => setValues(p => ({ ...p, year: e.target.value }))}
+                    style={inputStyle}
+                    placeholder="2024"
+                    maxLength={4}
+                    disabled={busy}
+                  />
+                </div>
               </div>
 
-              {/* Description */}
+              {/* Statement */}
               <div>
                 <label style={labelStyle}>
                   About this piece{' '}
                   <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
                 </label>
                 <textarea
-                  value={values.description}
-                  onChange={e => setValues(p => ({ ...p, description: e.target.value }))}
+                  value={values.statement}
+                  onChange={e => setValues(p => ({ ...p, statement: e.target.value }))}
                   style={{ ...inputStyle, minHeight: '4.5rem', resize: 'vertical' }}
                   placeholder="Your process, what it means to you, when it was made…"
                   disabled={busy}
