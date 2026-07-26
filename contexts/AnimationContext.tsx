@@ -49,7 +49,7 @@ export const AnimationProvider: React.FC<{ children: ReactNode }> = ({
   }, [currentScreen]);
 
   const handleLoadingComplete = () => {
-    setCurrentScreen("title");
+    setCurrentScreen((screen) => (screen === "loading" ? "title" : screen));
   };
 
   const handleTitleFading = () => {
