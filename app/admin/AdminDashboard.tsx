@@ -258,7 +258,7 @@ function SubmissionCard({
 
 // ── Submissions tab ───────────────────────────────────────────────────────────
 
-function SubmissionsTab({ onApproved }: { onApproved: () => void }) {
+function SubmissionsTab({ onApproved }: { onApproved: (roomId: string, artwork: ImageMetadata) => void }) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -287,11 +287,12 @@ function SubmissionsTab({ onApproved }: { onApproved: () => void }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ roomId }),
     });
-    const data = await res.json() as { ok?: boolean; error?: string };
+    const data = await res.json() as { ok?: boolean; error?: string; artwork?: ImageMetadata; roomId?: string };
     if (!res.ok || !data.ok) throw new Error(data.error ?? 'Approval failed.');
+    const approvedId = activeModal.submission.id;
     setActiveModal(null);
-    await load();
-    onApproved();
+    setSubmissions(prev => prev.filter(s => s.id !== approvedId));
+    if (data.artwork && data.roomId) onApproved(data.roomId, data.artwork);
   };
 
   const handleRejectConfirm = async (reason: string) => {
@@ -303,8 +304,9 @@ function SubmissionsTab({ onApproved }: { onApproved: () => void }) {
     });
     const data = await res.json() as { ok?: boolean; error?: string };
     if (!res.ok || !data.ok) throw new Error(data.error ?? 'Rejection failed.');
+    const rejectedId = activeModal.submission.id;
     setActiveModal(null);
-    await load();
+    setSubmissions(prev => prev.filter(s => s.id !== rejectedId));
   };
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
@@ -338,7 +340,7 @@ function SubmissionsTab({ onApproved }: { onApproved: () => void }) {
 
 // ── Approved tab ──────────────────────────────────────────────────────────────
 
-function ApprovedTab({ refreshKey }: { refreshKey: number }) {
+function ApprovedTab({ pendingAdd }: { pendingAdd: { roomId: string; artwork: ImageMetadata } | null }) {
   const [artworks, setArtworks] = useState<Record<string, ImageMetadata[]>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -361,12 +363,24 @@ function ApprovedTab({ refreshKey }: { refreshKey: number }) {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load, refreshKey]);
+  useEffect(() => { load(); }, [load]);
+
+  // Optimistic add: inject newly approved artwork directly into local state
+  useEffect(() => {
+    if (!pendingAdd) return;
+    setArtworks(prev => ({
+      ...prev,
+      [pendingAdd.roomId]: [...(prev[pendingAdd.roomId] ?? []), pendingAdd.artwork],
+    }));
+  }, [pendingAdd]);
 
   const handleRemove = async (roomId: string, index: number) => {
     const key = `${roomId}-${index}`;
     setRemoving(key);
     setRemoveError('');
+    // Optimistic remove
+    const snapshot = artworks[roomId] ?? [];
+    setArtworks(prev => ({ ...prev, [roomId]: snapshot.filter((_, i) => i !== index) }));
     try {
       const res = await fetch(`/api/admin/artworks/${roomId}`, {
         method: 'DELETE',
@@ -375,15 +389,16 @@ function ApprovedTab({ refreshKey }: { refreshKey: number }) {
       });
       if (!res.ok) {
         const data = await res.json() as { error?: string };
+        setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
         setRemoveError(data.error ?? `Error ${res.status}`);
         return;
       }
-      await load();
+      setConfirmDelete(null);
     } catch {
+      setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
       setRemoveError('Failed to remove artwork.');
     } finally {
       setRemoving(null);
-      setConfirmDelete(null);
     }
   };
 
@@ -631,10 +646,10 @@ type Tab = 'submissions' | 'approved' | 'settings';
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>('submissions');
-  const [approvedRefreshKey, setApprovedRefreshKey] = useState(0);
+  const [pendingAdd, setPendingAdd] = useState<{ roomId: string; artwork: ImageMetadata } | null>(null);
 
-  const handleApproved = () => {
-    setApprovedRefreshKey(k => k + 1);
+  const handleApproved = (roomId: string, artwork: ImageMetadata) => {
+    setPendingAdd({ roomId, artwork });
     setTab('approved');
   };
 
@@ -659,7 +674,7 @@ export default function AdminDashboard() {
 
       <main className="px-6 py-6">
         {tab === 'submissions' && <SubmissionsTab onApproved={handleApproved} />}
-        {tab === 'approved' && <ApprovedTab refreshKey={approvedRefreshKey} />}
+        {tab === 'approved' && <ApprovedTab pendingAdd={pendingAdd} />}
         {tab === 'settings' && <SettingsTab />}
       </main>
     </div>

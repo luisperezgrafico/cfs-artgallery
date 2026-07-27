@@ -58,7 +58,7 @@ export async function POST(
       galleryUrl: origin || 'https://cfs-gallery.art',
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, artwork, roomId });
   } catch (err) {
     console.error('[admin/approve]', err);
     return NextResponse.json({ error: 'Failed to approve submission.' }, { status: 500 });

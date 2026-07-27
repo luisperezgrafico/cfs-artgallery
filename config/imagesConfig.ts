@@ -2,6 +2,7 @@ import { ImageMetadata } from '../types/museum';
 
 export const drawingImages: ImageMetadata[] = [
   {
+    id: 'static-lux-perpetua',
     url: '/art/placeholder-horizon.svg',
     aspectRatio: 800 / 1000,
     title: 'Lux Perpetua',
@@ -14,6 +15,7 @@ export const drawingImages: ImageMetadata[] = [
       `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
   },
   {
+    id: 'static-hora-incerta',
     url: '/art/placeholder-ember.svg',
     aspectRatio: 900 / 660,
     title: 'Hora Incerta',
@@ -26,6 +28,7 @@ export const drawingImages: ImageMetadata[] = [
       `Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.\n\nNemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.\n\nAt vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.\n\nSimilique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus.\n\nOmnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.`,
   },
   {
+    id: 'static-silva-quieta',
     url: '/art/placeholder-thicket.svg',
     aspectRatio: 700 / 910,
     title: 'Silva Quieta',
@@ -37,6 +40,7 @@ export const drawingImages: ImageMetadata[] = [
     longDescription: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.`,
   },
   {
+    id: 'static-aqua-lenis',
     url: '/art/placeholder-tide.svg',
     aspectRatio: 910 / 700,
     title: 'Aqua Lenis',
@@ -49,6 +53,7 @@ export const drawingImages: ImageMetadata[] = [
       `Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?\n\nAt vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi.`,
   },
   {
+    id: 'static-noctis-figura',
     url: '/art/placeholder-night.svg',
     aspectRatio: 730 / 920,
     title: 'Noctis Figura',
@@ -61,6 +66,7 @@ export const drawingImages: ImageMetadata[] = [
       `Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus.`,
   },
   {
+    id: 'static-sine-titulo',
     url: '/art/placeholder-abstract.svg',
     aspectRatio: 800 / 800,
     title: 'Sine Titulo',

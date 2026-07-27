@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
-import { drawingImages } from '../../config/imagesConfig';
 
 interface Transform {
   scale: number;
@@ -15,7 +14,7 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 4;
 
 const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
-  const { isTourStarted, currentFrameIndex } = useTour();
+  const { isTourStarted, currentFrameIndex, images } = useTour();
   const [isOpen, setIsOpen] = useState(false);
   const [transform, setTransform] = useState<Transform>({ scale: 1, x: 0, y: 0 });
 
@@ -27,7 +26,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
   const lastTapAt = useRef(0);
 
   const artwork =
-    isTourStarted && currentFrameIndex >= 0 ? drawingImages[currentFrameIndex] : null;
+    isTourStarted && currentFrameIndex >= 0 ? images[currentFrameIndex] : null;
 
   const resetTransform = useCallback(() => {
     const t = { scale: 1, x: 0, y: 0 };
