@@ -338,75 +338,33 @@ function SubmissionsTab({ onApproved }: { onApproved: (roomId: string, artwork: 
   );
 }
 
-// ── Approved tab ──────────────────────────────────────────────────────────────
+// ── Approved tab (purely presentational) ─────────────────────────────────────
 
-function ApprovedTab({ pendingAdd }: { pendingAdd: { roomId: string; artwork: ImageMetadata } | null }) {
-  const [artworks, setArtworks] = useState<Record<string, ImageMetadata[]>>({});
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const [removing, setRemoving] = useState<string | null>(null);
-  const [removeError, setRemoveError] = useState('');
+function ApprovedTab({
+  artworks,
+  loading,
+  loadError,
+  removing,
+  removeError,
+  onRetry,
+  onRemove,
+}: {
+  artworks: Record<string, ImageMetadata[]>;
+  loading: boolean;
+  loadError: string;
+  removing: string | null;
+  removeError: string;
+  onRetry: () => void;
+  onRemove: (roomId: string, index: number) => void;
+}) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ roomId: string; index: number; title: string } | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError('');
-    try {
-      const res = await fetch('/api/admin/artworks');
-      if (!res.ok) { setLoadError(`Error ${res.status}`); return; }
-      setArtworks(await res.json());
-    } catch {
-      setLoadError('Failed to load artworks.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  // Optimistic add: inject newly approved artwork directly into local state
-  useEffect(() => {
-    if (!pendingAdd) return;
-    setArtworks(prev => ({
-      ...prev,
-      [pendingAdd.roomId]: [...(prev[pendingAdd.roomId] ?? []), pendingAdd.artwork],
-    }));
-  }, [pendingAdd]);
-
-  const handleRemove = async (roomId: string, index: number) => {
-    const key = `${roomId}-${index}`;
-    setRemoving(key);
-    setRemoveError('');
-    // Optimistic remove
-    const snapshot = artworks[roomId] ?? [];
-    setArtworks(prev => ({ ...prev, [roomId]: snapshot.filter((_, i) => i !== index) }));
-    try {
-      const res = await fetch(`/api/admin/artworks/${roomId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ index }),
-      });
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
-        setRemoveError(data.error ?? `Error ${res.status}`);
-        return;
-      }
-      setConfirmDelete(null);
-    } catch {
-      setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
-      setRemoveError('Failed to remove artwork.');
-    } finally {
-      setRemoving(null);
-    }
-  };
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
   if (loadError) return (
     <div className="flex flex-col items-center gap-3 py-20">
       <p className="text-red-400 text-sm">{loadError}</p>
-      <button onClick={load} className="text-white/50 text-xs underline">Retry</button>
+      <button onClick={onRetry} className="text-white/50 text-xs underline">Retry</button>
     </div>
   );
 
@@ -420,7 +378,6 @@ function ApprovedTab({ pendingAdd }: { pendingAdd: { roomId: string; artwork: Im
     <>
       {lightbox && <Lightbox url={lightbox} onClose={() => setLightbox(null)} />}
 
-      {/* Confirm delete modal */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
           <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-sm p-6 space-y-4">
@@ -433,14 +390,14 @@ function ApprovedTab({ pendingAdd }: { pendingAdd: { roomId: string; artwork: Im
             )}
             <div className="flex gap-3 pt-1">
               <button
-                onClick={() => handleRemove(confirmDelete.roomId, confirmDelete.index)}
+                onClick={() => { onRemove(confirmDelete.roomId, confirmDelete.index); setConfirmDelete(null); }}
                 disabled={!!removing}
                 className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm font-medium transition-colors"
               >
                 {removing ? <Loader2 size={14} className="animate-spin" /> : null}
                 {removing ? 'Removing…' : 'Remove'}
               </button>
-              <button onClick={() => { setConfirmDelete(null); setRemoveError(''); }} disabled={!!removing}
+              <button onClick={() => setConfirmDelete(null)} disabled={!!removing}
                 className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm transition-colors">
                 Cancel
               </button>
@@ -646,11 +603,63 @@ type Tab = 'submissions' | 'approved' | 'settings';
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>('submissions');
-  const [pendingAdd, setPendingAdd] = useState<{ roomId: string; artwork: ImageMetadata } | null>(null);
+
+  // Artworks state lives here so tab switches don't trigger re-fetches
+  const [artworks, setArtworks] = useState<Record<string, ImageMetadata[]>>({});
+  const [artworksLoading, setArtworksLoading] = useState(true);
+  const [artworksError, setArtworksError] = useState('');
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState('');
+
+  const loadArtworks = useCallback(async () => {
+    setArtworksLoading(true);
+    setArtworksError('');
+    try {
+      const res = await fetch('/api/admin/artworks');
+      if (!res.ok) { setArtworksError(`Error ${res.status}`); return; }
+      setArtworks(await res.json());
+    } catch {
+      setArtworksError('Failed to load artworks.');
+    } finally {
+      setArtworksLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadArtworks(); }, [loadArtworks]);
 
   const handleApproved = (roomId: string, artwork: ImageMetadata) => {
-    setPendingAdd({ roomId, artwork });
+    // Add optimistically — no re-fetch needed
+    setArtworks(prev => ({
+      ...prev,
+      [roomId]: [...(prev[roomId] ?? []), artwork],
+    }));
     setTab('approved');
+  };
+
+  const handleRemove = async (roomId: string, index: number) => {
+    const key = `${roomId}-${index}`;
+    setRemoving(key);
+    setRemoveError('');
+    const snapshot = artworks[roomId] ?? [];
+    // Optimistic remove
+    setArtworks(prev => ({ ...prev, [roomId]: snapshot.filter((_, i) => i !== index) }));
+    try {
+      const res = await fetch(`/api/admin/artworks/${roomId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index }),
+      });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
+        setRemoveError(data.error ?? `Error ${res.status}`);
+      }
+    } catch {
+      setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
+      setRemoveError('Failed to remove artwork.');
+    } finally {
+      setRemoving(null);
+    }
   };
 
   return (
@@ -674,7 +683,17 @@ export default function AdminDashboard() {
 
       <main className="px-6 py-6">
         {tab === 'submissions' && <SubmissionsTab onApproved={handleApproved} />}
-        {tab === 'approved' && <ApprovedTab pendingAdd={pendingAdd} />}
+        {tab === 'approved' && (
+          <ApprovedTab
+            artworks={artworks}
+            loading={artworksLoading}
+            loadError={artworksError}
+            removing={removing}
+            removeError={removeError}
+            onRetry={loadArtworks}
+            onRemove={handleRemove}
+          />
+        )}
         {tab === 'settings' && <SettingsTab />}
       </main>
     </div>
