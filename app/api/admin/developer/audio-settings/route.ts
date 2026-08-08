@@ -60,6 +60,12 @@ function stringArrayValue(value: unknown): string[] {
   return Array.isArray(value) ? value.map(item => typeof item === 'string' ? item : '') : [];
 }
 
+function secretDraft(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed && !trimmed.includes('•') ? trimmed : null;
+}
+
 function nextElevenLabsKeys(body: Partial<AudioSettings> & { elevenlabsApiKeyClear?: boolean }, current: AudioSettings): [string, string[]] {
   const currentSlots = keySlots(current.elevenlabs);
   const incomingSlots = [
@@ -68,8 +74,8 @@ function nextElevenLabsKeys(body: Partial<AudioSettings> & { elevenlabsApiKeyCle
   ].slice(0, 4);
 
   const nextSlots = Array.from({ length: 4 }, (_, index) => {
-    const incoming = incomingSlots[index];
-    if (typeof incoming === 'string' && incoming.trim()) return incoming.trim();
+    const incoming = secretDraft(incomingSlots[index]);
+    if (incoming) return incoming;
     if (body.elevenlabsApiKeyClear) return '';
     return currentSlots[index] ?? '';
   });
