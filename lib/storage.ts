@@ -64,6 +64,8 @@ export interface AudioSettings {
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
+export const DEFAULT_ELEVENLABS_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
+
 export const DEFAULT_SETTINGS: GallerySettings = {
   resendApiKey: '',
   moderatorEmails: [],
@@ -91,7 +93,7 @@ export const DEFAULT_SETTINGS: GallerySettings = {
     },
     elevenlabs: {
       apiKey: '',
-      voiceId: '',
+      voiceId: DEFAULT_ELEVENLABS_VOICE_ID,
       modelId: 'eleven_multilingual_v2',
       outputFormat: 'mp3_44100_128',
       timeoutMs: 120_000,
@@ -397,6 +399,8 @@ export async function getSettings(): Promise<GallerySettings> {
       elevenlabs: {
         ...DEFAULT_SETTINGS.audioSettings.elevenlabs,
         ...(stored.audioSettings?.elevenlabs ?? {}),
+        voiceId: stored.audioSettings?.elevenlabs?.voiceId?.trim()
+          || DEFAULT_SETTINGS.audioSettings.elevenlabs.voiceId,
       },
     },
   };

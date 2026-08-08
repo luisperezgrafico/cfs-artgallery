@@ -13,6 +13,10 @@ import {
   updateManagedArtwork,
   updateArtworkAudio,
   resetRoomArtworksToSeed,
+  getSettings,
+  saveSettings,
+  DEFAULT_SETTINGS,
+  DEFAULT_ELEVENLABS_VOICE_ID,
   type Submission,
 } from '../../lib/storage';
 import type { ImageMetadata } from '../../types/museum';
@@ -235,6 +239,23 @@ describe('approved artwork seed', () => {
     expect(reset.map(a => a.id)).toContain('static-lux-perpetua');
     expect((await getRoomArtworks('room-1'))?.map(a => a.id)).toEqual(reset.map(a => a.id));
     expect((await getRoomArtworks('room-1'))?.map(a => a.id)).not.toContain('custom');
+  });
+});
+
+describe('settings', () => {
+  it('fills a missing ElevenLabs voice id with the default voice', async () => {
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      audioSettings: {
+        ...DEFAULT_SETTINGS.audioSettings,
+        elevenlabs: {
+          ...DEFAULT_SETTINGS.audioSettings.elevenlabs,
+          voiceId: '',
+        },
+      },
+    });
+
+    expect((await getSettings()).audioSettings.elevenlabs.voiceId).toBe(DEFAULT_ELEVENLABS_VOICE_ID);
   });
 });
 
