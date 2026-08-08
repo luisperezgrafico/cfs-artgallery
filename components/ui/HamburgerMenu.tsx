@@ -169,43 +169,47 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
         {/* Drawer panel */}
         <div
-          className="h-full w-[75vw] max-w-sm bg-black/90 backdrop-blur-xl border-l border-white/10 flex flex-col overflow-y-auto"
-          style={{ paddingRight: 'env(safe-area-inset-right)' }}
+          className="h-full w-[75vw] max-w-sm backdrop-blur-xl border-l flex flex-col overflow-y-auto"
+          style={{
+            paddingRight: 'env(safe-area-inset-right)',
+            background: 'var(--panel-bg)',
+            borderColor: 'var(--panel-border)',
+          }}
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 pb-5 border-b border-white/10 shrink-0"
-            style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))' }}
+            className="flex items-center justify-between px-5 pb-5 border-b shrink-0"
+            style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))', borderColor: 'var(--panel-separator)' }}
           >
-            <span className="text-white font-semibold text-base tracking-wide">Gallery</span>
+            <span className="font-semibold text-base tracking-wide" style={{ color: 'var(--panel-title)' }}>Gallery</span>
           </div>
 
           {view === 'shelf' ? (
             <div className="px-4 pt-5 pb-3 shrink-0">
               <button
                 onClick={() => setView('main')}
-                className="mb-4 inline-flex items-center gap-1.5 px-1 text-xs text-white/45 hover:text-white/70 transition-colors"
+                className="mb-4 inline-flex items-center gap-1.5 px-1 text-xs transition-colors text-[var(--panel-subtitle)] hover:text-[var(--panel-title)]"
               >
                 <ChevronLeft size={14} /> Back
               </button>
-              <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 flex items-center gap-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 flex items-center gap-1.5 text-[var(--panel-subtitle)]">
                 My Shelf
-                <span className="text-white/20 font-normal normal-case tracking-normal text-[9px]">{shelfItems.length}</span>
+                <span className="font-normal normal-case tracking-normal text-[9px] opacity-70">{shelfItems.length}</span>
               </p>
               <ul className="space-y-1">
                 {shelfItems.map(item => (
                   <li key={item.id}>
                     <button
                       onClick={() => handleShelfNavigate(item)}
-                      className="w-full text-left px-2.5 py-2 rounded-lg transition-colors hover:bg-white/8 group flex items-center gap-3"
+                      className="w-full text-left px-2.5 py-2 rounded-lg transition-colors hover:bg-[var(--panel-btn-bg-hover)] group flex items-center gap-3"
                     >
-                      <span className="shrink-0 w-10 h-10 rounded bg-white/8 overflow-hidden">
+                      <span className="shrink-0 w-10 h-10 rounded overflow-hidden bg-[var(--panel-btn-bg)]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={item.url} alt="" className="w-full h-full object-cover opacity-85" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-white/80 text-sm leading-snug group-hover:text-white truncate">{item.title}</span>
-                        <span className="block text-white/35 text-xs truncate">{item.artist}</span>
+                        <span className="block text-sm leading-snug truncate text-[var(--panel-text)] group-hover:text-[var(--panel-title)]">{item.title}</span>
+                        <span className="block text-xs truncate text-[var(--panel-subtitle)]">{item.artist}</span>
                       </span>
                     </button>
                   </li>
@@ -218,20 +222,20 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 <div className="px-4 pt-5 pb-2 shrink-0">
                   <button
                     onClick={() => setView('shelf')}
-                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm text-white/80 hover:bg-white/8 hover:text-white transition-colors"
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-[var(--panel-text)] hover:bg-[var(--panel-btn-bg-hover)] hover:text-[var(--panel-title)]"
                   >
                     <span className="inline-flex items-center gap-2">
                       <Heart size={14} fill="currentColor" />
                       My Shelf
                     </span>
-                    <span className="text-white/30 text-xs">{shelfItems.length}</span>
+                    <span className="text-xs text-[var(--panel-subtitle)]">{shelfItems.length}</span>
                   </button>
                 </div>
               )}
 
               {/* Rooms */}
               <div className={`px-4 ${shelfItems.length > 0 ? 'pt-3' : 'pt-5'} pb-3 shrink-0`}>
-                <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 text-[var(--panel-subtitle)]">
                   Rooms
                 </p>
                 <ul className="space-y-0.5">
@@ -243,8 +247,8 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                           onClick={() => handleRoomSelect(i)}
                           className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
                             isActive
-                              ? 'bg-white/12 text-white font-medium'
-                              : 'text-white/75 hover:bg-white/8 hover:text-white'
+                              ? 'font-medium bg-[var(--panel-btn-bg)] text-[var(--panel-title)]'
+                              : 'text-[var(--panel-text)] hover:bg-[var(--panel-btn-bg-hover)] hover:text-[var(--panel-title)]'
                           }`}
                         >
                           {room.name}
@@ -262,41 +266,41 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
           {view === 'main' && (
             <>
               {/* Appearance */}
-              <div className="px-5 pt-4 pb-4 border-t border-white/10 shrink-0">
-                <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
+              <div className="px-5 pt-4 pb-4 border-t shrink-0" style={{ borderColor: 'var(--panel-separator)' }}>
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 text-[var(--panel-subtitle)]">
                   Appearance
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-white/75 text-sm">Theme</span>
-                  <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors" />
+                  <span className="text-sm text-[var(--panel-text)]">Theme</span>
+                  <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]" />
                 </div>
               </div>
 
               {/* Controls */}
               <div
-                className="px-5 pt-4 border-t border-white/10 shrink-0"
-                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+                className="px-5 pt-4 border-t shrink-0"
+                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))', borderColor: 'var(--panel-separator)' }}
               >
-                <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 text-[var(--panel-subtitle)]">
                   Controls
                 </p>
                 {isMobile ? (
-                  <ul className="space-y-2 text-xs text-white/45">
-                    <li><span className="text-white/65">Tap artwork</span> — zoom in</li>
-                    <li><span className="text-white/65">Tap plaque</span> — read description</li>
-                    <li><span className="text-white/65">Tap bench</span> — sit and look around</li>
-                    <li><span className="text-white/65">Swipe left / right</span> — navigate artworks</li>
-                    <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
-                    <li><span className="text-white/65">Swipe down</span> — exit zoom</li>
+                  <ul className="space-y-2 text-xs text-[var(--panel-subtitle)]">
+                    <li><span className="text-[var(--panel-text)]">Tap artwork</span> — zoom in</li>
+                    <li><span className="text-[var(--panel-text)]">Tap plaque</span> — read description</li>
+                    <li><span className="text-[var(--panel-text)]">Tap bench</span> — sit and look around</li>
+                    <li><span className="text-[var(--panel-text)]">Swipe left / right</span> — navigate artworks</li>
+                    <li><span className="text-[var(--panel-text)]">Eye-off button</span> — hide interface</li>
+                    <li><span className="text-[var(--panel-text)]">Swipe down</span> — exit zoom</li>
                   </ul>
                 ) : (
-                  <ul className="space-y-2 text-xs text-white/45">
-                    <li><span className="text-white/65">Click artwork</span> — zoom in</li>
-                    <li><span className="text-white/65">Click plaque</span> — read description</li>
-                    <li><span className="text-white/65">Click bench</span> — sit and look around</li>
-                    <li><span className="text-white/65">← → arrows</span> — navigate artworks</li>
-                    <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
-                    <li><span className="text-white/65">Escape</span> — exit zoom</li>
+                  <ul className="space-y-2 text-xs text-[var(--panel-subtitle)]">
+                    <li><span className="text-[var(--panel-text)]">Click artwork</span> — zoom in</li>
+                    <li><span className="text-[var(--panel-text)]">Click plaque</span> — read description</li>
+                    <li><span className="text-[var(--panel-text)]">Click bench</span> — sit and look around</li>
+                    <li><span className="text-[var(--panel-text)]">← → arrows</span> — navigate artworks</li>
+                    <li><span className="text-[var(--panel-text)]">Eye-off button</span> — hide interface</li>
+                    <li><span className="text-[var(--panel-text)]">Escape</span> — exit zoom</li>
                   </ul>
                 )}
               </div>

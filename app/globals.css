@@ -83,8 +83,9 @@
     --field-bg-soft: rgba(255, 255, 255, 0.22);
     --field-border: rgba(160, 138, 108, 0.4);
     --field-text: #2b3644;
-    --field-label: #8a7a68;
-    --field-hint: #b0a898;
+    /* darkened from #8a7a68 / #b0a898 — those failed WCAG AA (3.7:1 / 2.1:1) against --field-bg */
+    --field-label: #6a5d4c;
+    --field-hint: #786c5a;
     --field-icon: #a08a6c;
   }
 
