@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const aspectRatio = parseFloat((form.get('aspectRatio') as string) ?? '1');
     const file = form.get('file') as File | null;
 
-    if (!title || !artist || !email || !file) {
+    if (!title || !artist || !email || !shortDescription || !file) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
     if (!ALLOWED_TYPES.includes(file.type)) {

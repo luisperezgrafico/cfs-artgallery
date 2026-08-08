@@ -285,7 +285,7 @@ test.describe('managing an approved artwork', () => {
     expect(roomOneTitles).toEqual(['Slot one', 'Slot three', 'Free placement']);
     await expect(row(page, 'slot-1').getByTestId('audio-status')).toContainText('Audio ready');
     await expect(row(page, 'slot-3').getByTestId('audio-status')).toContainText('Audio missing');
-    await expect(row(page, 'free').getByTestId('audio-status')).toContainText('No audio text');
+    await expect(row(page, 'free').getByTestId('audio-status')).toContainText('Audio missing');
 
     await row(page, 'slot-1').getByTestId('manage-button').click();
     await page.getByLabel('Room').selectOption('room-2');

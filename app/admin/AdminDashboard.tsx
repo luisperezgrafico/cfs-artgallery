@@ -401,19 +401,10 @@ function AudioStatusBadge({ artwork, busy = false }: { artwork: ImageMetadata; b
     );
   }
 
-  if (hasNarrationText(artwork)) {
-    return (
-      <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-amber-300/90 bg-amber-950/35 border border-amber-800/40 rounded-full px-2 py-0.5"
-        data-testid="audio-status">
-        <AlertCircle size={11} /> Audio missing
-      </span>
-    );
-  }
-
   return (
-    <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-white/35 bg-white/[0.03] border border-white/10 rounded-full px-2 py-0.5"
+    <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-amber-300/90 bg-amber-950/35 border border-amber-800/40 rounded-full px-2 py-0.5"
       data-testid="audio-status">
-      No audio text
+      <AlertCircle size={11} /> Audio missing
     </span>
   );
 }

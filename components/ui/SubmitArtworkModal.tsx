@@ -25,6 +25,7 @@ interface FieldErrors {
   title?: string;
   name?: string;
   email?: string;
+  shortDescription?: string;
   file?: string;
 }
 
@@ -151,6 +152,9 @@ const SubmitArtworkModal: React.FC = () => {
       errs.email = 'Email is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
       errs.email = 'Enter a valid email address.';
+    }
+    if (!values.shortDescription.trim()) {
+      errs.shortDescription = 'Brief summary is required.';
     }
     if (!values.file) errs.file = 'Please select your artwork file.';
     setFieldErrors(errs);
@@ -336,18 +340,15 @@ const SubmitArtworkModal: React.FC = () => {
 
               {/* Short description */}
               <div>
-                <label style={labelStyle}>
-                  Brief summary{' '}
-                  <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
-                </label>
-                <input
-                  type="text"
+                <label style={labelStyle}>Brief summary *</label>
+                <textarea
                   value={values.shortDescription}
                   onChange={e => setValues(p => ({ ...p, shortDescription: e.target.value }))}
-                  style={inputStyle}
-                  placeholder="One sentence visitors see first when they open the plaque…"
+                  style={{ ...inputStyle, minHeight: '3.75rem', resize: 'vertical' }}
+                  placeholder="A short description helps visitors understand your work and lets us create the audio narration."
                   disabled={busy}
                 />
+                {fieldErrors.shortDescription && <p style={errorText}>{fieldErrors.shortDescription}</p>}
               </div>
 
               {/* Statement */}
