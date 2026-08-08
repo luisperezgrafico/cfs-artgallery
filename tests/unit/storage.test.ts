@@ -12,6 +12,7 @@ import {
   getPublishingSubmissions,
   updateManagedArtwork,
   updateArtworkAudio,
+  clearArtworkAudio,
   resetRoomArtworksToSeed,
   getSettings,
   saveSettings,
@@ -229,6 +230,22 @@ describe('managed artworks', () => {
     expect(updated).toMatchObject({ id: 'a', audioVoice: 'coral', audioSource: 'generated' });
     expect((await getRoomArtworks('room-1'))?.[0].audioUrl).toBe('https://example.test/audio.mp3');
   });
+
+  it('removes audio metadata without changing the rest of the artwork', async () => {
+    await addArtworkToRoom('room-1', {
+      ...artwork('a'),
+      audioUrl: 'https://example.test/audio.mp3',
+      audioGeneratedAt: '2026-08-08T12:00:00.000Z',
+      audioVoice: 'coral',
+      audioSource: 'generated',
+    });
+
+    const updated = await clearArtworkAudio('room-1', 'a');
+
+    expect(updated).toMatchObject({ id: 'a', title: 'Piece a' });
+    expect(updated?.audioUrl).toBeUndefined();
+    expect((await getRoomArtworks('room-1'))?.[0].audioUrl).toBeUndefined();
+  });
 });
 
 describe('approved artwork seed', () => {
@@ -240,6 +257,29 @@ describe('approved artwork seed', () => {
     expect(reset.map(a => a.id)).toContain('static-lux-perpetua');
     expect((await getRoomArtworks('room-1'))?.map(a => a.id)).toEqual(reset.map(a => a.id));
     expect((await getRoomArtworks('room-1'))?.map(a => a.id)).not.toContain('custom');
+  });
+
+  it('hydrates stored static artworks with the current template metadata', async () => {
+    await addArtworkToRoom('room-1', {
+      ...artwork('static-lux-perpetua'),
+      artist: 'Artist Placeholder',
+      longDescription: 'Lorem ipsum',
+      slot: 0,
+      audioUrl: 'https://example.test/audio.mp3',
+      audioGeneratedAt: '2026-08-08T12:00:00.000Z',
+      audioVoice: 'old-voice',
+      audioSource: 'generated',
+    });
+
+    const stored = (await getRoomArtworks('room-1'))?.find(a => a.id === 'static-lux-perpetua');
+
+    expect(stored).toMatchObject({
+      title: 'Lux Perpetua',
+      artist: 'Mira Solenne',
+      slot: 0,
+      audioUrl: 'https://example.test/audio.mp3',
+    });
+    expect(stored?.longDescription).not.toBe('Lorem ipsum');
   });
 });
 

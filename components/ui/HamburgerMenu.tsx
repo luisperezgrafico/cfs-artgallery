@@ -255,45 +255,49 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
           <div className="flex-1" />
 
-          {/* Appearance */}
-          <div className="px-5 pt-4 pb-4 border-t border-white/10 shrink-0">
-            <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
-              Appearance
-            </p>
-            <div className="flex items-center justify-between">
-              <span className="text-white/75 text-sm">Theme</span>
-              <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors" />
-            </div>
-          </div>
+          {view === 'main' && (
+            <>
+              {/* Appearance */}
+              <div className="px-5 pt-4 pb-4 border-t border-white/10 shrink-0">
+                <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
+                  Appearance
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/75 text-sm">Theme</span>
+                  <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors" />
+                </div>
+              </div>
 
-          {/* Controls */}
-          <div
-            className="px-5 pt-4 border-t border-white/10 shrink-0"
-            style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
-          >
-            <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
-              Controls
-            </p>
-            {isMobile ? (
-              <ul className="space-y-2 text-xs text-white/45">
-                <li><span className="text-white/65">Tap artwork</span> — zoom in</li>
-                <li><span className="text-white/65">Tap plaque</span> — read description</li>
-                <li><span className="text-white/65">Tap bench</span> — sit and look around</li>
-                <li><span className="text-white/65">Swipe left / right</span> — navigate artworks</li>
-                <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
-                <li><span className="text-white/65">Swipe down</span> — exit zoom</li>
-              </ul>
-            ) : (
-              <ul className="space-y-2 text-xs text-white/45">
-                <li><span className="text-white/65">Click artwork</span> — zoom in</li>
-                <li><span className="text-white/65">Click plaque</span> — read description</li>
-                <li><span className="text-white/65">Click bench</span> — sit and look around</li>
-                <li><span className="text-white/65">← → arrows</span> — navigate artworks</li>
-                <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
-                <li><span className="text-white/65">Escape</span> — exit zoom</li>
-              </ul>
-            )}
-          </div>
+              {/* Controls */}
+              <div
+                className="px-5 pt-4 border-t border-white/10 shrink-0"
+                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+              >
+                <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3">
+                  Controls
+                </p>
+                {isMobile ? (
+                  <ul className="space-y-2 text-xs text-white/45">
+                    <li><span className="text-white/65">Tap artwork</span> — zoom in</li>
+                    <li><span className="text-white/65">Tap plaque</span> — read description</li>
+                    <li><span className="text-white/65">Tap bench</span> — sit and look around</li>
+                    <li><span className="text-white/65">Swipe left / right</span> — navigate artworks</li>
+                    <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
+                    <li><span className="text-white/65">Swipe down</span> — exit zoom</li>
+                  </ul>
+                ) : (
+                  <ul className="space-y-2 text-xs text-white/45">
+                    <li><span className="text-white/65">Click artwork</span> — zoom in</li>
+                    <li><span className="text-white/65">Click plaque</span> — read description</li>
+                    <li><span className="text-white/65">Click bench</span> — sit and look around</li>
+                    <li><span className="text-white/65">← → arrows</span> — navigate artworks</li>
+                    <li><span className="text-white/65">Eye-off button</span> — hide interface</li>
+                    <li><span className="text-white/65">Escape</span> — exit zoom</li>
+                  </ul>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -108,6 +108,29 @@ const artworksPath = (roomId: string) => `gallery/data/artworks-${roomId}.json`;
 const SETTINGS_PATH = 'gallery/data/settings.json';
 const ROOM_CAPACITY = 8;
 
+function hydrateSeedMetadata(roomId: string, artworks: ImageMetadata[]): ImageMetadata[] {
+  const seed = approvedArtworksSeed(roomId);
+  if (!seed) return artworks;
+
+  const seedById = new Map(seed
+    .filter(artwork => artwork.id)
+    .map(artwork => [artwork.id, artwork] as const));
+
+  return artworks.map(artwork => {
+    const seedArtwork = artwork.id ? seedById.get(artwork.id) : undefined;
+    if (!seedArtwork) return artwork;
+
+    return {
+      ...seedArtwork,
+      slot: artwork.slot ?? seedArtwork.slot,
+      audioUrl: artwork.audioUrl,
+      audioGeneratedAt: artwork.audioGeneratedAt,
+      audioVoice: artwork.audioVoice,
+      audioSource: artwork.audioSource,
+    };
+  });
+}
+
 // ── Write serialization ───────────────────────────────────────────────────────
 // Every mutation below is a read-modify-write of a whole JSON file. Two of them
 // interleaving loses one of the writes — e.g. an artist submitting while a
@@ -229,7 +252,7 @@ export async function releaseSubmission(id: string): Promise<void> {
 
 export async function getRoomArtworks(roomId: string): Promise<ImageMetadata[] | null> {
   const stored = await store.readJson<ImageMetadata[] | null>(artworksPath(roomId), null);
-  if (stored !== null) return stored;
+  if (stored !== null) return hydrateSeedMetadata(roomId, stored);
   if (usingMemoryStore) return null;
   return approvedArtworksSeed(roomId);
 }
@@ -348,6 +371,28 @@ export async function updateArtworkAudio(
     if (!current) return null;
 
     const artwork = { ...current, ...audio };
+    await store.writeJson(
+      artworksPath(roomId),
+      existing.map(a => artworkKey(a) === id ? artwork : a),
+    );
+    return artwork;
+  });
+}
+
+export async function clearArtworkAudio(roomId: string, id: string): Promise<ImageMetadata | null> {
+  return withLock(artworksPath(roomId), async () => {
+    const existing = (await getRoomArtworks(roomId)) ?? [];
+    const current = existing.find(a => artworkKey(a) === id);
+    if (!current) return null;
+
+    const {
+      audioUrl: _audioUrl,
+      audioGeneratedAt: _audioGeneratedAt,
+      audioVoice: _audioVoice,
+      audioSource: _audioSource,
+      ...artwork
+    } = current;
+
     await store.writeJson(
       artworksPath(roomId),
       existing.map(a => artworkKey(a) === id ? artwork : a),

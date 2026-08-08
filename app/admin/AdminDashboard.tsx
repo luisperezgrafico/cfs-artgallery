@@ -419,6 +419,7 @@ function ArtworkManageModal({
   onUpdate,
   onRegenerateAudio,
   onUploadAudio,
+  onRemoveAudio,
 }: {
   roomId: string;
   artwork: ImageMetadata;
@@ -433,6 +434,7 @@ function ArtworkManageModal({
   ) => Promise<ImageMetadata>;
   onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
   onUploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
+  onRemoveAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
@@ -452,13 +454,14 @@ function ArtworkManageModal({
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [removingAudio, setRemovingAudio] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const audioUploadRef = React.useRef<HTMLInputElement | null>(null);
   const key = artworkKey(current);
   const room = rooms.find(r => r.id === currentRoomId);
-  const busy = busyArtworkId === key || saving || regenerating || uploadingAudio;
+  const busy = busyArtworkId === key || saving || regenerating || uploadingAudio || removingAudio;
   const canRegenerateAudio = hasNarrationText(current);
   const audioSourceLabel = current.audioSource === 'uploaded' ? 'Uploaded' : 'Generated';
   const occupiedSlots = new Set((artworks[targetRoomId] ?? [])
@@ -566,6 +569,21 @@ function ArtworkManageModal({
     } finally {
       setUploadingAudio(false);
       if (audioUploadRef.current) audioUploadRef.current.value = '';
+    }
+  };
+
+  const removeAudio = async () => {
+    setRemovingAudio(true);
+    setError('');
+    setAudioState('idle');
+    audioRef.current?.pause();
+    try {
+      const updated = await onRemoveAudio(currentRoomId, key);
+      setCurrent(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove audio.');
+    } finally {
+      setRemovingAudio(false);
     }
   };
 
@@ -747,6 +765,11 @@ function ArtworkManageModal({
                   {uploadingAudio ? <Loader2 size={14} className="animate-spin" /> : <UploadCloud size={14} />}
                   {uploadingAudio ? 'Uploading…' : 'Upload audio'}
                 </button>
+                <button onClick={removeAudio} disabled={busy || !current.audioUrl} data-testid="remove-audio"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/70 text-sm transition-colors">
+                  {removingAudio ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  {removingAudio ? 'Removing…' : 'Remove audio'}
+                </button>
               </div>
             </section>
 
@@ -792,6 +815,7 @@ function ApprovedTab({
   onUpdate,
   onRegenerateAudio,
   onUploadAudio,
+  onRemoveAudio,
 }: {
   artworks: Record<string, ImageMetadata[]>;
   publishingIds: string[];
@@ -806,6 +830,7 @@ function ApprovedTab({
   ) => Promise<ImageMetadata>;
   onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
   onUploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
+  onRemoveAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
 }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [manageArtwork, setManageArtwork] = useState<{ roomId: string; artwork: ImageMetadata } | null>(null);
@@ -828,6 +853,7 @@ function ApprovedTab({
           onUpdate={onUpdate}
           onRegenerateAudio={onRegenerateAudio}
           onUploadAudio={onUploadAudio}
+          onRemoveAudio={onRemoveAudio}
         />
       )}
 
@@ -1386,7 +1412,7 @@ export default function AdminDashboard() {
 
   // One store for the whole panel, mounted here so tab switches never remount
   // it: the tabs below are pure views over this state.
-  const { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio }: AdminData = useAdminData();
+  const { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio, removeAudio }: AdminData = useAdminData();
 
   useEffect(() => {
     fetch('/api/admin/session')
@@ -1454,6 +1480,7 @@ export default function AdminDashboard() {
                 onUpdate={updateArtwork}
                 onRegenerateAudio={regenerateAudio}
                 onUploadAudio={uploadAudio}
+                onRemoveAudio={removeAudio}
               />
             )}
             {tab === 'settings' && <SettingsTab />}

@@ -352,8 +352,14 @@ test.describe('managing an approved artwork', () => {
     await uploaded;
 
     await expect(page.getByText('Uploaded just now')).toBeVisible();
+    const removed = page.waitForResponse(r =>
+      r.request().method() === 'DELETE' && r.url().includes('/api/admin/artworks/room-1/audio'));
+    await page.getByTestId('remove-audio').click();
+    await removed;
+    await expect(page.getByText('Audio is missing for this artwork.')).toBeVisible();
+
     await page.getByLabel('Close').click();
-    await expect(row(page, 'x').getByTestId('audio-status')).toContainText('Audio ready');
+    await expect(row(page, 'x').getByTestId('audio-status')).toContainText('Audio missing');
   });
 });
 

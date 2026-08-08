@@ -27,6 +27,7 @@ export interface AdminData {
   ) => Promise<ImageMetadata>;
   regenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
   uploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
+  removeAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
   dismissError: () => void;
 }
 
@@ -294,7 +295,41 @@ export function useAdminData(): AdminData {
     return data.artwork;
   }, []);
 
+  const removeAudio = useCallback(async (roomId: string, artworkId: string): Promise<ImageMetadata> => {
+    dispatch({ type: 'artworkUpdateStart', artworkId });
+    let res: Response;
+    try {
+      res = await fetch(`/api/admin/artworks/${roomId}/audio`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: artworkId }),
+      });
+    } catch {
+      const message = 'Network error. Please try again.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    const data = await res.json().catch(() => null) as
+      | { ok?: boolean; error?: string; artwork?: ImageMetadata; roomId?: string }
+      | null;
+
+    if (!res.ok || !data?.ok || !data.artwork || !data.roomId) {
+      const message = data?.error ?? 'Failed to remove audio.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    dispatch({
+      type: 'artworkUpdateSuccess',
+      previousRoomId: roomId,
+      roomId: data.roomId,
+      artwork: data.artwork,
+    });
+    return data.artwork;
+  }, []);
+
   const dismissError = useCallback(() => dispatch({ type: 'dismissError' }), []);
 
-  return { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio, dismissError };
+  return { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio, removeAudio, dismissError };
 }
