@@ -33,6 +33,33 @@ export interface GallerySettings {
   moderatorEmails: string[];
   approvalTemplate: string;
   rejectionTemplate: string;
+  audioSettings: AudioSettings;
+}
+
+export type AudioProvider = 'local' | 'openai' | 'elevenlabs' | 'disabled';
+
+export interface OpenAiCompatibleAudioSettings {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  voice: string;
+  format: string;
+  timeoutMs: number;
+}
+
+export interface ElevenLabsAudioSettings {
+  apiKey: string;
+  voiceId: string;
+  modelId: string;
+  outputFormat: string;
+  timeoutMs: number;
+}
+
+export interface AudioSettings {
+  provider: AudioProvider;
+  local: OpenAiCompatibleAudioSettings;
+  openai: OpenAiCompatibleAudioSettings;
+  elevenlabs: ElevenLabsAudioSettings;
 }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -44,6 +71,32 @@ export const DEFAULT_SETTINGS: GallerySettings = {
     `Hi {{artist}},\n\nWe're delighted to let you know that your artwork "{{title}}" has been accepted into the ME/CFS Community Gallery.\n\nYou can view it at {{gallery_url}}.\n\nThank you for sharing your work with us.\n\n— The Gallery Team`,
   rejectionTemplate:
     `Hi {{artist}},\n\nThank you for submitting "{{title}}" to the ME/CFS Community Gallery. We really appreciate you sharing your work with us.\n\nAfter careful review, we're unable to include this piece in the current exhibition. We hope you'll consider submitting again in the future.\n\n— The Gallery Team`,
+  audioSettings: {
+    provider: 'elevenlabs',
+    local: {
+      baseUrl: '',
+      apiKey: '',
+      model: 'tts-models',
+      voice: 'xtts_en_bella_ref',
+      format: 'mp3',
+      timeoutMs: 120_000,
+    },
+    openai: {
+      baseUrl: 'https://api.openai.com/v1',
+      apiKey: '',
+      model: 'gpt-4o-mini-tts',
+      voice: 'coral',
+      format: 'mp3',
+      timeoutMs: 60_000,
+    },
+    elevenlabs: {
+      apiKey: '',
+      voiceId: '',
+      modelId: 'eleven_multilingual_v2',
+      outputFormat: 'mp3_44100_128',
+      timeoutMs: 120_000,
+    },
+  },
 };
 
 // ── Data paths ────────────────────────────────────────────────────────────────
@@ -327,7 +380,26 @@ export async function getAllRoomArtworks(
 
 export async function getSettings(): Promise<GallerySettings> {
   const stored = await store.readJson<Partial<GallerySettings>>(SETTINGS_PATH, {});
-  return { ...DEFAULT_SETTINGS, ...stored };
+  return {
+    ...DEFAULT_SETTINGS,
+    ...stored,
+    audioSettings: {
+      ...DEFAULT_SETTINGS.audioSettings,
+      ...(stored.audioSettings ?? {}),
+      local: {
+        ...DEFAULT_SETTINGS.audioSettings.local,
+        ...(stored.audioSettings?.local ?? {}),
+      },
+      openai: {
+        ...DEFAULT_SETTINGS.audioSettings.openai,
+        ...(stored.audioSettings?.openai ?? {}),
+      },
+      elevenlabs: {
+        ...DEFAULT_SETTINGS.audioSettings.elevenlabs,
+        ...(stored.audioSettings?.elevenlabs ?? {}),
+      },
+    },
+  };
 }
 
 export async function saveSettings(settings: GallerySettings): Promise<void> {

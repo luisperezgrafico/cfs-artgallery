@@ -336,6 +336,8 @@ test.describe('developer tools', () => {
     await expect(page.getByTestId('tab-developer')).toHaveCount(0);
     const res = await request.post('/api/admin/developer/reset-room-1');
     expect(res.status()).toBe(403);
+    const audioRes = await request.get('/api/admin/developer/audio-settings');
+    expect(audioRes.status()).toBe(403);
   });
 
   test('resets Room I with the template artworks for the dev user', async ({ browser, request }) => {
@@ -353,6 +355,15 @@ test.describe('developer tools', () => {
     await expect(row(page, 'custom')).toBeVisible();
 
     await page.getByTestId('tab-developer').click();
+    await page.getByTestId('audio-provider').selectOption('elevenlabs');
+    await page.getByPlaceholder('Paste ElevenLabs API key').fill('eleven-test-key');
+    await page.getByPlaceholder('JBFqnCBsd6RMkjVDRZzb').fill('voice-test-id');
+    const audioSave = page.waitForResponse(r =>
+      r.request().method() === 'PUT' && r.url().includes('/api/admin/developer/audio-settings'));
+    await page.getByTestId('save-audio-settings').click();
+    await audioSave;
+    await expect(page.getByTestId('audio-settings-result')).toContainText('Audio settings saved');
+
     const reset = page.waitForResponse(r =>
       r.request().method() === 'POST' && r.url().includes('/api/admin/developer/reset-room-1'));
     await page.getByTestId('reset-room-1-seed').click();

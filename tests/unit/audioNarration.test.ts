@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildNarrationText, generateArtworkAudio } from '../../lib/audioNarration';
 import { memoryStore } from '../../lib/blobStore';
-import type { Submission } from '../../lib/storage';
+import { DEFAULT_SETTINGS, saveSettings, type Submission } from '../../lib/storage';
 
 function submission(overrides: Partial<Submission> = {}): Submission {
   return {
@@ -30,6 +30,8 @@ beforeEach(() => {
   delete process.env.TTS_VOICE;
   delete process.env.TTS_FORMAT;
   delete process.env.OPENAI_API_KEY;
+  delete process.env.ELEVENLABS_API_KEY;
+  delete process.env.ELEVENLABS_VOICE_ID;
 });
 
 describe('buildNarrationText', () => {
@@ -41,6 +43,50 @@ describe('buildNarrationText', () => {
 
   it('returns an empty string when there is no description to narrate', () => {
     expect(buildNarrationText(submission({ shortDescription: '', statement: '' }))).toBe('');
+  });
+
+  it('calls ElevenLabs when selected in audio settings', async () => {
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      audioSettings: {
+        ...DEFAULT_SETTINGS.audioSettings,
+        provider: 'elevenlabs',
+        elevenlabs: {
+          ...DEFAULT_SETTINGS.audioSettings.elevenlabs,
+          apiKey: 'eleven-key',
+          voiceId: 'voice-123',
+          modelId: 'eleven_multilingual_v2',
+          outputFormat: 'mp3_44100_128',
+        },
+      },
+    });
+
+    const fetchMock = vi.fn(async () => new Response(
+      new Blob([new Uint8Array([4, 5, 6])], { type: 'audio/mpeg' }),
+      { status: 200, headers: { 'content-type': 'audio/mpeg' } },
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const audio = await generateArtworkAudio(submission());
+
+    expect(audio?.url).toMatch(/^\/api\/testing\/blob\/gallery\/audio\/piece-a-\d+\.mp3$/);
+    expect(audio?.voice).toBe('voice-123');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.elevenlabs.io/v1/text-to-speech/voice-123?output_format=mp3_44100_128',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'xi-api-key': 'eleven-key',
+        }),
+      }),
+    );
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    const [, options] = calls[0];
+    expect(JSON.parse(options.body as string)).toEqual({
+      text: 'Quiet Window, by Ada, 2026, Watercolour.\n\nA short note.\n\nThe longer artist statement.',
+      model_id: 'eleven_multilingual_v2',
+    });
   });
 });
 

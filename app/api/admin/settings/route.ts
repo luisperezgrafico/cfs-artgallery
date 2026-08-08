@@ -8,7 +8,9 @@ export async function GET() {
     const settings = await getSettings();
     // Never expose the API key in full — mask it for display
     return NextResponse.json({
-      ...settings,
+      moderatorEmails: settings.moderatorEmails,
+      approvalTemplate: settings.approvalTemplate,
+      rejectionTemplate: settings.rejectionTemplate,
       resendApiKey: settings.resendApiKey
         ? `${settings.resendApiKey.slice(0, 6)}${'•'.repeat(20)}`
         : '',
@@ -35,6 +37,7 @@ export async function PUT(request: NextRequest) {
       moderatorEmails: body.moderatorEmails ?? current.moderatorEmails,
       approvalTemplate: body.approvalTemplate ?? current.approvalTemplate,
       rejectionTemplate: body.rejectionTemplate ?? current.rejectionTemplate,
+      audioSettings: current.audioSettings,
     };
 
     await saveSettings(updated);
