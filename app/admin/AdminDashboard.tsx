@@ -1379,11 +1379,16 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <span className="font-semibold text-sm tracking-wide">ME/CFS Gallery — Admin</span>
-        <button onClick={() => refresh()} disabled={state.loading} data-testid="refresh"
-          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
-          title="Reload from the server">
-          <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] uppercase tracking-wider text-white/40" data-testid="admin-role">
+            {role}
+          </span>
+          <button onClick={() => refresh()} disabled={state.loading} data-testid="refresh"
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
+            title="Reload from the server">
+            <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
+          </button>
+        </div>
       </header>
 
       <TabBar tab={tab} onSelect={setTab} counts={{ submissions: state.submissions.length, approved: approvedCount }} role={role} />

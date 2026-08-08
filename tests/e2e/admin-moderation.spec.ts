@@ -333,6 +333,7 @@ test.describe('developer tools', () => {
     await seed(request);
     await openAdmin(page);
 
+    await expect(page.getByTestId('admin-role')).toHaveText('admin');
     await expect(page.getByTestId('tab-developer')).toHaveCount(0);
     const res = await request.post('/api/admin/developer/reset-room-1');
     expect(res.status()).toBe(403);
@@ -351,6 +352,7 @@ test.describe('developer tools', () => {
     const page = await context.newPage();
 
     await openAdmin(page);
+    await expect(page.getByTestId('admin-role')).toHaveText('dev');
     await page.getByTestId('tab-approved').click();
     await expect(row(page, 'custom')).toBeVisible();
 
