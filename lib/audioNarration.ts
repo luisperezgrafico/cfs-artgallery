@@ -26,7 +26,7 @@ interface OpenAiCompatibleTtsConfig {
 
 interface ElevenLabsTtsConfig {
   provider: 'elevenlabs';
-  apiKey: string;
+  apiKeys: string[];
   voiceId: string;
   modelId: string;
   outputFormat: string;
@@ -41,6 +41,19 @@ function trimSlash(value: string): string {
 
 function positiveTimeout(value: number, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function uniqueValues(values: string[]): string[] {
+  return Array.from(new Set(values.map(value => value.trim()).filter(Boolean)));
+}
+
+function elevenLabsApiKeys(settings: AudioSettings['elevenlabs']): string[] {
+  return uniqueValues([
+    settings.apiKey,
+    ...(settings.apiKeys ?? []),
+    ...(process.env.ELEVENLABS_API_KEYS?.split(',') ?? []),
+    process.env.ELEVENLABS_API_KEY ?? '',
+  ]);
 }
 
 function envTtsConfig(): TtsConfig | null {
@@ -95,13 +108,13 @@ function configuredTtsConfig(settings: AudioSettings): TtsConfig | null {
     };
   }
 
-  const apiKey = settings.elevenlabs.apiKey.trim() || process.env.ELEVENLABS_API_KEY?.trim() || '';
+  const apiKeys = elevenLabsApiKeys(settings.elevenlabs);
   const voiceId = settings.elevenlabs.voiceId.trim() || process.env.ELEVENLABS_VOICE_ID?.trim() || '';
-  if (!apiKey || !voiceId) return envTtsConfig();
+  if (apiKeys.length === 0 || !voiceId) return envTtsConfig();
 
   return {
     provider: 'elevenlabs',
-    apiKey,
+    apiKeys,
     voiceId,
     modelId: settings.elevenlabs.modelId.trim() || process.env.ELEVENLABS_MODEL_ID?.trim() || 'eleven_multilingual_v2',
     outputFormat: settings.elevenlabs.outputFormat.trim() || process.env.ELEVENLABS_OUTPUT_FORMAT?.trim() || 'mp3_44100_128',
@@ -139,26 +152,21 @@ function voiceLabel(config: TtsConfig): string {
   return config.provider === 'elevenlabs' ? config.voiceId : config.voice;
 }
 
-async function generateAudioForSource(source: NarrationSource): Promise<ArtworkAudio | null> {
-  const text = buildNarrationTextFromSource(source);
-  if (!text) return null;
+async function fetchElevenLabsSpeech(config: ElevenLabsTtsConfig, text: string): Promise<Response> {
+  let lastError: Error | null = null;
 
-  const config = await readTtsConfig();
-  if (!config) return null;
+  for (const apiKey of config.apiKeys) {
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), config.timeoutMs);
 
-  const abortController = new AbortController();
-  const timeout = setTimeout(() => abortController.abort(), config.timeoutMs);
-
-  try {
-    let response: Response;
-    if (config.provider === 'elevenlabs') {
-      response = await fetch(
+    try {
+      const response = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(config.voiceId)}?output_format=${encodeURIComponent(config.outputFormat)}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'xi-api-key': config.apiKey,
+            'xi-api-key': apiKey,
           },
           body: JSON.stringify({
             text,
@@ -168,8 +176,37 @@ async function generateAudioForSource(source: NarrationSource): Promise<ArtworkA
           redirect: 'manual',
         },
       );
-    } else {
-      assertSafeBackendUrl(config.baseUrl);
+
+      if (response.ok) return response;
+
+      const message = await response.text().catch(() => 'TTS request failed');
+      lastError = new Error(`TTS request failed (${response.status}): ${message}`);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error('TTS request failed');
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw lastError ?? new Error('TTS request failed.');
+}
+
+async function generateAudioForSource(source: NarrationSource): Promise<ArtworkAudio | null> {
+  const text = buildNarrationTextFromSource(source);
+  if (!text) return null;
+
+  const config = await readTtsConfig();
+  if (!config) return null;
+
+  let response: Response;
+  if (config.provider === 'elevenlabs') {
+    response = await fetchElevenLabsSpeech(config, text);
+  } else {
+    assertSafeBackendUrl(config.baseUrl);
+
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), config.timeoutMs);
+    try {
       response = await fetch(`${config.baseUrl}/audio/speech`, {
         method: 'POST',
         headers: {
@@ -185,27 +222,27 @@ async function generateAudioForSource(source: NarrationSource): Promise<ArtworkA
         signal: abortController.signal,
         redirect: 'manual',
       });
+    } finally {
+      clearTimeout(timeout);
     }
-
-    if (!response.ok) {
-      const message = await response.text().catch(() => 'TTS request failed');
-      throw new Error(`TTS request failed (${response.status}): ${message}`);
-    }
-
-    const extension = extensionForConfig(config);
-    const contentType = response.headers.get('content-type') || `audio/${extension}`;
-    const audio = await response.blob();
-    const file = await store.putFile(`gallery/audio/${source.id ?? 'artwork'}-${Date.now()}.${extension}`, audio, contentType);
-
-    return {
-      url: file.url,
-      generatedAt: new Date().toISOString(),
-      voice: voiceLabel(config),
-      textSignature: audioTextSignature(source),
-    };
-  } finally {
-    clearTimeout(timeout);
   }
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => 'TTS request failed');
+    throw new Error(`TTS request failed (${response.status}): ${message}`);
+  }
+
+  const extension = extensionForConfig(config);
+  const contentType = response.headers.get('content-type') || `audio/${extension}`;
+  const audio = await response.blob();
+  const file = await store.putFile(`gallery/audio/${source.id ?? 'artwork'}-${Date.now()}.${extension}`, audio, contentType);
+
+  return {
+    url: file.url,
+    generatedAt: new Date().toISOString(),
+    voice: voiceLabel(config),
+    textSignature: audioTextSignature(source),
+  };
 }
 
 export function buildNarrationText(submission: Submission): string {

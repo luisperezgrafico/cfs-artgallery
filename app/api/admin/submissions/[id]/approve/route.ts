@@ -10,10 +10,11 @@ import {
 import { sendArtistApproval } from '../../../../../../lib/email';
 import { generateArtworkAudio } from '../../../../../../lib/audioNarration';
 import { ImageMetadata } from '../../../../../../types/museum';
+import { normalizeContentNotes } from '../../../../../../config/contentNotes';
 
 export const dynamic = 'force-dynamic';
 
-function toArtwork(submission: Submission, slot: number | undefined): ImageMetadata {
+function toArtwork(submission: Submission, slot: number | undefined, contentNotes: string[]): ImageMetadata {
   return {
     id: submission.id,
     url: submission.imageUrl,
@@ -23,6 +24,7 @@ function toArtwork(submission: Submission, slot: number | undefined): ImageMetad
     medium: submission.medium || undefined,
     shortDescription: submission.shortDescription || undefined,
     longDescription: submission.statement || undefined,
+    contentNotes: contentNotes.length > 0 ? contentNotes : undefined,
     link: '',
     aspectRatio: submission.aspectRatio,
     slot,
@@ -35,7 +37,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json().catch(() => ({})) as { roomId?: string; slot?: unknown };
+    const body = await request.json().catch(() => ({})) as { roomId?: string; slot?: unknown; contentNotes?: unknown };
 
     // Resolve the room before claiming, so a bad request can't strand a
     // submission in "approved" with nowhere to hang it.
@@ -61,7 +63,7 @@ export async function POST(
       return NextResponse.json({ error: 'Submission already processed.' }, { status: 409 });
     }
 
-    const artwork = toArtwork(submission, slot);
+    const artwork = toArtwork(submission, slot, normalizeContentNotes(body.contentNotes));
     try {
       const audio = await generateArtworkAudio(submission);
       if (audio) {

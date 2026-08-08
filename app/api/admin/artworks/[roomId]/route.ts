@@ -5,6 +5,7 @@ import {
   type EditableArtworkFields,
 } from '../../../../../lib/storage';
 import { rooms } from '../../../../../config/roomsConfig';
+import { normalizeContentNotes } from '../../../../../config/contentNotes';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,7 @@ function editableFields(input: unknown): Partial<EditableArtworkFields> {
   const medium = optionalString(body.medium);
   const shortDescription = optionalString(body.shortDescription);
   const longDescription = optionalString(body.longDescription);
+  const contentNotes = normalizeContentNotes(body.contentNotes);
   const link = optionalString(body.link);
 
   if (title !== undefined) fields.title = title;
@@ -29,6 +31,7 @@ function editableFields(input: unknown): Partial<EditableArtworkFields> {
   if (medium !== undefined) fields.medium = medium;
   if (shortDescription !== undefined) fields.shortDescription = shortDescription;
   if (longDescription !== undefined) fields.longDescription = longDescription;
+  if (Array.isArray(body.contentNotes)) fields.contentNotes = contentNotes;
   if (link !== undefined) fields.link = link;
 
   return fields;

@@ -24,6 +24,7 @@ export const drawingImages: ImageMetadata[] = [
     medium: 'Watercolour on paper',
     link: '#',
     shortDescription: 'A warm abstract composition about uncertain time and gentle repetition.',
+    contentNotes: ['sensory-intensity'],
     longDescription:
       `The title means uncertain hour. The image is built from warm areas of color that seem to shift in and out of focus, suggesting time as something soft rather than sharply measured.\n\nThe darker passages give the composition weight, while the lighter marks create a sense of movement across the surface. For audio testing, this description includes longer sentences and gentle transitions so the narration can be evaluated for pacing and clarity.`,
   },
@@ -63,6 +64,7 @@ export const drawingImages: ImageMetadata[] = [
     medium: 'Ink on card',
     link: '#',
     shortDescription: 'A dark ink composition with a quiet figure emerging from the background.',
+    contentNotes: ['dark-imagery'],
     longDescription:
       `Noctis Figura uses a dark field with small tonal shifts so the surface does not feel flat. A partial figure appears from the background, giving the image a quiet focal point without making it too literal.\n\nThe work is useful for audio testing because it asks the narration to describe low contrast, atmosphere, and subtle visual detail in a clear and unhurried way.`,
   },

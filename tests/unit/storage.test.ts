@@ -179,11 +179,12 @@ describe('managed artworks', () => {
     const result = await updateManagedArtwork('room-1', 'a', {
       targetRoomId: 'room-1',
       slot: 3,
-      fields: { title: 'Edited', shortDescription: 'New note' },
+      fields: { title: 'Edited', shortDescription: 'New note', contentNotes: ['dark-imagery', 'loss'] },
     });
 
     expect(result?.artwork.title).toBe('Edited');
     expect(result?.artwork.shortDescription).toBe('New note');
+    expect(result?.artwork.contentNotes).toEqual(['dark-imagery', 'loss']);
     expect(result?.artwork.slot).toBe(3);
     expect((await getRoomArtworks('room-1'))?.map(a => a.title)).toEqual(['Edited']);
   });

@@ -13,7 +13,13 @@ function maskSecret(value: string): string {
   return value ? `${value.slice(0, 6)}${'•'.repeat(20)}` : '';
 }
 
+function keySlots(settings: AudioSettings['elevenlabs']): string[] {
+  return [settings.apiKey, ...(settings.apiKeys ?? [])].slice(0, 4);
+}
+
 function publicSettings(settings: AudioSettings) {
+  const elevenLabsKeySlots = keySlots(settings.elevenlabs);
+
   return {
     ...settings,
     local: {
@@ -29,7 +35,9 @@ function publicSettings(settings: AudioSettings) {
     elevenlabs: {
       ...settings.elevenlabs,
       apiKey: maskSecret(settings.elevenlabs.apiKey),
+      apiKeys: elevenLabsKeySlots.slice(1).map(maskSecret),
       apiKeySet: Boolean(settings.elevenlabs.apiKey),
+      apiKeySlotsSet: Array.from({ length: 4 }, (_, index) => Boolean(elevenLabsKeySlots[index])),
     },
   };
 }
@@ -46,6 +54,27 @@ function stringValue(value: unknown, fallback: string): string {
 
 function numberValue(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function stringArrayValue(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(item => typeof item === 'string' ? item : '') : [];
+}
+
+function nextElevenLabsKeys(body: Partial<AudioSettings> & { elevenlabsApiKeyClear?: boolean }, current: AudioSettings): [string, string[]] {
+  const currentSlots = keySlots(current.elevenlabs);
+  const incomingSlots = [
+    body.elevenlabs?.apiKey,
+    ...stringArrayValue(body.elevenlabs?.apiKeys),
+  ].slice(0, 4);
+
+  const nextSlots = Array.from({ length: 4 }, (_, index) => {
+    const incoming = incomingSlots[index];
+    if (typeof incoming === 'string' && incoming.trim()) return incoming.trim();
+    if (body.elevenlabsApiKeyClear) return '';
+    return currentSlots[index] ?? '';
+  });
+
+  return [nextSlots[0] ?? '', nextSlots.slice(1).filter(Boolean)];
 }
 
 export async function GET(request: NextRequest) {
@@ -72,6 +101,7 @@ export async function PUT(request: NextRequest) {
       elevenlabsApiKeyClear?: boolean;
     };
     const current = await getSettings();
+    const [elevenLabsApiKey, elevenLabsApiKeys] = nextElevenLabsKeys(body, current.audioSettings);
 
     const next: AudioSettings = {
       provider: provider(body.provider, current.audioSettings.provider),
@@ -100,11 +130,8 @@ export async function PUT(request: NextRequest) {
         timeoutMs: numberValue(body.openai?.timeoutMs, current.audioSettings.openai.timeoutMs),
       },
       elevenlabs: {
-        apiKey: body.elevenlabs?.apiKey
-          ? body.elevenlabs.apiKey
-          : body.elevenlabsApiKeyClear
-          ? ''
-          : current.audioSettings.elevenlabs.apiKey,
+        apiKey: elevenLabsApiKey,
+        apiKeys: elevenLabsApiKeys,
         voiceId: stringValue(body.elevenlabs?.voiceId, current.audioSettings.elevenlabs.voiceId),
         modelId: stringValue(body.elevenlabs?.modelId, current.audioSettings.elevenlabs.modelId),
         outputFormat: stringValue(body.elevenlabs?.outputFormat, current.audioSettings.elevenlabs.outputFormat),

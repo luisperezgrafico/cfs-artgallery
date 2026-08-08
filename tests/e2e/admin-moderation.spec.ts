@@ -399,14 +399,21 @@ test.describe('developer tools', () => {
     await page.getByTestId('tab-approved').click();
     await expect(row(page, 'custom')).toBeVisible();
 
+    await page.getByTestId('tab-settings').click();
+    await page.getByRole('button', { name: /ElevenLabs audio/i }).click();
+    await page.getByPlaceholder('Paste ElevenLabs API key').fill('eleven-test-key');
+    await page.locator('select').selectOption('JBFqnCBsd6RMkjVDRZzb');
+    const audioSave = page.waitForResponse(r =>
+      r.request().method() === 'PUT' && r.url().includes('/api/admin/settings/audio'));
+    await page.getByTestId('save-elevenlabs-settings').click();
+    await audioSave;
+
     await page.getByTestId('tab-developer').click();
     await page.getByTestId('audio-provider').selectOption('elevenlabs');
-    await page.getByPlaceholder('Paste ElevenLabs API key').fill('eleven-test-key');
-    await page.getByPlaceholder('JBFqnCBsd6RMkjVDRZzb').fill('voice-test-id');
-    const audioSave = page.waitForResponse(r =>
+    const providerSave = page.waitForResponse(r =>
       r.request().method() === 'PUT' && r.url().includes('/api/admin/developer/audio-settings'));
     await page.getByTestId('save-audio-settings').click();
-    await audioSave;
+    await providerSave;
     await expect(page.getByTestId('audio-settings-result')).toContainText('Audio settings saved');
 
     const reset = page.waitForResponse(r =>

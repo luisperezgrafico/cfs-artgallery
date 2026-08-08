@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { AudioSettings, EditableArtworkFields, Submission, GallerySettings } from '../../lib/storage';
 import { rooms } from '../../config/roomsConfig';
+import { contentNoteOptions, type ContentNote } from '../../config/contentNotes';
 import type { ImageMetadata } from '../../types/museum';
 import { artworkKey } from '../../utils/artworkKey';
 import { audioTextSignature } from '../../utils/audioNarrationText';
@@ -24,6 +25,42 @@ function timeAgo(iso: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+function toggleContentNote(notes: string[], note: string): string[] {
+  return notes.includes(note)
+    ? notes.filter(item => item !== note)
+    : [...notes, note];
+}
+
+function ContentNotesPicker({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: string[];
+  onChange: (value: string[]) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      {contentNoteOptions.map(note => (
+        <label
+          key={note.value}
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-white/65"
+        >
+          <input
+            type="checkbox"
+            checked={value.includes(note.value)}
+            onChange={() => onChange(toggleContentNote(value, note.value))}
+            disabled={disabled}
+            className="h-3.5 w-3.5 accent-white"
+          />
+          {note.label}
+        </label>
+      ))}
+    </div>
+  );
 }
 
 // ── Image lightbox ────────────────────────────────────────────────────────────
@@ -56,11 +93,12 @@ function ApproveModal({
 }: {
   submission: Submission;
   artworks: Record<string, ImageMetadata[]>;
-  onConfirm: (roomId: string, slot: number | null) => Promise<void>;
+  onConfirm: (roomId: string, slot: number | null, contentNotes: string[]) => Promise<void>;
   onClose: () => void;
 }) {
   const [roomId, setRoomId] = useState(submission.preferredRoom ?? rooms[0]?.id ?? '');
   const [slot, setSlot] = useState(submission.preferredSlot !== undefined ? String(submission.preferredSlot) : '');
+  const [contentNotes, setContentNotes] = useState<ContentNote[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const preferredRoom = submission.preferredRoom
@@ -78,7 +116,7 @@ function ApproveModal({
     setBusy(true);
     setError('');
     try {
-      await onConfirm(roomId, slot === '' ? null : Number(slot));
+      await onConfirm(roomId, slot === '' ? null : Number(slot), contentNotes);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.');
       setBusy(false);
@@ -87,7 +125,7 @@ function ApproveModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" data-testid="approve-modal">
-      <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-md p-6 space-y-4">
+      <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-md max-h-[90dvh] overflow-y-auto p-6 space-y-4">
         <h3 className="text-white font-semibold text-base">Approve &ldquo;{submission.title}&rdquo;</h3>
 
         {submission.shortDescription && (
@@ -143,6 +181,13 @@ function ApproveModal({
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block text-xs text-white/50 mb-2 uppercase tracking-wider">
+            Content notes
+          </label>
+          <ContentNotesPicker value={contentNotes} onChange={value => setContentNotes(value as ContentNote[])} disabled={busy} />
         </div>
 
         {error && (
@@ -320,7 +365,7 @@ function SubmissionsTab({
 }: {
   submissions: Submission[];
   artworks: Record<string, ImageMetadata[]>;
-  onApprove: (s: Submission, roomId: string, slot: number | null) => Promise<void>;
+  onApprove: (s: Submission, roomId: string, slot: number | null, contentNotes: string[]) => Promise<void>;
   onReject: (s: Submission, reason: string) => Promise<void>;
 }) {
   const [activeModal, setActiveModal] = useState<{ submission: Submission; type: 'approve' | 'reject' } | null>(null);
@@ -335,7 +380,7 @@ function SubmissionsTab({
         <ApproveModal
           submission={activeModal.submission}
           artworks={artworks}
-          onConfirm={async (roomId, slot) => { await onApprove(activeModal.submission, roomId, slot); setActiveModal(null); }}
+          onConfirm={async (roomId, slot, contentNotes) => { await onApprove(activeModal.submission, roomId, slot, contentNotes); setActiveModal(null); }}
           onClose={() => setActiveModal(null)}
         />
       )}
@@ -465,6 +510,7 @@ function ArtworkManageModal({
     medium: artwork.medium ?? '',
     shortDescription: artwork.shortDescription ?? '',
     longDescription: artwork.longDescription ?? '',
+    contentNotes: artwork.contentNotes ?? [],
     link: artwork.link,
   });
   const [saving, setSaving] = useState(false);
@@ -543,6 +589,7 @@ function ArtworkManageModal({
           medium: fields.medium.trim(),
           shortDescription: fields.shortDescription.trim(),
           longDescription: fields.longDescription.trim(),
+          contentNotes: fields.contentNotes,
           link: fields.link.trim(),
         },
       });
@@ -706,6 +753,14 @@ function ArtworkManageModal({
                 onChange={e => setFields(f => ({ ...f, longDescription: e.target.value }))}
                 placeholder="Long description"
                 className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y" />
+              <div>
+                <p className="text-white/35 text-xs mb-2">Content notes</p>
+                <ContentNotesPicker
+                  value={fields.contentNotes}
+                  onChange={value => setFields(f => ({ ...f, contentNotes: value }))}
+                  disabled={busy}
+                />
+              </div>
               <div>
                 <p className="text-white/35 text-xs mb-1">External link</p>
                 <input aria-label="External link" value={fields.link} onChange={e => setFields(f => ({ ...f, link: e.target.value }))}
@@ -973,24 +1028,84 @@ function ApprovedTab({
 
 // ── Settings tab ──────────────────────────────────────────────────────────────
 
+type SettingsSectionId = 'email' | 'moderators' | 'templates' | 'audio';
+
+function SettingsAccordionSection({
+  id,
+  title,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  id: SettingsSectionId;
+  title: string;
+  summary?: string;
+  open: boolean;
+  onToggle: (id: SettingsSectionId) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
+      <button
+        type="button"
+        onClick={() => onToggle(id)}
+        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
+        aria-expanded={open}
+      >
+        <span>
+          <span className="block text-xs font-semibold uppercase tracking-widest text-white/50">{title}</span>
+          {summary && <span className="mt-1 block text-xs text-white/30">{summary}</span>}
+        </span>
+        {open ? <ChevronUp size={16} className="shrink-0 text-white/40" /> : <ChevronDown size={16} className="shrink-0 text-white/40" />}
+      </button>
+      {open && <div className="space-y-4 border-t border-white/10 px-4 py-4">{children}</div>}
+    </section>
+  );
+}
+
 function SettingsTab() {
   type DisplaySettings = GallerySettings & { resendApiKeySet?: boolean };
+  type DisplayElevenLabsSettings = AudioSettings['elevenlabs'] & { apiKeySet?: boolean; apiKeySlotsSet?: boolean[] };
+  type ElevenLabsVoice = { id: string; name: string };
   const [settings, setSettings] = useState<DisplaySettings | null>(null);
+  const [elevenLabsSettings, setElevenLabsSettings] = useState<DisplayElevenLabsSettings | null>(null);
+  const [voices, setVoices] = useState<ElevenLabsVoice[]>([]);
+  const [openSections, setOpenSections] = useState<SettingsSectionId[]>(['email']);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [audioSaving, setAudioSaving] = useState(false);
+  const [voicesLoading, setVoicesLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [audioMessage, setAudioMessage] = useState('');
+  const [voicesMessage, setVoicesMessage] = useState('');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<'ok' | 'fail' | null>(null);
   const [apiKeyDraft, setApiKeyDraft] = useState('');
+  const [elevenLabsApiKeyDrafts, setElevenLabsApiKeyDrafts] = useState<string[]>(['', '', '', '']);
   const [showKey, setShowKey] = useState(false);
   const [newEmail, setNewEmail] = useState('');
 
   useEffect(() => {
-    fetch('/api/admin/settings')
-      .then(r => r.json())
-      .then((data: DisplaySettings) => { setSettings(data); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch('/api/admin/settings').then(r => r.json()) as Promise<DisplaySettings>,
+      fetch('/api/admin/settings/audio').then(r => r.json()) as Promise<DisplayElevenLabsSettings>,
+    ])
+      .then(([settingsData, audioData]) => {
+        setSettings(settingsData);
+        setElevenLabsSettings(audioData);
+      })
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   }, []);
+
+  const toggleSection = (id: SettingsSectionId) => {
+    setOpenSections(sections =>
+      sections.includes(id)
+        ? sections.filter(section => section !== id)
+        : [...sections, id],
+    );
+  };
 
   const save = async () => {
     if (!settings) return;
@@ -1006,6 +1121,52 @@ function SettingsTab() {
     setSaved(true);
     setApiKeyDraft('');
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const loadVoices = async () => {
+    setVoicesLoading(true);
+    setVoicesMessage('');
+    try {
+      const res = await fetch('/api/admin/settings/audio/voices');
+      const data = await res.json().catch(() => null) as { voices?: ElevenLabsVoice[]; error?: string } | null;
+      if (!res.ok) throw new Error(data?.error ?? 'Failed to load voices.');
+      setVoices(data?.voices ?? []);
+      setVoicesMessage((data?.voices ?? []).length > 0 ? 'Voices loaded.' : 'Save an API key before loading voices.');
+    } catch (err) {
+      setVoicesMessage(err instanceof Error ? err.message : 'Failed to load voices.');
+    } finally {
+      setVoicesLoading(false);
+    }
+  };
+
+  const saveElevenLabsSettings = async () => {
+    if (!elevenLabsSettings) return;
+    setAudioSaving(true);
+    setAudioMessage('');
+    try {
+      const res = await fetch('/api/admin/settings/audio', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...elevenLabsSettings,
+          apiKey: elevenLabsApiKeyDrafts[0] ?? '',
+          apiKeys: elevenLabsApiKeyDrafts.slice(1),
+        }),
+      });
+      const data = await res.json().catch(() => null) as
+        | { ok?: boolean; error?: string; elevenlabs?: DisplayElevenLabsSettings }
+        | null;
+      if (!res.ok || !data?.ok || !data.elevenlabs) {
+        throw new Error(data?.error ?? 'Failed to save ElevenLabs settings.');
+      }
+      setElevenLabsSettings(data.elevenlabs);
+      setElevenLabsApiKeyDrafts(['', '', '', '']);
+      setAudioMessage('ElevenLabs settings saved.');
+    } catch (err) {
+      setAudioMessage(err instanceof Error ? err.message : 'Failed to save ElevenLabs settings.');
+    } finally {
+      setAudioSaving(false);
+    }
   };
 
   const sendTestEmail = async () => {
@@ -1029,17 +1190,20 @@ function SettingsTab() {
     setNewEmail('');
   };
 
-  if (loading || !settings) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
+  if (loading || !settings || !elevenLabsSettings) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
 
   return (
-    <div className="max-w-2xl space-y-8">
-
-      {/* ── Resend API key ── */}
-      <section className="space-y-3">
-        <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest">Email — Resend</h3>
+    <div className="max-w-2xl space-y-3">
+      <SettingsAccordionSection
+        id="email"
+        title="Email - Resend"
+        summary="Delivery key and test email"
+        open={openSections.includes('email')}
+        onToggle={toggleSection}
+      >
         <div>
           <label className="block text-xs text-white/40 mb-1">API key</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type={showKey ? 'text' : 'password'}
               value={apiKeyDraft || (settings.resendApiKeySet ? '••••••••••••••••••••••••' : '')}
@@ -1048,11 +1212,11 @@ function SettingsTab() {
               className="flex-1 bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
             />
             <button onClick={() => setShowKey(s => !s)}
-              className="px-3 text-white/40 hover:text-white/70 bg-zinc-800 border border-white/10 rounded-lg text-xs transition-colors">
+              className="px-3 py-2 text-white/40 hover:text-white/70 bg-zinc-800 border border-white/10 rounded-lg text-xs transition-colors">
               {showKey ? 'Hide' : 'Show'}
             </button>
             <button onClick={sendTestEmail} disabled={testing || (!settings.resendApiKeySet && !apiKeyDraft)}
-              className="flex items-center gap-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white/70 hover:text-white border border-white/10 rounded-lg text-xs transition-colors disabled:opacity-40">
+              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white/70 hover:text-white border border-white/10 rounded-lg text-xs transition-colors disabled:opacity-40">
               {testing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
               {testResult === 'ok' ? 'Sent!' : testResult === 'fail' ? 'Failed' : 'Test'}
             </button>
@@ -1061,11 +1225,15 @@ function SettingsTab() {
             <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">resend.com</a>
           </p>
         </div>
-      </section>
+      </SettingsAccordionSection>
 
-      {/* ── Moderator emails ── */}
-      <section className="space-y-3">
-        <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest">Moderators</h3>
+      <SettingsAccordionSection
+        id="moderators"
+        title="Moderators"
+        summary="Submission notification recipients"
+        open={openSections.includes('moderators')}
+        onToggle={toggleSection}
+      >
         <p className="text-white/35 text-xs">Notified when a new artwork is submitted.</p>
         <div className="space-y-2">
           {settings.moderatorEmails.map(email => (
@@ -1086,12 +1254,16 @@ function SettingsTab() {
             </button>
           </div>
         </div>
-      </section>
+      </SettingsAccordionSection>
 
-      {/* ── Email templates ── */}
-      <section className="space-y-4">
+      <SettingsAccordionSection
+        id="templates"
+        title="Email templates"
+        summary="{{artist}} {{title}} {{gallery_url}}"
+        open={openSections.includes('templates')}
+        onToggle={toggleSection}
+      >
         <div className="flex items-center justify-between">
-          <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest">Email templates</h3>
           <p className="text-white/25 text-xs">{'{{artist}}'} {'{{title}}'} {'{{gallery_url}}'}</p>
         </div>
         <div>
@@ -1106,7 +1278,96 @@ function SettingsTab() {
             onChange={e => setSettings(s => s ? { ...s, rejectionTemplate: e.target.value } : s)}
             className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y font-mono" />
         </div>
-      </section>
+      </SettingsAccordionSection>
+
+      <SettingsAccordionSection
+        id="audio"
+        title="ElevenLabs audio"
+        summary="Stable narration provider settings"
+        open={openSections.includes('audio')}
+        onToggle={toggleSection}
+      >
+        <div>
+          <p className="text-white/35 text-xs mb-1">API keys</p>
+          <div className="grid gap-2">
+            {Array.from({ length: 4 }, (_, index) => (
+              <input
+                key={index}
+                value={elevenLabsApiKeyDrafts[index] ?? ''}
+                onChange={e => setElevenLabsApiKeyDrafts(drafts => {
+                  const next = [...drafts];
+                  next[index] = e.target.value;
+                  return next;
+                })}
+                placeholder={
+                  elevenLabsSettings.apiKeySlotsSet?.[index]
+                    ? `Saved ElevenLabs API key ${index + 1}`
+                    : index === 0
+                      ? 'Paste ElevenLabs API key'
+                      : `Optional ElevenLabs API key ${index + 1}`
+                }
+                className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
+              />
+            ))}
+          </div>
+          <p className="text-white/35 text-xs mt-2">Generation tries these keys in order before showing an error.</p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <div className="mb-1 flex items-center justify-between gap-3">
+              <p className="text-white/35 text-xs">Voice</p>
+              <button
+                type="button"
+                onClick={loadVoices}
+                disabled={voicesLoading}
+                className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40"
+              >
+                {voicesLoading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                Load voices
+              </button>
+            </div>
+            <select
+              value={elevenLabsSettings.voiceId}
+              onChange={e => setElevenLabsSettings(s => s ? { ...s, voiceId: e.target.value } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value={elevenLabsSettings.voiceId}>{voices.find(voice => voice.id === elevenLabsSettings.voiceId)?.name ?? elevenLabsSettings.voiceId}</option>
+              {voices
+                .filter(voice => voice.id !== elevenLabsSettings.voiceId)
+                .map(voice => <option key={voice.id} value={voice.id}>{voice.name}</option>)}
+            </select>
+            {voicesMessage && <p className="text-white/35 text-xs mt-1">{voicesMessage}</p>}
+          </div>
+          <div>
+            <p className="text-white/35 text-xs mb-1">Model ID</p>
+            <input value={elevenLabsSettings.modelId}
+              onChange={e => setElevenLabsSettings(s => s ? { ...s, modelId: e.target.value } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <p className="text-white/35 text-xs mb-1">Output format</p>
+            <input value={elevenLabsSettings.outputFormat}
+              onChange={e => setElevenLabsSettings(s => s ? { ...s, outputFormat: e.target.value } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <p className="text-white/35 text-xs mb-1">Timeout ms</p>
+            <input type="number" value={elevenLabsSettings.timeoutMs}
+              onChange={e => setElevenLabsSettings(s => s ? { ...s, timeoutMs: Number(e.target.value) } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button onClick={saveElevenLabsSettings} disabled={audioSaving} data-testid="save-elevenlabs-settings"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-zinc-900 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50">
+            {audioSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {audioSaving ? 'Saving...' : 'Save ElevenLabs'}
+          </button>
+          {audioMessage && <span className={`text-xs ${audioMessage.includes('Failed') ? 'text-red-400' : 'text-emerald-400'}`}>{audioMessage}</span>}
+        </div>
+      </SettingsAccordionSection>
 
       <div className="flex items-center gap-3 pt-2">
         <button onClick={save} disabled={saving}
@@ -1125,7 +1386,7 @@ function SettingsTab() {
 type DisplayAudioSettings = AudioSettings & {
   local: AudioSettings['local'] & { apiKeySet?: boolean };
   openai: AudioSettings['openai'] & { apiKeySet?: boolean };
-  elevenlabs: AudioSettings['elevenlabs'] & { apiKeySet?: boolean };
+  elevenlabs: AudioSettings['elevenlabs'];
 };
 
 function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
@@ -1138,7 +1399,6 @@ function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
   const [audioMessage, setAudioMessage] = useState('');
   const [localApiKeyDraft, setLocalApiKeyDraft] = useState('');
   const [openAiApiKeyDraft, setOpenAiApiKeyDraft] = useState('');
-  const [elevenLabsApiKeyDraft, setElevenLabsApiKeyDraft] = useState('');
 
   useEffect(() => {
     fetch('/api/admin/developer/audio-settings')
@@ -1179,7 +1439,11 @@ function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
           ...audioSettings,
           local: { ...audioSettings.local, apiKey: localApiKeyDraft },
           openai: { ...audioSettings.openai, apiKey: openAiApiKeyDraft },
-          elevenlabs: { ...audioSettings.elevenlabs, apiKey: elevenLabsApiKeyDraft },
+          elevenlabs: {
+            ...audioSettings.elevenlabs,
+            apiKey: '',
+            apiKeys: [],
+          },
         }),
       });
       const data = await res.json().catch(() => null) as
@@ -1191,7 +1455,6 @@ function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
       setAudioSettings(data.audioSettings);
       setLocalApiKeyDraft('');
       setOpenAiApiKeyDraft('');
-      setElevenLabsApiKeyDraft('');
       setAudioMessage('Audio settings saved.');
     } catch (err) {
       setAudioMessage(err instanceof Error ? err.message : 'Failed to save audio settings.');
@@ -1310,38 +1573,9 @@ function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
               )}
 
               {audioSettings.provider === 'elevenlabs' && (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <p className="text-white/35 text-xs mb-1">API key</p>
-                    <input value={elevenLabsApiKeyDraft} onChange={e => setElevenLabsApiKeyDraft(e.target.value)}
-                      placeholder={audioSettings.elevenlabs.apiKeySet ? 'Saved API key' : 'Paste ElevenLabs API key'}
-                      className="w-full bg-zinc-950 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <p className="text-white/35 text-xs mb-1">Voice ID</p>
-                    <input value={audioSettings.elevenlabs.voiceId}
-                      onChange={e => setAudioSettings(s => s ? { ...s, elevenlabs: { ...s.elevenlabs, voiceId: e.target.value } } : s)}
-                      placeholder="JBFqnCBsd6RMkjVDRZzb"
-                      className="w-full bg-zinc-950 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  </div>
-                  <div>
-                    <p className="text-white/35 text-xs mb-1">Model ID</p>
-                    <input value={audioSettings.elevenlabs.modelId}
-                      onChange={e => setAudioSettings(s => s ? { ...s, elevenlabs: { ...s.elevenlabs, modelId: e.target.value } } : s)}
-                      className="w-full bg-zinc-950 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  </div>
-                  <div>
-                    <p className="text-white/35 text-xs mb-1">Output format</p>
-                    <input value={audioSettings.elevenlabs.outputFormat}
-                      onChange={e => setAudioSettings(s => s ? { ...s, elevenlabs: { ...s.elevenlabs, outputFormat: e.target.value } } : s)}
-                      className="w-full bg-zinc-950 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  </div>
-                  <div>
-                    <p className="text-white/35 text-xs mb-1">Timeout ms</p>
-                    <input type="number" value={audioSettings.elevenlabs.timeoutMs}
-                      onChange={e => setAudioSettings(s => s ? { ...s, elevenlabs: { ...s.elevenlabs, timeoutMs: Number(e.target.value) } } : s)}
-                      className="w-full bg-zinc-950 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  </div>
+                <div className="rounded-lg border border-white/10 bg-zinc-950 px-3 py-3">
+                  <p className="text-white/60 text-sm">ElevenLabs is the stable narration provider.</p>
+                  <p className="text-white/35 text-xs mt-1">Configure API keys, voice, model, and output format in Settings. This Developer control only changes which provider is active for testing.</p>
                 </div>
               )}
 
@@ -1409,11 +1643,11 @@ function TabBar({
     : ['submissions', 'approved', 'settings'];
 
   return (
-    <nav className="border-b border-white/10 px-6">
-      <div className="flex">
+    <nav className="max-w-full overflow-x-auto border-b border-white/10 px-4 sm:px-6">
+      <div className="flex min-w-max">
         {tabs.map(t => (
           <button key={t} onClick={() => onSelect(t)} data-testid={`tab-${t}`}
-            className={`px-4 py-3 text-sm capitalize transition-colors border-b-2 -mb-px ${
+            className={`shrink-0 px-4 py-3 text-sm capitalize transition-colors border-b-2 -mb-px ${
               tab === t ? 'border-white text-white' : 'border-transparent text-white/45 hover:text-white/70'
             }`}>
             {t}
@@ -1445,8 +1679,8 @@ export default function AdminDashboard() {
       .catch(() => setRole('admin'));
   }, []);
 
-  const handleApprove = async (submission: Submission, roomId: string, slot: number | null) => {
-    await approve(submission, roomId, slot);
+  const handleApprove = async (submission: Submission, roomId: string, slot: number | null, contentNotes: string[]) => {
+    await approve(submission, roomId, slot, contentNotes);
     setTab('approved');
   };
 

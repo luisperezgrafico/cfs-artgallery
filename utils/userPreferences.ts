@@ -9,6 +9,7 @@ export interface ShelfItem {
   title: string;
   artist: string;
   url: string;
+  contentNotes?: string[];
   roomId: string;
   frameIndex: number;
 }
@@ -137,7 +138,11 @@ export function readShelf(): ShelfItem[] {
         typeof item.id === 'string' &&
         typeof item.title === 'string' &&
         typeof item.roomId === 'string' &&
-        typeof item.frameIndex === 'number',
+        typeof item.frameIndex === 'number' &&
+        (
+          item.contentNotes === undefined ||
+          (Array.isArray(item.contentNotes) && (item.contentNotes as unknown[]).every(note => typeof note === 'string'))
+        ),
     );
   } catch {
     return [];

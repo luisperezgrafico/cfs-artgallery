@@ -88,6 +88,37 @@ describe('buildNarrationText', () => {
       model_id: 'eleven_multilingual_v2',
     });
   });
+
+  it('tries the next ElevenLabs API key when one fails', async () => {
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      audioSettings: {
+        ...DEFAULT_SETTINGS.audioSettings,
+        provider: 'elevenlabs',
+        elevenlabs: {
+          ...DEFAULT_SETTINGS.audioSettings.elevenlabs,
+          apiKey: 'limit-key',
+          apiKeys: ['working-key'],
+          voiceId: 'voice-123',
+        },
+      },
+    });
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response('quota exceeded', { status: 429 }))
+      .mockResolvedValueOnce(new Response(
+        new Blob([new Uint8Array([4, 5, 6])], { type: 'audio/mpeg' }),
+        { status: 200, headers: { 'content-type': 'audio/mpeg' } },
+      ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const audio = await generateArtworkAudio(submission());
+
+    expect(audio?.url).toMatch(/^\/api\/testing\/blob\/gallery\/audio\/piece-a-\d+\.mp3$/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'xi-api-key': 'limit-key' });
+    expect(fetchMock.mock.calls[1][1].headers).toMatchObject({ 'xi-api-key': 'working-key' });
+  });
 });
 
 describe('generateArtworkAudio', () => {

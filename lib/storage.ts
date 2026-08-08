@@ -49,6 +49,7 @@ export interface OpenAiCompatibleAudioSettings {
 
 export interface ElevenLabsAudioSettings {
   apiKey: string;
+  apiKeys: string[];
   voiceId: string;
   modelId: string;
   outputFormat: string;
@@ -93,6 +94,7 @@ export const DEFAULT_SETTINGS: GallerySettings = {
     },
     elevenlabs: {
       apiKey: '',
+      apiKeys: [],
       voiceId: DEFAULT_ELEVENLABS_VOICE_ID,
       modelId: 'eleven_multilingual_v2',
       outputFormat: 'mp3_44100_128',
@@ -297,7 +299,7 @@ export async function removeArtworkFromRoom(roomId: string, id: string): Promise
 
 export type EditableArtworkFields = Pick<
   ImageMetadata,
-  'title' | 'artist' | 'date' | 'medium' | 'shortDescription' | 'longDescription' | 'link'
+  'title' | 'artist' | 'date' | 'medium' | 'shortDescription' | 'longDescription' | 'contentNotes' | 'link'
 >;
 
 export interface ManagedArtworkUpdate {
@@ -446,6 +448,7 @@ export async function getSettings(): Promise<GallerySettings> {
       elevenlabs: {
         ...DEFAULT_SETTINGS.audioSettings.elevenlabs,
         ...(stored.audioSettings?.elevenlabs ?? {}),
+        apiKeys: stored.audioSettings?.elevenlabs?.apiKeys ?? [],
         voiceId: stored.audioSettings?.elevenlabs?.voiceId?.trim()
           || DEFAULT_SETTINGS.audioSettings.elevenlabs.voiceId,
       },

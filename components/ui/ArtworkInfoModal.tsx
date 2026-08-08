@@ -5,6 +5,7 @@ import { X, ExternalLink, ChevronDown, ChevronUp, Heart, Volume2, Pause, RotateC
 import { useTour } from '../../contexts/TourContext';
 import { useRoom } from '../../contexts/RoomContext';
 import { useShelf } from '../../contexts/ShelfContext';
+import { contentNoteLabel } from '../../config/contentNotes';
 
 interface Origin {
   x: number;
@@ -36,6 +37,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
       title: artwork.title,
       artist: artwork.artist,
       url: artwork.url,
+      contentNotes: artwork.contentNotes,
       roomId: activeRoom.id,
       frameIndex: currentFrameIndex,
     });
@@ -71,6 +73,8 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
 
   const close = () => setIsOpen(false);
   const hasDescription = !!(artwork.shortDescription || artwork.longDescription);
+  const contentNotes = artwork.contentNotes ?? [];
+  const hasContentNotes = contentNotes.length > 0;
   const canPlayAudio = !!(artwork.audioUrl && hasDescription);
   const audioLabel = artwork.audioSource === 'uploaded' ? 'Artist audio' : 'AI voice';
 
@@ -172,13 +176,44 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
           </div>
 
           {/* Separator */}
-          {hasDescription && (
+          {(hasDescription || hasContentNotes) && (
             <div className="mx-6" style={{ borderTop: '1px solid var(--panel-separator)' }} />
           )}
 
           {/* Descriptions */}
-          {hasDescription && (
+          {(hasDescription || hasContentNotes) && (
             <div className="overflow-y-auto px-6 py-5 flex-1">
+              {hasContentNotes && (
+                <div className="mb-4">
+                  <p
+                    className="mb-2 text-[11px] uppercase tracking-widest"
+                    style={{
+                      color: 'var(--panel-subtitle)',
+                      fontFamily: "Georgia, 'Times New Roman', serif",
+                    }}
+                  >
+                    Content notes
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {contentNotes.map(note => (
+                      <span
+                        key={note}
+                        className="px-2 py-1 text-xs"
+                        style={{
+                          color: 'var(--panel-subtitle)',
+                          border: '1px solid var(--panel-border)',
+                          background: 'var(--panel-btn-bg)',
+                          borderRadius: '2px',
+                          fontFamily: "Georgia, 'Times New Roman', serif",
+                        }}
+                      >
+                        {contentNoteLabel(note)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {canPlayAudio && (
                 <div className="mb-4">
                   <button

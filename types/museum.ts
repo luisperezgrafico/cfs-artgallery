@@ -42,6 +42,8 @@ export interface ImageMetadata {
   shortDescription?: string;
   /** Full artist statement — shown behind a "Read more" toggle */
   longDescription?: string;
+  /** Curated content notes shown as gentle distress/context tags */
+  contentNotes?: string[];
   /** Pre-generated narration for the artwork description */
   audioUrl?: string;
   audioGeneratedAt?: string;
