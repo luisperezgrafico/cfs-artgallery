@@ -326,6 +326,35 @@ test.describe('managing an approved artwork', () => {
     await expect(moved).toContainText('Edited title');
     await expect(moved).toContainText('slot 4');
   });
+
+  test('uploads artist audio from the manage modal', async ({ page, request }) => {
+    await seed(request, {
+      artworks: {
+        'room-1': [
+          artwork('x', {
+            title: 'Original title',
+            shortDescription: 'Original short description.',
+          }),
+        ],
+      },
+    });
+    await openAdmin(page);
+    await page.getByTestId('tab-approved').click();
+
+    await row(page, 'x').getByTestId('manage-button').click();
+    const uploaded = page.waitForResponse(r =>
+      r.request().method() === 'POST' && r.url().includes('/api/admin/artworks/room-1/audio/upload'));
+    await page.getByTestId('upload-audio-input').setInputFiles({
+      name: 'artist-audio.mp3',
+      mimeType: 'audio/mpeg',
+      buffer: Buffer.from([1, 2, 3, 4]),
+    });
+    await uploaded;
+
+    await expect(page.getByText('Uploaded just now')).toBeVisible();
+    await page.getByLabel('Close').click();
+    await expect(row(page, 'x').getByTestId('audio-status')).toContainText('Audio ready');
+  });
 });
 
 test.describe('developer tools', () => {

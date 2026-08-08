@@ -12,7 +12,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'A meditation on light that refuses to fade — painted during a long relapse, when stillness became the only available canvas.',
     longDescription:
-      `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
+      `This piece began as a small study of morning light crossing a wall, but it slowly became a record of endurance. The pale center is not meant to be dramatic. It is the kind of light that stays almost unnoticed, returning day after day while the body waits for better hours.\n\nI wanted the image to feel quiet rather than hopeful in a forced way. The marks around the edge hold the fatigue, interruptions, and uncertainty of making work in short fragments. The light remains because sometimes the smallest constant thing is enough to orient yourself.`,
   },
   {
     id: 'static-hora-incerta',
@@ -25,7 +25,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'Time loses its edges when every hour looks the same. This piece tries to hold that feeling without fighting it.',
     longDescription:
-      `Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.\n\nNemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.\n\nAt vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.\n\nSimilique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus.\n\nOmnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.`,
+      `The title means uncertain hour. It comes from the way illness can loosen the structure of a day until morning, afternoon, and night feel less like separate places and more like changes in the same room.\n\nThe warmer areas are moments of attention: a cup cooling on a table, a message half written, a sound outside the window. The darker passages are not emptiness, but the time around those moments. I wanted the work to move slowly, as if it were breathing through a long pause.\n\nFor audio testing, this description includes longer sentences and gentler transitions so the narration can reveal whether the chosen voice handles reflective language with enough calm and clarity.`,
   },
   {
     id: 'static-silva-quieta',
@@ -37,7 +37,8 @@ export const drawingImages: ImageMetadata[] = [
     medium: 'Pencil on paper',
     link: '#',
     shortDescription: 'Drawn slowly, one small section at a time, across many weeks. The forest grew at the pace illness allowed.',
-    longDescription: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.`,
+    longDescription:
+      `Silva Quieta means quiet wood. The drawing was made in very short sessions, with long rests between them. Each line had to be simple enough to begin again after a day, a week, or a setback.\n\nThe dense areas are built from repeated marks rather than continuous effort. That process became part of the meaning of the piece. It is about a place that appears slowly, without pressure, and about allowing an image to grow at the pace the body can sustain.`,
   },
   {
     id: 'static-aqua-lenis',
@@ -50,7 +51,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'Water as rest, not motion. The tide does not ask permission to return.',
     longDescription:
-      `Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?\n\nAt vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi.`,
+      `This work imagines water as a soft form of time. The surface is calm, but it is not still; it carries a quiet movement that does not demand attention. I was thinking about rest as something active, something the body may be doing even when nothing visible is happening.\n\nThe rounded shapes and muted colors are meant to slow the eye. They suggest a tide returning without urgency. For me, the piece is less about escape and more about permission: permission to pause, to repeat, and to come back only when there is enough energy.`,
   },
   {
     id: 'static-noctis-figura',
@@ -63,7 +64,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'Night is the only time the body and the world agree on stillness.',
     longDescription:
-      `Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus.`,
+      `Noctis Figura is about the strange comfort of late hours. At night, the expectations of the day loosen, and stillness can feel less like failure and more like atmosphere. The figure is not fully visible because the experience it holds is not fully explainable.\n\nThe dark field is layered with small variations so it does not become flat. I wanted the viewer to feel that something is present, but quiet; close, but not demanding. The piece gives shape to a kind of rest that arrives only when the world has gone soft around the edges.`,
   },
   {
     id: 'static-sine-titulo',
@@ -75,6 +76,8 @@ export const drawingImages: ImageMetadata[] = [
     medium: 'Digital',
     link: '#',
     shortDescription: 'No title because naming it would have taken more energy than making it.',
+    longDescription:
+      `This piece was made from the leftover energy of several unfinished days. It does not try to resolve into a single image. Instead, it keeps the feeling of fragments: a color chosen quickly, a shape placed before concentration disappeared, a composition held together by instinct.\n\nLeaving it untitled felt honest. Sometimes the act of explaining arrives later than the act of making, and sometimes it never arrives at all. The work remains as evidence that a brief creative impulse can still count, even when it comes without a polished story.`,
   },
   { url: '', title: '', artist: '', date: '', link: '', aspectRatio: 1, isEmpty: true },
   { url: '', title: '', artist: '', date: '', link: '', aspectRatio: 1, isEmpty: true },

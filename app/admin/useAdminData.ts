@@ -26,6 +26,7 @@ export interface AdminData {
     input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
   ) => Promise<ImageMetadata>;
   regenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
+  uploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
   dismissError: () => void;
 }
 
@@ -256,7 +257,44 @@ export function useAdminData(): AdminData {
     return data.artwork;
   }, []);
 
+  const uploadAudio = useCallback(async (roomId: string, artworkId: string, file: File): Promise<ImageMetadata> => {
+    dispatch({ type: 'artworkUpdateStart', artworkId });
+    const body = new FormData();
+    body.append('id', artworkId);
+    body.append('file', file);
+
+    let res: Response;
+    try {
+      res = await fetch(`/api/admin/artworks/${roomId}/audio/upload`, {
+        method: 'POST',
+        body,
+      });
+    } catch {
+      const message = 'Network error. Please try again.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    const data = await res.json().catch(() => null) as
+      | { ok?: boolean; error?: string; artwork?: ImageMetadata; roomId?: string }
+      | null;
+
+    if (!res.ok || !data?.ok || !data.artwork || !data.roomId) {
+      const message = data?.error ?? 'Failed to upload audio.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    dispatch({
+      type: 'artworkUpdateSuccess',
+      previousRoomId: roomId,
+      roomId: data.roomId,
+      artwork: data.artwork,
+    });
+    return data.artwork;
+  }, []);
+
   const dismissError = useCallback(() => dispatch({ type: 'dismissError' }), []);
 
-  return { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, dismissError };
+  return { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio, dismissError };
 }

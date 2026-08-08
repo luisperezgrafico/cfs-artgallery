@@ -340,7 +340,7 @@ export async function updateManagedArtwork(
 export async function updateArtworkAudio(
   roomId: string,
   id: string,
-  audio: Pick<ImageMetadata, 'audioUrl' | 'audioGeneratedAt' | 'audioVoice'>,
+  audio: Pick<ImageMetadata, 'audioUrl' | 'audioGeneratedAt' | 'audioVoice' | 'audioSource'>,
 ): Promise<ImageMetadata | null> {
   return withLock(artworksPath(roomId), async () => {
     const existing = (await getRoomArtworks(roomId)) ?? [];

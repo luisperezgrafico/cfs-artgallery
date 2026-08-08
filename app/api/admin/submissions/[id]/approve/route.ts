@@ -68,6 +68,7 @@ export async function POST(
         artwork.audioUrl = audio.url;
         artwork.audioGeneratedAt = audio.generatedAt;
         artwork.audioVoice = audio.voice;
+        artwork.audioSource = 'generated';
       }
     } catch (err) {
       console.error('[admin/approve] audio narration failed, approving without audio:', err);

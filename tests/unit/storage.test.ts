@@ -223,9 +223,10 @@ describe('managed artworks', () => {
       audioUrl: 'https://example.test/audio.mp3',
       audioGeneratedAt: '2026-08-08T12:00:00.000Z',
       audioVoice: 'coral',
+      audioSource: 'generated',
     });
 
-    expect(updated).toMatchObject({ id: 'a', audioVoice: 'coral' });
+    expect(updated).toMatchObject({ id: 'a', audioVoice: 'coral', audioSource: 'generated' });
     expect((await getRoomArtworks('room-1'))?.[0].audioUrl).toBe('https://example.test/audio.mp3');
   });
 });

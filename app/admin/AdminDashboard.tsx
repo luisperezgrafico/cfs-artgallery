@@ -418,6 +418,7 @@ function ArtworkManageModal({
   onRemove,
   onUpdate,
   onRegenerateAudio,
+  onUploadAudio,
 }: {
   roomId: string;
   artwork: ImageMetadata;
@@ -431,6 +432,7 @@ function ArtworkManageModal({
     input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
   ) => Promise<ImageMetadata>;
   onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
+  onUploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
@@ -449,13 +451,16 @@ function ArtworkManageModal({
   });
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const audioUploadRef = React.useRef<HTMLInputElement | null>(null);
   const key = artworkKey(current);
   const room = rooms.find(r => r.id === currentRoomId);
-  const busy = busyArtworkId === key || saving || regenerating;
+  const busy = busyArtworkId === key || saving || regenerating || uploadingAudio;
   const canRegenerateAudio = hasNarrationText(current);
+  const audioSourceLabel = current.audioSource === 'uploaded' ? 'Uploaded' : 'Generated';
   const occupiedSlots = new Set((artworks[targetRoomId] ?? [])
     .filter(item => artworkKey(item) !== key && item.slot !== undefined)
     .map(item => item.slot as number));
@@ -544,6 +549,23 @@ function ArtworkManageModal({
       setError(err instanceof Error ? err.message : 'Failed to regenerate audio.');
     } finally {
       setRegenerating(false);
+    }
+  };
+
+  const uploadAudio = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingAudio(true);
+    setError('');
+    setAudioState('idle');
+    audioRef.current?.pause();
+    try {
+      const updated = await onUploadAudio(currentRoomId, key, file);
+      setCurrent(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload audio.');
+    } finally {
+      setUploadingAudio(false);
+      if (audioUploadRef.current) audioUploadRef.current.value = '';
     }
   };
 
@@ -682,7 +704,7 @@ function ArtworkManageModal({
                     {audioState === 'error'
                       ? 'Audio unavailable'
                       : current.audioGeneratedAt
-                        ? `Generated ${timeAgo(current.audioGeneratedAt)}`
+                        ? `${audioSourceLabel} ${timeAgo(current.audioGeneratedAt)}`
                         : 'Audio ready'}
                   </span>
                   <audio
@@ -701,11 +723,31 @@ function ArtworkManageModal({
                     : 'Add a short or long description before generating audio.'}
                 </p>
               )}
-              <button onClick={regenerateAudio} disabled={busy || !canRegenerateAudio} data-testid="regenerate-audio"
-                className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/70 text-sm transition-colors">
-                {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                {regenerating ? 'Regenerating…' : 'Regenerate audio'}
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={regenerateAudio} disabled={busy || !canRegenerateAudio} data-testid="regenerate-audio"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/70 text-sm transition-colors">
+                  {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  {regenerating ? 'Generating…' : 'Generate with AI'}
+                </button>
+                <input
+                  ref={audioUploadRef}
+                  type="file"
+                  accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/mp4,audio/aac,audio/ogg"
+                  className="sr-only"
+                  onChange={e => void uploadAudio(e.target.files?.[0])}
+                  disabled={busy}
+                  data-testid="upload-audio-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => audioUploadRef.current?.click()}
+                  disabled={busy}
+                  data-testid="upload-audio-button"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/70 text-sm transition-colors">
+                  {uploadingAudio ? <Loader2 size={14} className="animate-spin" /> : <UploadCloud size={14} />}
+                  {uploadingAudio ? 'Uploading…' : 'Upload audio'}
+                </button>
+              </div>
             </section>
 
             <section className="space-y-3 border-t border-white/10 pt-5">
@@ -749,6 +791,7 @@ function ApprovedTab({
   onRemove,
   onUpdate,
   onRegenerateAudio,
+  onUploadAudio,
 }: {
   artworks: Record<string, ImageMetadata[]>;
   publishingIds: string[];
@@ -762,6 +805,7 @@ function ApprovedTab({
     input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
   ) => Promise<ImageMetadata>;
   onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
+  onUploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
 }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [manageArtwork, setManageArtwork] = useState<{ roomId: string; artwork: ImageMetadata } | null>(null);
@@ -783,6 +827,7 @@ function ApprovedTab({
           onRemove={onRemove}
           onUpdate={onUpdate}
           onRegenerateAudio={onRegenerateAudio}
+          onUploadAudio={onUploadAudio}
         />
       )}
 
@@ -1341,7 +1386,7 @@ export default function AdminDashboard() {
 
   // One store for the whole panel, mounted here so tab switches never remount
   // it: the tabs below are pure views over this state.
-  const { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio }: AdminData = useAdminData();
+  const { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio }: AdminData = useAdminData();
 
   useEffect(() => {
     fetch('/api/admin/session')
@@ -1408,6 +1453,7 @@ export default function AdminDashboard() {
                 onRemove={remove}
                 onUpdate={updateArtwork}
                 onRegenerateAudio={regenerateAudio}
+                onUploadAudio={uploadAudio}
               />
             )}
             {tab === 'settings' && <SettingsTab />}

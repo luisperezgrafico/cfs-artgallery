@@ -72,6 +72,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const close = () => setIsOpen(false);
   const hasDescription = !!(artwork.shortDescription || artwork.longDescription);
   const canPlayAudio = !!(artwork.audioUrl && hasDescription);
+  const audioLabel = artwork.audioSource === 'uploaded' ? 'Artist audio' : 'AI voice';
 
   const toggleAudio = async () => {
     const player = audioRef.current;
@@ -205,7 +206,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                       fontFamily: "Georgia, 'Times New Roman', serif",
                     }}
                   >
-                    {audioState === 'error' ? 'Audio unavailable' : 'AI voice'}
+                    {audioState === 'error' ? 'Audio unavailable' : audioLabel}
                   </span>
                   <audio
                     ref={audioRef}

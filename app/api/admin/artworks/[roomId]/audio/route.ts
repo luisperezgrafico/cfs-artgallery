@@ -32,6 +32,7 @@ export async function POST(
       audioUrl: audio.url,
       audioGeneratedAt: audio.generatedAt,
       audioVoice: audio.voice,
+      audioSource: 'generated',
     });
     if (!updated) {
       return NextResponse.json({ error: 'Artwork not found.' }, { status: 404 });
