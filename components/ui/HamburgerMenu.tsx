@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Menu, X, Heart } from 'lucide-react';
+import { ChevronLeft, Heart, Menu, X } from 'lucide-react';
 import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
 import { useShelf } from '../../contexts/ShelfContext';
@@ -22,6 +22,7 @@ function useIsMobile() {
 
 const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [view, setView] = useState<'main' | 'shelf'>('main');
   const [tabY, setTabY] = useState(() => readMenuTabY());
   const isMobile = useIsMobile();
   const { rooms, activeRoomIndex, setActiveRoomIndex } = useRoom();
@@ -48,10 +49,19 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     tabYRef.current = tabY;
   }, [tabY]);
 
+  useEffect(() => {
+    if (!isOpen) setView('main');
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (shelfItems.length === 0 && view === 'shelf') setView('main');
+  }, [shelfItems.length, view]);
+
   const handleRoomSelect = (i: number) => {
     if (i === activeRoomIndex) { setIsOpen(false); return; }
     quitTour();
     setActiveRoomIndex(i);
+    setView('main');
     setIsOpen(false);
   };
 
@@ -67,6 +77,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
       quitTour();
       setActiveRoomIndex(targetRoomIndex);
     }
+    setView('main');
     setIsOpen(false);
   };
 
@@ -165,53 +176,81 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
             <span className="text-white font-semibold text-base tracking-wide">Gallery</span>
           </div>
 
-          {/* Rooms */}
-          <div className="px-4 pt-5 pb-3 shrink-0">
-            <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1">
-              Rooms
-            </p>
-            <ul className="space-y-0.5">
-              {rooms.map((room, i) => {
-                const isActive = i === activeRoomIndex;
-                return (
-                  <li key={room.id}>
-                    <button
-                      onClick={() => handleRoomSelect(i)}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                        isActive
-                          ? 'bg-white/12 text-white font-medium'
-                          : 'text-white/75 hover:bg-white/8 hover:text-white'
-                      }`}
-                    >
-                      {room.name}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* My shelf */}
-          {shelfItems.length > 0 && (
-            <div className="px-4 pt-2 pb-3 border-t border-white/10 shrink-0">
+          {view === 'shelf' ? (
+            <div className="px-4 pt-5 pb-3 shrink-0">
+              <button
+                onClick={() => setView('main')}
+                className="mb-4 inline-flex items-center gap-1.5 px-1 text-xs text-white/45 hover:text-white/70 transition-colors"
+              >
+                <ChevronLeft size={14} /> Back
+              </button>
               <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 flex items-center gap-1.5">
-                My shelf
+                My Shelf
                 <span className="text-white/20 font-normal normal-case tracking-normal text-[9px]">{shelfItems.length}</span>
               </p>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {shelfItems.map(item => (
                   <li key={item.id}>
                     <button
                       onClick={() => handleShelfNavigate(item)}
-                      className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-white/8 group"
+                      className="w-full text-left px-2.5 py-2 rounded-lg transition-colors hover:bg-white/8 group flex items-center gap-3"
                     >
-                      <p className="text-white/80 text-sm leading-snug group-hover:text-white truncate">{item.title}</p>
-                      <p className="text-white/35 text-xs truncate">{item.artist}</p>
+                      <span className="shrink-0 w-10 h-10 rounded bg-white/8 overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.url} alt="" className="w-full h-full object-cover opacity-85" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-white/80 text-sm leading-snug group-hover:text-white truncate">{item.title}</span>
+                        <span className="block text-white/35 text-xs truncate">{item.artist}</span>
+                      </span>
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
+          ) : (
+            <>
+              {shelfItems.length > 0 && (
+                <div className="px-4 pt-5 pb-2 shrink-0">
+                  <button
+                    onClick={() => setView('shelf')}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm text-white/80 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Heart size={14} fill="currentColor" />
+                      My Shelf
+                    </span>
+                    <span className="text-white/30 text-xs">{shelfItems.length}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Rooms */}
+              <div className={`px-4 ${shelfItems.length > 0 ? 'pt-3' : 'pt-5'} pb-3 shrink-0`}>
+                <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest mb-3 px-1">
+                  Rooms
+                </p>
+                <ul className="space-y-0.5">
+                  {rooms.map((room, i) => {
+                    const isActive = i === activeRoomIndex;
+                    return (
+                      <li key={room.id}>
+                        <button
+                          onClick={() => handleRoomSelect(i)}
+                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                            isActive
+                              ? 'bg-white/12 text-white font-medium'
+                              : 'text-white/75 hover:bg-white/8 hover:text-white'
+                          }`}
+                        >
+                          {room.name}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </>
           )}
 
           <div className="flex-1" />
