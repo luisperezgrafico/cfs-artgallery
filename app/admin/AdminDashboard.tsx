@@ -1071,7 +1071,7 @@ function SettingsTab() {
   const [settings, setSettings] = useState<DisplaySettings | null>(null);
   const [elevenLabsSettings, setElevenLabsSettings] = useState<DisplayElevenLabsSettings | null>(null);
   const [voices, setVoices] = useState<ElevenLabsVoice[]>([]);
-  const [openSections, setOpenSections] = useState<SettingsSectionId[]>(['email']);
+  const [openSections, setOpenSections] = useState<SettingsSectionId[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [audioSaving, setAudioSaving] = useState(false);
@@ -1332,7 +1332,7 @@ function SettingsTab() {
               onChange={e => setElevenLabsSettings(s => s ? { ...s, voiceId: e.target.value } : s)}
               className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
             >
-              <option value={elevenLabsSettings.voiceId}>{voices.find(voice => voice.id === elevenLabsSettings.voiceId)?.name ?? elevenLabsSettings.voiceId}</option>
+              <option value={elevenLabsSettings.voiceId}>{voices.find(voice => voice.id === elevenLabsSettings.voiceId)?.name ?? 'Current saved voice'}</option>
               {voices
                 .filter(voice => voice.id !== elevenLabsSettings.voiceId)
                 .map(voice => <option key={voice.id} value={voice.id}>{voice.name}</option>)}
