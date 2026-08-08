@@ -10,14 +10,14 @@ interface SwipeableContainerProps {
 
 const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => {
   const { isTourStarted, nextFrame, previousFrame, quitTour } = useTour();
-  // True whenever any overlay (lightbox, info modal, submit modal) is open
+  // True whenever any overlay/drawer owns touch gestures.
   const anyModalOpen = useRef(false);
 
   useEffect(() => {
     const open  = () => { anyModalOpen.current = true;  };
     const close = () => { anyModalOpen.current = false; };
-    const OPEN_EVENTS  = ['open-artwork-lightbox',  'open-artwork-info',  'open-submit-artwork'];
-    const CLOSE_EVENTS = ['close-artwork-lightbox', 'close-artwork-info', 'close-submit-artwork'];
+    const OPEN_EVENTS  = ['open-artwork-lightbox',  'open-artwork-info',  'open-submit-artwork',  'open-hamburger-menu'];
+    const CLOSE_EVENTS = ['close-artwork-lightbox', 'close-artwork-info', 'close-submit-artwork', 'close-hamburger-menu'];
     OPEN_EVENTS.forEach(e  => window.addEventListener(e, open));
     CLOSE_EVENTS.forEach(e => window.addEventListener(e, close));
     return () => {

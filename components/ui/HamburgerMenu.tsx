@@ -54,6 +54,10 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   }, [isOpen]);
 
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent(isOpen ? 'open-hamburger-menu' : 'close-hamburger-menu'));
+  }, [isOpen]);
+
+  useEffect(() => {
     if (shelfItems.length === 0 && view === 'shelf') setView('main');
   }, [shelfItems.length, view]);
 
