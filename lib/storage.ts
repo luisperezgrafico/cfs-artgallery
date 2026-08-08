@@ -1,6 +1,7 @@
-import { store } from './blobStore';
+import { store, usingMemoryStore } from './blobStore';
 import { ImageMetadata } from '../types/museum';
 import { artworkKey } from '../utils/artworkKey';
+import { approvedArtworksSeed } from '../config/approvedArtworksSeed';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: GallerySettings = {
 const SUBMISSIONS_PATH = 'gallery/data/submissions.json';
 const artworksPath = (roomId: string) => `gallery/data/artworks-${roomId}.json`;
 const SETTINGS_PATH = 'gallery/data/settings.json';
+const ROOM_CAPACITY = 8;
 
 // ── Write serialization ───────────────────────────────────────────────────────
 // Every mutation below is a read-modify-write of a whole JSON file. Two of them
@@ -66,6 +68,14 @@ function withLock<T>(pathname: string, fn: () => Promise<T>): Promise<T> {
   // Keep the chain alive but never let a rejection poison the next caller.
   writeChains.set(pathname, next.catch(() => undefined));
   return next;
+}
+
+function withLocks<T>(pathnames: string[], fn: () => Promise<T>): Promise<T> {
+  const unique = [...new Set(pathnames)].sort();
+  return unique.reduceRight(
+    (next, pathname) => () => withLock(pathname, next),
+    fn,
+  )();
 }
 
 // ── Submissions ───────────────────────────────────────────────────────────────
@@ -163,7 +173,10 @@ export async function releaseSubmission(id: string): Promise<void> {
 // ── Live artworks (per room) ──────────────────────────────────────────────────
 
 export async function getRoomArtworks(roomId: string): Promise<ImageMetadata[] | null> {
-  return store.readJson<ImageMetadata[] | null>(artworksPath(roomId), null);
+  const stored = await store.readJson<ImageMetadata[] | null>(artworksPath(roomId), null);
+  if (stored !== null) return stored;
+  if (usingMemoryStore) return null;
+  return approvedArtworksSeed(roomId);
 }
 
 /**
@@ -201,6 +214,104 @@ export async function removeArtworkFromRoom(roomId: string, id: string): Promise
     await store.writeJson(artworksPath(roomId), remaining);
     return true;
   });
+}
+
+export type EditableArtworkFields = Pick<
+  ImageMetadata,
+  'title' | 'artist' | 'date' | 'medium' | 'shortDescription' | 'longDescription' | 'link'
+>;
+
+export interface ManagedArtworkUpdate {
+  targetRoomId: string;
+  slot?: number;
+  fields: Partial<EditableArtworkFields>;
+}
+
+export interface ManagedArtworkResult {
+  previousRoomId: string;
+  roomId: string;
+  artwork: ImageMetadata;
+}
+
+export async function updateManagedArtwork(
+  sourceRoomId: string,
+  id: string,
+  update: ManagedArtworkUpdate,
+): Promise<ManagedArtworkResult | null> {
+  const targetRoomId = update.targetRoomId || sourceRoomId;
+  const sourcePath = artworksPath(sourceRoomId);
+  const targetPath = artworksPath(targetRoomId);
+
+  return withLocks([sourcePath, targetPath], async () => {
+    const source = (await getRoomArtworks(sourceRoomId)) ?? [];
+    const existing = source.find(a => artworkKey(a) === id);
+    if (!existing) return null;
+
+    const target = sourceRoomId === targetRoomId
+      ? source
+      : (await getRoomArtworks(targetRoomId)) ?? [];
+
+    const slot = update.slot !== undefined && update.slot >= 0 && update.slot < ROOM_CAPACITY
+      ? update.slot
+      : undefined;
+
+    if (slot !== undefined && target.some(a => artworkKey(a) !== id && a.slot === slot)) {
+      throw new Error(`Slot ${slot + 1} is already occupied in that room.`);
+    }
+
+    const artwork: ImageMetadata = {
+      ...existing,
+      ...update.fields,
+      slot,
+    };
+
+    if (sourceRoomId === targetRoomId) {
+      await store.writeJson(
+        sourcePath,
+        source.map(a => artworkKey(a) === id ? artwork : a),
+      );
+    } else {
+      await store.writeJson(
+        sourcePath,
+        source.filter(a => artworkKey(a) !== id),
+      );
+      await store.writeJson(targetPath, [...target, artwork]);
+    }
+
+    return { previousRoomId: sourceRoomId, roomId: targetRoomId, artwork };
+  });
+}
+
+export async function updateArtworkAudio(
+  roomId: string,
+  id: string,
+  audio: Pick<ImageMetadata, 'audioUrl' | 'audioGeneratedAt' | 'audioVoice'>,
+): Promise<ImageMetadata | null> {
+  return withLock(artworksPath(roomId), async () => {
+    const existing = (await getRoomArtworks(roomId)) ?? [];
+    const current = existing.find(a => artworkKey(a) === id);
+    if (!current) return null;
+
+    const artwork = { ...current, ...audio };
+    await store.writeJson(
+      artworksPath(roomId),
+      existing.map(a => artworkKey(a) === id ? artwork : a),
+    );
+    return artwork;
+  });
+}
+
+export async function resetRoomArtworksToSeed(roomId: string): Promise<ImageMetadata[]> {
+  const seed = approvedArtworksSeed(roomId);
+  if (!seed) {
+    throw new Error('No approved artwork seed exists for that room.');
+  }
+
+  await withLock(artworksPath(roomId), async () => {
+    await store.writeJson(artworksPath(roomId), seed);
+  });
+
+  return seed;
 }
 
 export async function getAllRoomArtworks(

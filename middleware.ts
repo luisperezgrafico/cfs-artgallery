@@ -1,31 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseBasicAuth, roleForCredentials } from './lib/adminAuth';
 
 export function middleware(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
 
-  if (!authHeader?.startsWith('Basic ')) {
+  const credentials = parseBasicAuth(authHeader);
+  const role = credentials ? roleForCredentials(credentials) : null;
+
+  if (!role) {
     return new NextResponse('Unauthorized', {
       status: 401,
       headers: { 'WWW-Authenticate': 'Basic realm="Gallery Admin", charset="UTF-8"' },
     });
   }
 
-  const decoded = atob(authHeader.slice(6));
-  const colonAt = decoded.indexOf(':');
-  const user = decoded.slice(0, colonAt);
-  const pass = decoded.slice(colonAt + 1);
+  const headers = new Headers(request.headers);
+  headers.set('x-gallery-admin-role', role);
 
-  const expectedUser = process.env.ADMIN_USER ?? 'admin';
-  const expectedPass = process.env.ADMIN_PASSWORD;
-
-  if (!expectedPass || user !== expectedUser || pass !== expectedPass) {
-    return new NextResponse('Unauthorized', {
-      status: 401,
-      headers: { 'WWW-Authenticate': 'Basic realm="Gallery Admin", charset="UTF-8"' },
-    });
-  }
-
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers } });
 }
 
 export const config = {

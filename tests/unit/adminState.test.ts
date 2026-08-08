@@ -188,6 +188,26 @@ describe('deleting', () => {
   });
 });
 
+describe('updating approved artworks', () => {
+  it('updates an artwork in place', () => {
+    const state = reduce(
+      loadedWith([], { 'room-1': [artwork('x'), artwork('y')] }),
+      { type: 'artworkUpdateSuccess', previousRoomId: 'room-1', roomId: 'room-1', artwork: { ...artwork('x'), title: 'Edited' } },
+    );
+    expect(state.artworks['room-1'].map(a => a.title)).toEqual(['Edited', 'Piece y']);
+  });
+
+  it('moves an artwork between rooms', () => {
+    const state = reduce(
+      loadedWith([], { 'room-1': [artwork('x')], 'room-2': [artwork('y')] }),
+      { type: 'artworkUpdateSuccess', previousRoomId: 'room-1', roomId: 'room-2', artwork: { ...artwork('x'), slot: 4 } },
+    );
+    expect(state.artworks['room-1']).toEqual([]);
+    expect(state.artworks['room-2'].map(a => a.id)).toEqual(['y', 'x']);
+    expect(state.artworks['room-2'][1].slot).toBe(4);
+  });
+});
+
 describe('hasArtworks', () => {
   it('is false for empty rooms and true once one has a piece', () => {
     expect(hasArtworks({ 'room-1': [], 'room-2': [] })).toBe(false);

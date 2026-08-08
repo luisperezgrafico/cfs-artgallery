@@ -8,11 +8,12 @@ import {
   Submission,
 } from '../../../../../../lib/storage';
 import { sendArtistApproval } from '../../../../../../lib/email';
+import { generateArtworkAudio } from '../../../../../../lib/audioNarration';
 import { ImageMetadata } from '../../../../../../types/museum';
 
 export const dynamic = 'force-dynamic';
 
-function toArtwork(submission: Submission): ImageMetadata {
+function toArtwork(submission: Submission, slot: number | undefined): ImageMetadata {
   return {
     id: submission.id,
     url: submission.imageUrl,
@@ -24,7 +25,7 @@ function toArtwork(submission: Submission): ImageMetadata {
     longDescription: submission.statement || undefined,
     link: '',
     aspectRatio: submission.aspectRatio,
-    slot: submission.preferredSlot,
+    slot,
   };
 }
 
@@ -34,7 +35,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json().catch(() => ({})) as { roomId?: string };
+    const body = await request.json().catch(() => ({})) as { roomId?: string; slot?: unknown };
 
     // Resolve the room before claiming, so a bad request can't strand a
     // submission in "approved" with nowhere to hang it.
@@ -46,6 +47,11 @@ export async function POST(
     if (!roomId) {
       return NextResponse.json({ error: 'roomId is required.' }, { status: 400 });
     }
+    const slot = body.slot === null
+      ? undefined
+      : typeof body.slot === 'number' && Number.isInteger(body.slot) && body.slot >= 0 && body.slot <= 7
+        ? body.slot
+        : existing.preferredSlot;
 
     // Claiming is the single atomic step that decides who owns this approval.
     // A duplicate click gets null and stops here, so the artwork is never
@@ -55,7 +61,18 @@ export async function POST(
       return NextResponse.json({ error: 'Submission already processed.' }, { status: 409 });
     }
 
-    const artwork = toArtwork(submission);
+    const artwork = toArtwork(submission, slot);
+    try {
+      const audio = await generateArtworkAudio(submission);
+      if (audio) {
+        artwork.audioUrl = audio.url;
+        artwork.audioGeneratedAt = audio.generatedAt;
+        artwork.audioVoice = audio.voice;
+      }
+    } catch (err) {
+      console.error('[admin/approve] audio narration failed, approving without audio:', err);
+    }
+
     try {
       await addArtworkToRoom(roomId, artwork);
     } catch (err) {

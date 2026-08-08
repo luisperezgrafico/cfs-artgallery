@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 import {
   CheckCircle, XCircle, Eye, X, ChevronDown, ChevronUp,
   Plus, Trash2, Send, Save, Loader2, AlertCircle, RefreshCw, UploadCloud,
+  SlidersHorizontal, Volume2, Pause, RotateCcw,
 } from 'lucide-react';
-import type { Submission, GallerySettings } from '../../lib/storage';
+import type { EditableArtworkFields, Submission, GallerySettings } from '../../lib/storage';
 import { rooms } from '../../config/roomsConfig';
 import type { ImageMetadata } from '../../types/museum';
 import { artworkKey } from '../../utils/artworkKey';
@@ -48,22 +49,35 @@ function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
 
 function ApproveModal({
   submission,
+  artworks,
   onConfirm,
   onClose,
 }: {
   submission: Submission;
-  onConfirm: (roomId: string) => Promise<void>;
+  artworks: Record<string, ImageMetadata[]>;
+  onConfirm: (roomId: string, slot: number | null) => Promise<void>;
   onClose: () => void;
 }) {
   const [roomId, setRoomId] = useState(submission.preferredRoom ?? rooms[0]?.id ?? '');
+  const [slot, setSlot] = useState(submission.preferredSlot !== undefined ? String(submission.preferredSlot) : '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const preferredRoom = submission.preferredRoom
+    ? rooms.find(r => r.id === submission.preferredRoom)?.name ?? submission.preferredRoom
+    : null;
+  const preferredSlot = submission.preferredSlot !== undefined ? `slot ${submission.preferredSlot + 1}` : null;
+  const occupiedSlots = new Set((artworks[roomId] ?? [])
+    .filter(artwork => artwork.slot !== undefined)
+    .map(artwork => artwork.slot as number));
+  const slotOccupiedInRoom = (nextRoomId: string, nextSlot: string) =>
+    nextSlot !== ''
+    && (artworks[nextRoomId] ?? []).some(artwork => artwork.slot === Number(nextSlot));
 
   const confirm = async () => {
     setBusy(true);
     setError('');
     try {
-      await onConfirm(roomId);
+      await onConfirm(roomId, slot === '' ? null : Number(slot));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.');
       setBusy(false);
@@ -79,6 +93,12 @@ function ApproveModal({
           <p className="text-white/50 text-xs italic">&ldquo;{submission.shortDescription}&rdquo;</p>
         )}
 
+        {(preferredRoom || preferredSlot) && (
+          <p className="text-white/35 text-xs">
+            Artist preference: {[preferredRoom, preferredSlot].filter(Boolean).join(' · ')}
+          </p>
+        )}
+
         <div>
           <label className="block text-xs text-white/50 mb-1 uppercase tracking-wider">
             Assign to room
@@ -88,12 +108,39 @@ function ApproveModal({
           </label>
           <select
             value={roomId}
-            onChange={e => setRoomId(e.target.value)}
+            onChange={e => {
+              const nextRoomId = e.target.value;
+              setRoomId(nextRoomId);
+              if (slotOccupiedInRoom(nextRoomId, slot)) setSlot('');
+            }}
             disabled={busy}
             aria-label="Assign to room"
             className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
           >
             {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs text-white/50 mb-1 uppercase tracking-wider">
+            Assign to slot
+            {submission.preferredSlot !== undefined && (
+              <span className="ml-2 normal-case text-white/30 tracking-normal">· artist&rsquo;s preference</span>
+            )}
+          </label>
+          <select
+            value={slot}
+            onChange={e => setSlot(e.target.value)}
+            disabled={busy}
+            aria-label="Assign to slot"
+            className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="">Auto</option>
+            {Array.from({ length: 8 }, (_, i) => (
+              <option key={i} value={i} disabled={occupiedSlots.has(i)}>
+                Slot {i + 1}{occupiedSlots.has(i) ? ' — occupied' : ''}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -266,11 +313,13 @@ function SubmissionCard({
 
 function SubmissionsTab({
   submissions,
+  artworks,
   onApprove,
   onReject,
 }: {
   submissions: Submission[];
-  onApprove: (s: Submission, roomId: string) => Promise<void>;
+  artworks: Record<string, ImageMetadata[]>;
+  onApprove: (s: Submission, roomId: string, slot: number | null) => Promise<void>;
   onReject: (s: Submission, reason: string) => Promise<void>;
 }) {
   const [activeModal, setActiveModal] = useState<{ submission: Submission; type: 'approve' | 'reject' } | null>(null);
@@ -284,7 +333,8 @@ function SubmissionsTab({
       {activeModal?.type === 'approve' && (
         <ApproveModal
           submission={activeModal.submission}
-          onConfirm={async roomId => { await onApprove(activeModal.submission, roomId); setActiveModal(null); }}
+          artworks={artworks}
+          onConfirm={async (roomId, slot) => { await onApprove(activeModal.submission, roomId, slot); setActiveModal(null); }}
           onClose={() => setActiveModal(null)}
         />
       )}
@@ -319,6 +369,386 @@ function PublishingChip() {
   );
 }
 
+function sortArtworksForAdmin(list: ImageMetadata[]): ImageMetadata[] {
+  return [...list].sort((a, b) => {
+    const aSlot = a.slot ?? Number.POSITIVE_INFINITY;
+    const bSlot = b.slot ?? Number.POSITIVE_INFINITY;
+    if (aSlot !== bSlot) return aSlot - bSlot;
+    return a.title.localeCompare(b.title);
+  });
+}
+
+function hasNarrationText(artwork: ImageMetadata): boolean {
+  return !!(artwork.shortDescription?.trim() || artwork.longDescription?.trim());
+}
+
+function AudioStatusBadge({ artwork, busy = false }: { artwork: ImageMetadata; busy?: boolean }) {
+  if (busy) {
+    return (
+      <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-sky-300/90 bg-sky-950/35 border border-sky-800/40 rounded-full px-2 py-0.5"
+        data-testid="audio-status">
+        <Loader2 size={11} className="animate-spin" /> Generating…
+      </span>
+    );
+  }
+
+  if (artwork.audioUrl) {
+    return (
+      <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-emerald-300/85 bg-emerald-950/30 border border-emerald-800/35 rounded-full px-2 py-0.5"
+        data-testid="audio-status">
+        <Volume2 size={11} /> Audio ready
+      </span>
+    );
+  }
+
+  if (hasNarrationText(artwork)) {
+    return (
+      <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-amber-300/90 bg-amber-950/35 border border-amber-800/40 rounded-full px-2 py-0.5"
+        data-testid="audio-status">
+        <AlertCircle size={11} /> Audio missing
+      </span>
+    );
+  }
+
+  return (
+    <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-white/35 bg-white/[0.03] border border-white/10 rounded-full px-2 py-0.5"
+      data-testid="audio-status">
+      No audio text
+    </span>
+  );
+}
+
+function ArtworkManageModal({
+  roomId,
+  artwork,
+  artworks,
+  busyArtworkId,
+  onClose,
+  onRemove,
+  onUpdate,
+  onRegenerateAudio,
+}: {
+  roomId: string;
+  artwork: ImageMetadata;
+  artworks: Record<string, ImageMetadata[]>;
+  busyArtworkId: string | null;
+  onClose: () => void;
+  onRemove: (roomId: string, artworkId: string) => Promise<void>;
+  onUpdate: (
+    roomId: string,
+    artworkId: string,
+    input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
+  ) => Promise<ImageMetadata>;
+  onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
+  const [currentRoomId, setCurrentRoomId] = useState(roomId);
+  const [current, setCurrent] = useState(artwork);
+  const [targetRoomId, setTargetRoomId] = useState(roomId);
+  const [slotDraft, setSlotDraft] = useState(artwork.slot !== undefined ? String(artwork.slot) : '');
+  const [fields, setFields] = useState<Required<EditableArtworkFields>>({
+    title: artwork.title,
+    artist: artwork.artist,
+    date: artwork.date,
+    medium: artwork.medium ?? '',
+    shortDescription: artwork.shortDescription ?? '',
+    longDescription: artwork.longDescription ?? '',
+    link: artwork.link,
+  });
+  const [saving, setSaving] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const key = artworkKey(current);
+  const room = rooms.find(r => r.id === currentRoomId);
+  const busy = busyArtworkId === key || saving || regenerating;
+  const canRegenerateAudio = hasNarrationText(current);
+  const occupiedSlots = new Set((artworks[targetRoomId] ?? [])
+    .filter(item => artworkKey(item) !== key && item.slot !== undefined)
+    .map(item => item.slot as number));
+
+  const slotOccupiedInRoom = (nextRoomId: string, slot: string) =>
+    slot !== ''
+    && (artworks[nextRoomId] ?? []).some(item =>
+      artworkKey(item) !== key && item.slot === Number(slot));
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape' && !busy) onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [busy, onClose]);
+
+  useEffect(() => () => audioRef.current?.pause(), []);
+
+  const toggleAudio = async () => {
+    const player = audioRef.current;
+    if (!player) return;
+
+    if (audioState === 'playing') {
+      player.pause();
+      setAudioState('paused');
+      return;
+    }
+
+    if (audioState === 'ended') player.currentTime = 0;
+
+    try {
+      await player.play();
+      setAudioState('playing');
+    } catch {
+      setAudioState('error');
+    }
+  };
+
+  const remove = async () => {
+    await onRemove(currentRoomId, key);
+    onClose();
+  };
+
+  const saveChanges = async () => {
+    if (!fields.title.trim() || !fields.artist.trim()) {
+      setError('Title and artist are required.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    try {
+      const updated = await onUpdate(currentRoomId, key, {
+        targetRoomId,
+        slot: slotDraft === '' ? undefined : Number(slotDraft),
+        fields: {
+          title: fields.title.trim(),
+          artist: fields.artist.trim(),
+          date: fields.date.trim(),
+          medium: fields.medium.trim(),
+          shortDescription: fields.shortDescription.trim(),
+          longDescription: fields.longDescription.trim(),
+          link: fields.link.trim(),
+        },
+      });
+      setCurrent(updated);
+      setCurrentRoomId(targetRoomId);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const regenerateAudio = async () => {
+    setRegenerating(true);
+    setError('');
+    setAudioState('idle');
+    audioRef.current?.pause();
+    try {
+      const updated = await onRegenerateAudio(currentRoomId, key);
+      setCurrent(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to regenerate audio.');
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" data-testid="manage-artwork-modal">
+      <div className="bg-zinc-950 border border-white/10 rounded-xl w-full max-w-3xl max-h-[90dvh] overflow-hidden flex flex-col">
+        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-white/10">
+          <div className="min-w-0">
+            <h3 className="text-white font-semibold text-base truncate">Manage &ldquo;{current.title}&rdquo;</h3>
+            <p className="text-white/45 text-xs mt-1">
+              {room?.name ?? roomId}
+              {current.slot !== undefined ? ` · slot ${current.slot + 1}` : ''}
+            </p>
+          </div>
+          <button onClick={onClose} disabled={busy}
+            className="shrink-0 text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
+            aria-label="Close">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-6 grid gap-6 md:grid-cols-[220px_1fr]">
+          <div className="space-y-3">
+            <div className="aspect-square rounded-lg overflow-hidden bg-zinc-900 border border-white/10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={current.url} alt={current.title} className="w-full h-full object-cover" />
+            </div>
+            <a href={current.url} target="_blank" rel="noopener noreferrer"
+              className="block text-center text-xs text-white/45 hover:text-white/70 underline">
+              Open image
+            </a>
+          </div>
+
+          <div className="space-y-6">
+            {error && (
+              <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2" data-testid="manage-error">
+                <AlertCircle size={13} /> {error}
+              </div>
+            )}
+
+            <section className="space-y-3">
+              <h4 className="text-white/45 text-xs font-semibold uppercase tracking-widest">Artwork</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-white/35 text-xs mb-1">Title</p>
+                  <input aria-label="Artwork title" value={fields.title} onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
+                    className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <p className="text-white/35 text-xs mb-1">Artist</p>
+                  <input aria-label="Artist" value={fields.artist} onChange={e => setFields(f => ({ ...f, artist: e.target.value }))}
+                    className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <p className="text-white/35 text-xs mb-1">Date</p>
+                  <input aria-label="Artwork date" value={fields.date} onChange={e => setFields(f => ({ ...f, date: e.target.value }))}
+                    className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <p className="text-white/35 text-xs mb-1">Medium</p>
+                  <input aria-label="Medium" value={fields.medium} onChange={e => setFields(f => ({ ...f, medium: e.target.value }))}
+                    className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h4 className="text-white/45 text-xs font-semibold uppercase tracking-widest">Placement</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-white/35 text-xs mb-1">Room</p>
+                  <select aria-label="Room" value={targetRoomId} onChange={e => {
+                    const nextRoomId = e.target.value;
+                    setTargetRoomId(nextRoomId);
+                    if (slotOccupiedInRoom(nextRoomId, slotDraft)) setSlotDraft('');
+                  }}
+                    className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm">
+                    {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <p className="text-white/35 text-xs mb-1">Slot</p>
+                  <select aria-label="Slot" value={slotDraft} onChange={e => setSlotDraft(e.target.value)}
+                    className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Auto</option>
+                    {Array.from({ length: 8 }, (_, i) => (
+                      <option key={i} value={i} disabled={occupiedSlots.has(i)}>
+                        Slot {i + 1}{occupiedSlots.has(i) ? ' — occupied' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h4 className="text-white/45 text-xs font-semibold uppercase tracking-widest">Descriptions</h4>
+              <textarea aria-label="Short description" value={fields.shortDescription} rows={3}
+                onChange={e => setFields(f => ({ ...f, shortDescription: e.target.value }))}
+                placeholder="Short description"
+                className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y" />
+              <textarea aria-label="Long description" value={fields.longDescription} rows={7}
+                onChange={e => setFields(f => ({ ...f, longDescription: e.target.value }))}
+                placeholder="Long description"
+                className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y" />
+              <div>
+                <p className="text-white/35 text-xs mb-1">External link</p>
+                <input aria-label="External link" value={fields.link} onChange={e => setFields(f => ({ ...f, link: e.target.value }))}
+                  className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={saveChanges} disabled={busy} data-testid="save-artwork"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-zinc-950 rounded-lg text-sm font-medium hover:bg-white/90 disabled:opacity-50 transition-colors">
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  {saving ? 'Saving…' : 'Save changes'}
+                </button>
+                {saved && <span className="text-emerald-400 text-xs">Saved</span>}
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h4 className="text-white/45 text-xs font-semibold uppercase tracking-widest">Audio</h4>
+              {current.audioUrl ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <button onClick={toggleAudio}
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-white/10 rounded-lg text-white/80 text-sm transition-colors"
+                    data-testid="manage-audio-button">
+                    {audioState === 'playing'
+                      ? <Pause size={14} />
+                      : audioState === 'ended'
+                        ? <RotateCcw size={14} />
+                        : <Volume2 size={14} />}
+                    {audioState === 'playing' ? 'Pause' : audioState === 'ended' ? 'Replay' : 'Play audio'}
+                  </button>
+                  <span className={`text-xs ${audioState === 'error' ? 'text-red-400' : 'text-white/35'}`}>
+                    {audioState === 'error'
+                      ? 'Audio unavailable'
+                      : current.audioGeneratedAt
+                        ? `Generated ${timeAgo(current.audioGeneratedAt)}`
+                        : 'Audio ready'}
+                  </span>
+                  <audio
+                    ref={audioRef}
+                    src={current.audioUrl}
+                    preload="none"
+                    onEnded={() => setAudioState('ended')}
+                    onPause={() => setAudioState(state => state === 'playing' ? 'paused' : state)}
+                    onError={() => setAudioState('error')}
+                  />
+                </div>
+              ) : (
+                <p className={canRegenerateAudio ? 'text-amber-300/80 text-sm' : 'text-white/30 text-sm'}>
+                  {canRegenerateAudio
+                    ? 'Audio is missing for this artwork.'
+                    : 'Add a short or long description before generating audio.'}
+                </p>
+              )}
+              <button onClick={regenerateAudio} disabled={busy || !canRegenerateAudio} data-testid="regenerate-audio"
+                className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/70 text-sm transition-colors">
+                {regenerating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                {regenerating ? 'Regenerating…' : 'Regenerate audio'}
+              </button>
+            </section>
+
+            <section className="space-y-3 border-t border-white/10 pt-5">
+              <h4 className="text-red-300/70 text-xs font-semibold uppercase tracking-widest">Danger</h4>
+              {confirmDelete ? (
+                <div className="bg-red-950/30 border border-red-800/40 rounded-lg p-3 space-y-3" data-testid="delete-modal">
+                  <p className="text-white/70 text-sm">&ldquo;{current.title}&rdquo; will be removed from the gallery. This cannot be undone.</p>
+                  <div className="flex gap-3">
+                    <button onClick={remove} disabled={busy} data-testid="confirm-delete"
+                      className="flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 disabled:opacity-60 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors">
+                      {busy ? <Loader2 size={14} className="animate-spin" /> : null}
+                      {busy ? 'Removing…' : 'Remove'}
+                    </button>
+                    <button onClick={() => setConfirmDelete(false)} disabled={busy}
+                      className="bg-zinc-800 hover:bg-zinc-700 disabled:opacity-60 text-white/70 rounded-lg px-4 py-2 text-sm transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setConfirmDelete(true)} disabled={busy}
+                  data-testid="delete-button"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm text-red-300 hover:text-red-200 bg-red-950/30 hover:bg-red-950/50 border border-red-800/40 rounded-lg transition-colors disabled:opacity-40">
+                  <Trash2 size={14} /> Remove from gallery
+                </button>
+              )}
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ApprovedTab({
   artworks,
   publishingIds,
@@ -326,6 +756,8 @@ function ApprovedTab({
   busyArtworkId,
   actionError,
   onRemove,
+  onUpdate,
+  onRegenerateAudio,
 }: {
   artworks: Record<string, ImageMetadata[]>;
   publishingIds: string[];
@@ -333,50 +765,41 @@ function ApprovedTab({
   busyArtworkId: string | null;
   actionError: string;
   onRemove: (roomId: string, artworkId: string) => Promise<void>;
+  onUpdate: (
+    roomId: string,
+    artworkId: string,
+    input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
+  ) => Promise<ImageMetadata>;
+  onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
 }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ roomId: string; id: string; title: string } | null>(null);
+  const [manageArtwork, setManageArtwork] = useState<{ roomId: string; artwork: ImageMetadata } | null>(null);
 
   if (!hasArtworks(artworks) && publishingSubmissions.length === 0) {
     return <div className="text-center py-20 text-white/35 text-sm" data-testid="approved-empty">No approved artworks yet. Approve a submission to add one.</div>;
   }
 
-  const confirm = async () => {
-    if (!confirmDelete) return;
-    await onRemove(confirmDelete.roomId, confirmDelete.id);
-    setConfirmDelete(null);
-  };
-
   return (
     <>
       {lightbox && <Lightbox url={lightbox} onClose={() => setLightbox(null)} />}
+      {manageArtwork && (
+        <ArtworkManageModal
+          roomId={manageArtwork.roomId}
+          artwork={manageArtwork.artwork}
+          artworks={artworks}
+          busyArtworkId={busyArtworkId}
+          onClose={() => setManageArtwork(null)}
+          onRemove={onRemove}
+          onUpdate={onUpdate}
+          onRegenerateAudio={onRegenerateAudio}
+        />
+      )}
 
       {/* A failed delete rolls the row back; without this the artwork would just
           reappear with no explanation. */}
-      {actionError && !confirmDelete && (
+      {actionError && !manageArtwork && (
         <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2 mb-4" data-testid="approved-error">
           <AlertCircle size={13} /> {actionError}
-        </div>
-      )}
-
-      {confirmDelete && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" data-testid="delete-modal">
-          <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-sm p-6 space-y-4">
-            <h3 className="text-white font-semibold text-base">Remove artwork?</h3>
-            <p className="text-white/60 text-sm">&ldquo;{confirmDelete.title}&rdquo; will be removed from the gallery. This cannot be undone.</p>
-            <div className="flex gap-3 pt-1">
-              <button onClick={confirm} disabled={!!busyArtworkId} data-testid="confirm-delete"
-                className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm font-medium transition-colors"
-              >
-                {busyArtworkId ? <Loader2 size={14} className="animate-spin" /> : null}
-                {busyArtworkId ? 'Removing…' : 'Remove'}
-              </button>
-              <button onClick={() => setConfirmDelete(null)} disabled={!!busyArtworkId}
-                className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm transition-colors">
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -414,7 +837,7 @@ function ApprovedTab({
 
       <div className="space-y-8">
         {rooms.map(room => {
-          const list = artworks[room.id] ?? [];
+          const list = sortArtworksForAdmin(artworks[room.id] ?? []);
           if (list.length === 0) return null;
           return (
             <section key={room.id} data-testid="approved-room" data-room-id={room.id}>
@@ -440,14 +863,15 @@ function ApprovedTab({
                         </p>
                       </div>
                       {publishingIds.includes(key) && <PublishingChip />}
+                      <AudioStatusBadge artwork={artwork} busy={busyArtworkId === key} />
                       <button
-                        onClick={() => setConfirmDelete({ roomId: room.id, id: key, title: artwork.title })}
+                        onClick={() => setManageArtwork({ roomId: room.id, artwork })}
                         disabled={!!busyArtworkId}
-                        data-testid="delete-button"
-                        className="shrink-0 text-white/30 hover:text-red-400 disabled:opacity-40 transition-colors p-1"
-                        title="Remove from gallery"
+                        data-testid="manage-button"
+                        className="shrink-0 inline-flex items-center gap-1.5 text-white/40 hover:text-white/75 disabled:opacity-40 transition-colors px-2 py-1 text-xs"
+                        title="Manage artwork"
                       >
-                        <Trash2 size={15} />
+                        <SlidersHorizontal size={14} /> Manage
                       </button>
                     </div>
                   );
@@ -610,23 +1034,80 @@ function SettingsTab() {
   );
 }
 
+// ── Developer tab ─────────────────────────────────────────────────────────────
+
+function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<'ok' | 'fail' | null>(null);
+  const [message, setMessage] = useState('');
+
+  const resetRoomOne = async () => {
+    setBusy(true);
+    setResult(null);
+    setMessage('');
+    try {
+      await onReset();
+      setResult('ok');
+      setMessage('Room I reset with template artworks.');
+    } catch (err) {
+      setResult('fail');
+      setMessage(err instanceof Error ? err.message : 'Failed to reset Room I.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl space-y-8">
+      <section className="space-y-3">
+        <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest">Mock data</h3>
+        <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 space-y-3">
+          <div>
+            <p className="text-white text-sm font-medium">Reset Room I with template artworks</p>
+            <p className="text-white/40 text-xs mt-1">
+              Replaces Room I&rsquo;s approved artworks with the built-in mock/template set for testing.
+            </p>
+          </div>
+          <button onClick={resetRoomOne} disabled={busy} data-testid="reset-room-1-seed"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/80 text-sm transition-colors">
+            {busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {busy ? 'Resetting…' : 'Reset Room I mocks'}
+          </button>
+          {message && (
+            <p className={result === 'ok' ? 'text-emerald-400 text-xs' : 'text-red-400 text-xs'} data-testid="developer-result">
+              {message}
+            </p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ── Dashboard shell ───────────────────────────────────────────────────────────
 
-type Tab = 'submissions' | 'approved' | 'settings';
+type Tab = 'submissions' | 'approved' | 'settings' | 'developer';
+type AdminRole = 'admin' | 'dev';
 
 function TabBar({
   tab,
   onSelect,
   counts,
+  role,
 }: {
   tab: Tab;
   onSelect: (t: Tab) => void;
   counts: { submissions: number; approved: number };
+  role: AdminRole;
 }) {
+  const tabs: Tab[] = role === 'dev'
+    ? ['submissions', 'approved', 'settings', 'developer']
+    : ['submissions', 'approved', 'settings'];
+
   return (
     <nav className="border-b border-white/10 px-6">
       <div className="flex">
-        {(['submissions', 'approved', 'settings'] as Tab[]).map(t => (
+        {tabs.map(t => (
           <button key={t} onClick={() => onSelect(t)} data-testid={`tab-${t}`}
             className={`px-4 py-3 text-sm capitalize transition-colors border-b-2 -mb-px ${
               tab === t ? 'border-white text-white' : 'border-transparent text-white/45 hover:text-white/70'
@@ -647,14 +1128,31 @@ function TabBar({
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>('submissions');
+  const [role, setRole] = useState<AdminRole>('admin');
 
   // One store for the whole panel, mounted here so tab switches never remount
   // it: the tabs below are pure views over this state.
-  const { state, refresh, approve, reject, remove }: AdminData = useAdminData();
+  const { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio }: AdminData = useAdminData();
 
-  const handleApprove = async (submission: Submission, roomId: string) => {
-    await approve(submission, roomId);
+  useEffect(() => {
+    fetch('/api/admin/session')
+      .then(r => r.json())
+      .then((data: { role?: AdminRole }) => setRole(data.role === 'dev' ? 'dev' : 'admin'))
+      .catch(() => setRole('admin'));
+  }, []);
+
+  const handleApprove = async (submission: Submission, roomId: string, slot: number | null) => {
+    await approve(submission, roomId, slot);
     setTab('approved');
+  };
+
+  const resetRoomOneSeed = async () => {
+    const res = await fetch('/api/admin/developer/reset-room-1', { method: 'POST' });
+    const data = await res.json().catch(() => null) as { ok?: boolean; error?: string } | null;
+    if (!res.ok || !data?.ok) {
+      throw new Error(data?.error ?? 'Failed to reset Room I.');
+    }
+    await refresh({ quiet: true });
   };
 
   const approvedCount = Object.values(state.artworks).reduce((n, list) => n + list.length, 0);
@@ -670,7 +1168,7 @@ export default function AdminDashboard() {
         </button>
       </header>
 
-      <TabBar tab={tab} onSelect={setTab} counts={{ submissions: state.submissions.length, approved: approvedCount }} />
+      <TabBar tab={tab} onSelect={setTab} counts={{ submissions: state.submissions.length, approved: approvedCount }} role={role} />
 
       <main className="px-6 py-6" data-testid="admin-main" data-loading={state.loading ? 'true' : 'false'}>
         {state.loading && (
@@ -689,7 +1187,7 @@ export default function AdminDashboard() {
         {!state.loading && !state.loadError && (
           <>
             {tab === 'submissions' && (
-              <SubmissionsTab submissions={state.submissions} onApprove={handleApprove} onReject={reject} />
+              <SubmissionsTab submissions={state.submissions} artworks={state.artworks} onApprove={handleApprove} onReject={reject} />
             )}
             {tab === 'approved' && (
               <ApprovedTab
@@ -699,9 +1197,12 @@ export default function AdminDashboard() {
                 busyArtworkId={state.busyArtworkId}
                 actionError={state.actionError}
                 onRemove={remove}
+                onUpdate={updateArtwork}
+                onRegenerateAudio={regenerateAudio}
               />
             )}
             {tab === 'settings' && <SettingsTab />}
+            {tab === 'developer' && <DeveloperTab onReset={resetRoomOneSeed} />}
           </>
         )}
       </main>

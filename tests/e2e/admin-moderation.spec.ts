@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { seed, openAdmin, submission, artwork, card, row, deleteArtwork, timeUntil, TINY_PNG } from './fixtures';
+import { BASE_URL, TEST_ADMIN } from '../../playwright.config';
 
 /**
  * End-to-end coverage of the moderation loop: a card appears, moves between
@@ -58,6 +59,25 @@ test.describe('approving', () => {
     await page.getByTestId('tab-submissions').click();
     await expect(card(page, 'a')).toHaveCount(0);
     await expect(card(page, 'b')).toBeVisible();
+  });
+
+  test('shows artist room and slot preferences when approving', async ({ page, request }) => {
+    await seed(request, {
+      submissions: [submission('a', { preferredRoom: 'room-2', preferredSlot: 3 })],
+      artworks: { 'room-2': [artwork('taken', { slot: 0 })] },
+    });
+    await openAdmin(page);
+
+    await card(page, 'a').getByTestId('approve-button').click();
+    await expect(page.getByText('Artist preference: Room II · slot 4')).toBeVisible();
+    await expect(page.getByLabel('Assign to room')).toHaveValue('room-2');
+    await expect(page.getByLabel('Assign to slot')).toHaveValue('3');
+    await expect(page.getByLabel('Assign to slot').locator('option[value="0"]')).toBeDisabled();
+
+    await page.getByTestId('confirm-approve').click();
+    const approved = page.locator('[data-room-id="room-2"]').locator('[data-artwork-id="a"]');
+    await expect(approved).toBeVisible();
+    await expect(approved).toContainText('slot 4');
   });
 
   test('the approved card does not come back when you revisit the tab', async ({ page, request }) => {
@@ -179,8 +199,7 @@ test.describe('deleting an approved artwork', () => {
 
     const elapsed = await timeUntil(
       async () => {
-        await row(page, 'y').getByTestId('delete-button').click();
-        await page.getByTestId('confirm-delete').click();
+        await deleteArtwork(page, 'y');
       },
       async () => { await expect(row(page, 'y')).toHaveCount(0); },
     );
@@ -191,7 +210,6 @@ test.describe('deleting an approved artwork', () => {
     await expect(row(page, 'z')).toBeVisible();
 
     // A reload drops every local guard, so this asserts what the server stored.
-    await page.waitForResponse(r => r.request().method() === 'DELETE');
     await openAdmin(page);
     await page.getByTestId('tab-approved').click();
     await expect(page.getByTestId('artwork-row')).toHaveCount(2);
@@ -201,8 +219,7 @@ test.describe('deleting an approved artwork', () => {
   test('deleted pieces stay gone across tab switches', async ({ page }) => {
     await openAdmin(page);
     await page.getByTestId('tab-approved').click();
-    await row(page, 'x').getByTestId('delete-button').click();
-    await page.getByTestId('confirm-delete').click();
+    await deleteArtwork(page, 'x');
     await expect(row(page, 'x')).toHaveCount(0);
 
     await page.getByTestId('tab-submissions').click();
@@ -223,7 +240,8 @@ test.describe('deleting an approved artwork', () => {
     await page.route('**/api/admin/artworks/*', route =>
       route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'Storage unavailable.' }) }));
 
-    await row(page, 'x').getByTestId('delete-button').click();
+    await row(page, 'x').getByTestId('manage-button').click();
+    await page.getByTestId('delete-button').click();
     await page.getByTestId('confirm-delete').click();
 
     await expect(page.getByTestId('approved-error')).toContainText('Storage unavailable.');
@@ -236,11 +254,117 @@ test.describe('deleting an approved artwork', () => {
     await page.getByTestId('tab-approved').click();
 
     for (const id of ['x', 'y', 'z']) {
-      await row(page, id).getByTestId('delete-button').click();
-      await page.getByTestId('confirm-delete').click();
+      await deleteArtwork(page, id);
       await expect(row(page, id)).toHaveCount(0);
     }
     await expect(page.getByTestId('approved-empty')).toBeVisible();
+  });
+});
+
+test.describe('managing an approved artwork', () => {
+  test('lists approved artworks in slot order and disables occupied slots', async ({ page, request }) => {
+    await seed(request, {
+      artworks: {
+        'room-1': [
+          artwork('free', { title: 'Free placement' }),
+          artwork('slot-3', { title: 'Slot three', slot: 2, shortDescription: 'Needs audio.' }),
+          artwork('slot-1', { title: 'Slot one', slot: 0, audioUrl: '/audio/ready.mp3' }),
+        ],
+        'room-2': [
+          artwork('taken', { title: 'Taken slot', slot: 3 }),
+        ],
+      },
+    });
+    await openAdmin(page);
+    await page.getByTestId('tab-approved').click();
+
+    const roomOneTitles = await page
+      .locator('[data-room-id="room-1"] [data-testid="artwork-row"]')
+      .locator('p.text-white')
+      .allTextContents();
+    expect(roomOneTitles).toEqual(['Slot one', 'Slot three', 'Free placement']);
+    await expect(row(page, 'slot-1').getByTestId('audio-status')).toContainText('Audio ready');
+    await expect(row(page, 'slot-3').getByTestId('audio-status')).toContainText('Audio missing');
+    await expect(row(page, 'free').getByTestId('audio-status')).toContainText('No audio text');
+
+    await row(page, 'slot-1').getByTestId('manage-button').click();
+    await page.getByLabel('Room').selectOption('room-2');
+    await expect(page.getByLabel('Slot').locator('option[value="3"]')).toBeDisabled();
+  });
+
+  test('edits metadata and moves the artwork to another room and slot', async ({ page, request }) => {
+    await seed(request, {
+      artworks: {
+        'room-1': [
+          artwork('x', {
+            title: 'Original title',
+            shortDescription: 'Original short description.',
+            longDescription: 'Original long description.',
+          }),
+        ],
+      },
+    });
+    await openAdmin(page);
+    await page.getByTestId('tab-approved').click();
+
+    await row(page, 'x').getByTestId('manage-button').click();
+    await page.getByLabel('Artwork title').fill('Edited title');
+    await page.getByLabel('Short description').fill('Edited short description.');
+    await page.getByLabel('Room').selectOption('room-2');
+    await page.getByLabel('Slot').selectOption('3');
+
+    const updated = page.waitForResponse(r =>
+      r.request().method() === 'PATCH' && r.url().includes('/api/admin/artworks/room-1'));
+    await page.getByTestId('save-artwork').click();
+    await updated;
+    await expect(page.getByText('Saved')).toBeVisible();
+
+    await page.getByLabel('Close').click();
+    await expect(page.locator('[data-room-id="room-1"]').locator('[data-artwork-id="x"]')).toHaveCount(0);
+    const moved = page.locator('[data-room-id="room-2"]').locator('[data-artwork-id="x"]');
+    await expect(moved).toBeVisible();
+    await expect(moved).toContainText('Edited title');
+    await expect(moved).toContainText('slot 4');
+  });
+});
+
+test.describe('developer tools', () => {
+  test('are hidden and forbidden for the regular admin user', async ({ page, request }) => {
+    await seed(request);
+    await openAdmin(page);
+
+    await expect(page.getByTestId('tab-developer')).toHaveCount(0);
+    const res = await request.post('/api/admin/developer/reset-room-1');
+    expect(res.status()).toBe(403);
+  });
+
+  test('resets Room I with the template artworks for the dev user', async ({ browser, request }) => {
+    await seed(request, {
+      artworks: { 'room-1': [artwork('custom', { title: 'Custom artwork' })] },
+    });
+    const context = await browser.newContext({
+      baseURL: BASE_URL,
+      httpCredentials: { username: 'dev', password: TEST_ADMIN.password },
+    });
+    const page = await context.newPage();
+
+    await openAdmin(page);
+    await page.getByTestId('tab-approved').click();
+    await expect(row(page, 'custom')).toBeVisible();
+
+    await page.getByTestId('tab-developer').click();
+    const reset = page.waitForResponse(r =>
+      r.request().method() === 'POST' && r.url().includes('/api/admin/developer/reset-room-1'));
+    await page.getByTestId('reset-room-1-seed').click();
+    await reset;
+    await expect(page.getByTestId('developer-result')).toContainText('Room I reset');
+
+    await page.getByTestId('tab-approved').click();
+    await expect(row(page, 'custom')).toHaveCount(0);
+    await expect(row(page, 'static-lux-perpetua')).toBeVisible();
+    await expect(row(page, 'static-hora-incerta')).toBeVisible();
+
+    await context.close();
   });
 });
 

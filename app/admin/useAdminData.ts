@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import type { Submission } from '../../lib/storage';
+import type { EditableArtworkFields, Submission } from '../../lib/storage';
 import type { ImageMetadata } from '../../types/museum';
 import { adminReducer, initialAdminState, type AdminState } from './adminState';
 
@@ -17,9 +17,15 @@ export interface AdminData {
    * `quiet` skips the loading state, for background polling.
    */
   refresh: (opts?: { quiet?: boolean }) => Promise<void>;
-  approve: (submission: Submission, roomId: string) => Promise<void>;
+  approve: (submission: Submission, roomId: string, slot?: number | null) => Promise<void>;
   reject: (submission: Submission, reason: string) => Promise<void>;
   remove: (roomId: string, artworkId: string) => Promise<void>;
+  updateArtwork: (
+    roomId: string,
+    artworkId: string,
+    input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
+  ) => Promise<ImageMetadata>;
+  regenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
   dismissError: () => void;
 }
 
@@ -91,14 +97,14 @@ export function useAdminData(): AdminData {
     return () => clearInterval(timer);
   }, [publishingCount, refresh]);
 
-  const approve = useCallback(async (submission: Submission, roomId: string) => {
+  const approve = useCallback(async (submission: Submission, roomId: string, slot?: number | null) => {
     dispatch({ type: 'approveStart', submissionId: submission.id });
     let res: Response;
     try {
       res = await fetch(`/api/admin/submissions/${submission.id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId }),
+        body: JSON.stringify({ roomId, slot }),
       });
     } catch {
       dispatch({ type: 'approveFailure', message: 'Network error. Please try again.' });
@@ -178,7 +184,79 @@ export function useAdminData(): AdminData {
     }
   }, []);
 
+  const updateArtwork = useCallback(async (
+    roomId: string,
+    artworkId: string,
+    input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
+  ): Promise<ImageMetadata> => {
+    dispatch({ type: 'artworkUpdateStart', artworkId });
+    let res: Response;
+    try {
+      res = await fetch(`/api/admin/artworks/${roomId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: artworkId, ...input }),
+      });
+    } catch {
+      const message = 'Network error. Please try again.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    const data = await res.json().catch(() => null) as
+      | { ok?: boolean; error?: string; artwork?: ImageMetadata; roomId?: string; previousRoomId?: string }
+      | null;
+
+    if (!res.ok || !data?.ok || !data.artwork || !data.roomId || !data.previousRoomId) {
+      const message = data?.error ?? 'Failed to update artwork.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    dispatch({
+      type: 'artworkUpdateSuccess',
+      previousRoomId: data.previousRoomId,
+      roomId: data.roomId,
+      artwork: data.artwork,
+    });
+    return data.artwork;
+  }, []);
+
+  const regenerateAudio = useCallback(async (roomId: string, artworkId: string): Promise<ImageMetadata> => {
+    dispatch({ type: 'artworkUpdateStart', artworkId });
+    let res: Response;
+    try {
+      res = await fetch(`/api/admin/artworks/${roomId}/audio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: artworkId }),
+      });
+    } catch {
+      const message = 'Network error. Please try again.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    const data = await res.json().catch(() => null) as
+      | { ok?: boolean; error?: string; artwork?: ImageMetadata; roomId?: string }
+      | null;
+
+    if (!res.ok || !data?.ok || !data.artwork || !data.roomId) {
+      const message = data?.error ?? 'Failed to regenerate audio.';
+      dispatch({ type: 'artworkUpdateFailure', message });
+      throw new Error(message);
+    }
+
+    dispatch({
+      type: 'artworkUpdateSuccess',
+      previousRoomId: roomId,
+      roomId: data.roomId,
+      artwork: data.artwork,
+    });
+    return data.artwork;
+  }, []);
+
   const dismissError = useCallback(() => dispatch({ type: 'dismissError' }), []);
 
-  return { state, refresh, approve, reject, remove, dismissError };
+  return { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, dismissError };
 }

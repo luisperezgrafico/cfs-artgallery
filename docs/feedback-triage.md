@@ -27,7 +27,7 @@ static export) or does it need a **backend** (the Phase 2 pivot)?
 | 7 | Saves where you left off | ✔️ | 🟢 | Implemented device-local resume: `roomId` + `frameIndex` | = #18 |
 | 8 | Design variation by room / piece | ✅ | 🟡 | Room atmosphere is data-driven via `RoomTheme` | Future: richer theme kit, no handmade rooms |
 | 9 | Randomize artwork / room order | 🗣️ | 🟡 | Not built | See **Discussion A**; pairs with resume-by-ID |
-| 10a | Optional artist audio commentary | 🟡 | 🟡 | Not built | Artist voice + TTS fallback later, off by default. Standalone feature: a play button near the plaque/description, listen at your own pace during manual browsing |
+| 10a | Optional artist audio commentary | 🟡 | 🟡 | **Partial:** generated TTS narration can be attached to approved artworks and played from the description plaque | Artist voice later; generated voice is off unless a TTS backend is configured. Standalone feature: a play button near the plaque/description, listen at your own pace during manual browsing |
 | 10b | Animated 3D artist avatar beside piece | 🔴 | 🔴 | Not built | Out for perf/cognitive load |
 | 10c | Guided tour mode (auto-navigate + narrate) | 🟡 | 🟡 | Not built | George's preferred take on the avatar idea: one tour guide voice auto-advancing through frames, instead of a 3D avatar per piece. Complements 10a rather than replacing it — 10a is opt-in per piece during manual browsing, 10c is a separate hands-off mode; would need an explicit "start guided tour" entry point and a way to interrupt/exit back to manual control. Can reuse the same audio assets if we build 10a first |
 | 11 | Guest book / comments / mini-blog | 🗣️ | 🔴 | Not built | See **Discussion B**; backend + moderation risk |

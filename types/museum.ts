@@ -42,6 +42,10 @@ export interface ImageMetadata {
   shortDescription?: string;
   /** Full artist statement — shown behind a "Read more" toggle */
   longDescription?: string;
+  /** Pre-generated narration for the artwork description */
+  audioUrl?: string;
+  audioGeneratedAt?: string;
+  audioVoice?: string;
   link: string;
   /** width / height — used by Frame to set size before texture loads */
   aspectRatio?: number;

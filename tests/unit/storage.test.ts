@@ -10,6 +10,9 @@ import {
   removeArtworkFromRoom,
   getRoomArtworks,
   getPublishingSubmissions,
+  updateManagedArtwork,
+  updateArtworkAudio,
+  resetRoomArtworksToSeed,
   type Submission,
 } from '../../lib/storage';
 import type { ImageMetadata } from '../../types/museum';
@@ -161,6 +164,77 @@ describe('preferred slot', () => {
     const list = await getRoomArtworks('room-1');
     expect(list?.find(a => a.id === 'a')?.slot).toBe(2);
     expect(list?.find(a => a.id === 'b')?.slot).toBeUndefined();
+  });
+});
+
+describe('managed artworks', () => {
+  it('updates editable artwork fields in place', async () => {
+    await addArtworkToRoom('room-1', artwork('a'));
+
+    const result = await updateManagedArtwork('room-1', 'a', {
+      targetRoomId: 'room-1',
+      slot: 3,
+      fields: { title: 'Edited', shortDescription: 'New note' },
+    });
+
+    expect(result?.artwork.title).toBe('Edited');
+    expect(result?.artwork.shortDescription).toBe('New note');
+    expect(result?.artwork.slot).toBe(3);
+    expect((await getRoomArtworks('room-1'))?.map(a => a.title)).toEqual(['Edited']);
+  });
+
+  it('moves an artwork to another room and slot', async () => {
+    await addArtworkToRoom('room-1', artwork('a'));
+
+    const result = await updateManagedArtwork('room-1', 'a', {
+      targetRoomId: 'room-2',
+      slot: 5,
+      fields: {},
+    });
+
+    expect(result?.previousRoomId).toBe('room-1');
+    expect(result?.roomId).toBe('room-2');
+    expect(await getRoomArtworks('room-1')).toEqual([]);
+    expect((await getRoomArtworks('room-2'))?.[0]).toMatchObject({ id: 'a', slot: 5 });
+  });
+
+  it('refuses to move into an occupied slot', async () => {
+    await addArtworkToRoom('room-1', artwork('a'));
+    await addArtworkToRoom('room-2', { ...artwork('b'), slot: 2 });
+
+    await expect(updateManagedArtwork('room-1', 'a', {
+      targetRoomId: 'room-2',
+      slot: 2,
+      fields: {},
+    })).rejects.toThrow('Slot 3 is already occupied');
+
+    expect((await getRoomArtworks('room-1'))?.map(a => a.id)).toEqual(['a']);
+    expect((await getRoomArtworks('room-2'))?.map(a => a.id)).toEqual(['b']);
+  });
+
+  it('updates generated audio metadata without changing the rest of the artwork', async () => {
+    await addArtworkToRoom('room-1', artwork('a'));
+
+    const updated = await updateArtworkAudio('room-1', 'a', {
+      audioUrl: 'https://example.test/audio.mp3',
+      audioGeneratedAt: '2026-08-08T12:00:00.000Z',
+      audioVoice: 'coral',
+    });
+
+    expect(updated).toMatchObject({ id: 'a', audioVoice: 'coral' });
+    expect((await getRoomArtworks('room-1'))?.[0].audioUrl).toBe('https://example.test/audio.mp3');
+  });
+});
+
+describe('approved artwork seed', () => {
+  it('can reset Room I to the built-in template artworks', async () => {
+    await addArtworkToRoom('room-1', artwork('custom'));
+
+    const reset = await resetRoomArtworksToSeed('room-1');
+
+    expect(reset.map(a => a.id)).toContain('static-lux-perpetua');
+    expect((await getRoomArtworks('room-1'))?.map(a => a.id)).toEqual(reset.map(a => a.id));
+    expect((await getRoomArtworks('room-1'))?.map(a => a.id)).not.toContain('custom');
   });
 });
 

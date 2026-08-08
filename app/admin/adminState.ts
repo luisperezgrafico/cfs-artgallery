@@ -82,6 +82,9 @@ export type AdminAction =
   | { type: 'removeStart'; roomId: string; artworkId: string }
   | { type: 'removeSuccess' }
   | { type: 'removeFailure'; roomId: string; artworkId: string; snapshot: ImageMetadata[]; message: string }
+  | { type: 'artworkUpdateStart'; artworkId: string }
+  | { type: 'artworkUpdateSuccess'; previousRoomId: string; roomId: string; artwork: ImageMetadata }
+  | { type: 'artworkUpdateFailure'; message: string }
   | { type: 'dismissError' };
 
 function addOnce(list: string[], id: string): string[] {
@@ -221,6 +224,45 @@ export function adminReducer(state: AdminState, action: AdminAction): AdminState
         removedArtworkIds: state.removedArtworkIds.filter(id => id !== action.artworkId),
         artworks: { ...state.artworks, [action.roomId]: action.snapshot },
       };
+
+    case 'artworkUpdateStart':
+      return { ...state, busyArtworkId: action.artworkId, actionError: '' };
+
+    case 'artworkUpdateSuccess': {
+      const key = artworkKey(action.artwork);
+      if (action.previousRoomId === action.roomId) {
+        return {
+          ...state,
+          busyArtworkId: null,
+          approvedArtworkIds: addOnce(state.approvedArtworkIds, key),
+          removedArtworkIds: state.removedArtworkIds.filter(id => id !== key),
+          artworks: {
+            ...state.artworks,
+            [action.roomId]: (state.artworks[action.roomId] ?? [])
+              .map(a => artworkKey(a) === key ? action.artwork : a),
+          },
+        };
+      }
+
+      const previous = (state.artworks[action.previousRoomId] ?? [])
+        .filter(a => artworkKey(a) !== key);
+      const target = (state.artworks[action.roomId] ?? []).filter(a => artworkKey(a) !== key);
+
+      return {
+        ...state,
+        busyArtworkId: null,
+        approvedArtworkIds: addOnce(state.approvedArtworkIds, key),
+        removedArtworkIds: state.removedArtworkIds.filter(id => id !== key),
+        artworks: {
+          ...state.artworks,
+          [action.previousRoomId]: previous,
+          [action.roomId]: [...target, action.artwork],
+        },
+      };
+    }
+
+    case 'artworkUpdateFailure':
+      return { ...state, busyArtworkId: null, actionError: action.message };
 
     case 'dismissError':
       return { ...state, actionError: '' };

@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "dev:test": "GALLERY_STORAGE=memory ADMIN_USER=test-admin ADMIN_PASSWORD=test-password next dev -p 3100",
+    "dev:test": "GALLERY_STORAGE=memory ADMIN_USER=test-admin ADMIN_PASSWORD=test-password TTS_BASE_URL= OPENAI_API_KEY= next dev -p 3100",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

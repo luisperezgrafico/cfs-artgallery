@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, ChevronDown, ChevronUp, Heart } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, ExternalLink, ChevronDown, ChevronUp, Heart, Volume2, Pause, RotateCcw } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 import { useRoom } from '../../contexts/RoomContext';
 import { useShelf } from '../../contexts/ShelfContext';
@@ -18,6 +18,8 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const [isOpen, setIsOpen] = useState(false);
   const [origin, setOrigin] = useState<Origin | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const artwork = isTourStarted && currentFrameIndex >= 0
     ? images[currentFrameIndex]
@@ -39,11 +41,18 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
     });
   };
 
-  useEffect(() => { setIsOpen(false); setExpanded(false); }, [currentFrameIndex]);
+  useEffect(() => {
+    audioRef.current?.pause();
+    setAudioState('idle');
+    setIsOpen(false);
+    setExpanded(false);
+  }, [currentFrameIndex]);
   useEffect(() => { if (!isTourStarted) setIsOpen(false); }, [isTourStarted]);
 
   useEffect(() => {
     if (!isOpen) {
+      audioRef.current?.pause();
+      setAudioState('idle');
       window.dispatchEvent(new CustomEvent('close-artwork-info'));
     }
   }, [isOpen]);
@@ -61,6 +70,30 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   if (!artwork || !isOpen) return null;
 
   const close = () => setIsOpen(false);
+  const hasDescription = !!(artwork.shortDescription || artwork.longDescription);
+  const canPlayAudio = !!(artwork.audioUrl && hasDescription);
+
+  const toggleAudio = async () => {
+    const player = audioRef.current;
+    if (!player) return;
+
+    if (artwork.longDescription) setExpanded(true);
+
+    if (audioState === 'playing') {
+      player.pause();
+      setAudioState('paused');
+      return;
+    }
+
+    if (audioState === 'ended') player.currentTime = 0;
+
+    try {
+      await player.play();
+      setAudioState('playing');
+    } catch {
+      setAudioState('error');
+    }
+  };
 
   const transformOrigin = origin ? `${origin.x}px ${origin.y}px` : '50% 75%';
   const safeAreaPadding = 'max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left))';
@@ -138,13 +171,53 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
           </div>
 
           {/* Separator */}
-          {(artwork.shortDescription || artwork.longDescription) && (
+          {hasDescription && (
             <div className="mx-6" style={{ borderTop: '1px solid var(--panel-separator)' }} />
           )}
 
           {/* Descriptions */}
-          {(artwork.shortDescription || artwork.longDescription) && (
+          {hasDescription && (
             <div className="overflow-y-auto px-6 py-5 flex-1">
+              {canPlayAudio && (
+                <div className="mb-4">
+                  <button
+                    onClick={toggleAudio}
+                    aria-label={audioState === 'playing' ? 'Pause full audio description' : 'Listen to full audio description'}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-sm transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                    style={{
+                      color: 'var(--panel-btn-text)',
+                      border: '1px solid var(--panel-border)',
+                      borderRadius: '2px',
+                      fontFamily: "Georgia, 'Times New Roman', serif",
+                    }}
+                  >
+                    {audioState === 'playing'
+                      ? <Pause size={14} />
+                      : audioState === 'ended'
+                        ? <RotateCcw size={14} />
+                        : <Volume2 size={14} />}
+                    {audioState === 'playing' ? 'Pause' : audioState === 'ended' ? 'Replay' : 'Listen'}
+                  </button>
+                  <span
+                    className="ml-3 align-middle text-xs"
+                    style={{
+                      color: audioState === 'error' ? '#b55a3a' : 'var(--panel-subtitle)',
+                      fontFamily: "Georgia, 'Times New Roman', serif",
+                    }}
+                  >
+                    {audioState === 'error' ? 'Audio unavailable' : 'AI voice'}
+                  </span>
+                  <audio
+                    ref={audioRef}
+                    src={artwork.audioUrl}
+                    preload="none"
+                    onEnded={() => setAudioState('ended')}
+                    onPause={() => setAudioState(state => state === 'playing' ? 'paused' : state)}
+                    onError={() => setAudioState('error')}
+                  />
+                </div>
+              )}
+
               {artwork.shortDescription && (
                 <p
                   className="text-sm whitespace-pre-line"
