@@ -2,6 +2,7 @@ import { store, usingMemoryStore } from './blobStore';
 import { ImageMetadata } from '../types/museum';
 import { artworkKey } from '../utils/artworkKey';
 import { approvedArtworksSeed } from '../config/approvedArtworksSeed';
+import { ROOM_CAPACITY } from '../config/roomConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -109,7 +110,6 @@ export const DEFAULT_SETTINGS: GallerySettings = {
 const SUBMISSIONS_PATH = 'gallery/data/submissions.json';
 const artworksPath = (roomId: string) => `gallery/data/artworks-${roomId}.json`;
 const SETTINGS_PATH = 'gallery/data/settings.json';
-const ROOM_CAPACITY = 8;
 
 function hydrateSeedMetadata(roomId: string, artworks: ImageMetadata[]): ImageMetadata[] {
   const seed = approvedArtworksSeed(roomId);

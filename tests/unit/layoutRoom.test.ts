@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { layoutRoom } from '../../components/Gallery';
+import { layoutRoom } from '../../utils/roomLayout';
 import type { ImageMetadata } from '../../types/museum';
 
 function art(id: string, slot?: number): ImageMetadata {

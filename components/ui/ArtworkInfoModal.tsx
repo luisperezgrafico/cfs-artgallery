@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ExternalLink, ChevronDown, ChevronUp, Heart, Volume2, Pause, RotateCcw } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 import { useRoom } from '../../contexts/RoomContext';
 import { useShelf } from '../../contexts/ShelfContext';
 import { contentNoteLabel } from '../../config/contentNotes';
+import { useAudioPlayer } from '../../utils/useAudioPlayer';
 
 interface Origin {
   x: number;
@@ -19,8 +20,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const [isOpen, setIsOpen] = useState(false);
   const [origin, setOrigin] = useState<Origin | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { audioState, toggle: toggleAudioPlayback, reset: resetAudio, audioProps } = useAudioPlayer();
 
   const artwork = isTourStarted && currentFrameIndex >= 0
     ? images[currentFrameIndex]
@@ -44,8 +44,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   };
 
   useEffect(() => {
-    audioRef.current?.pause();
-    setAudioState('idle');
+    resetAudio();
     setIsOpen(false);
     setExpanded(false);
   }, [currentFrameIndex]);
@@ -53,8 +52,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
 
   useEffect(() => {
     if (!isOpen) {
-      audioRef.current?.pause();
-      setAudioState('idle');
+      resetAudio();
       window.dispatchEvent(new CustomEvent('close-artwork-info'));
     }
   }, [isOpen]);
@@ -79,25 +77,8 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const audioLabel = artwork.audioSource === 'uploaded' ? 'Artist audio' : 'AI voice';
 
   const toggleAudio = async () => {
-    const player = audioRef.current;
-    if (!player) return;
-
     if (artwork.longDescription) setExpanded(true);
-
-    if (audioState === 'playing') {
-      player.pause();
-      setAudioState('paused');
-      return;
-    }
-
-    if (audioState === 'ended') player.currentTime = 0;
-
-    try {
-      await player.play();
-      setAudioState('playing');
-    } catch {
-      setAudioState('error');
-    }
+    await toggleAudioPlayback();
   };
 
   const transformOrigin = origin ? `${origin.x}px ${origin.y}px` : '50% 75%';
@@ -243,14 +224,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                   >
                     {audioState === 'error' ? 'Audio unavailable' : audioLabel}
                   </span>
-                  <audio
-                    ref={audioRef}
-                    src={artwork.audioUrl}
-                    preload="none"
-                    onEnded={() => setAudioState('ended')}
-                    onPause={() => setAudioState(state => state === 'playing' ? 'paused' : state)}
-                    onError={() => setAudioState('error')}
-                  />
+                  <audio {...audioProps} src={artwork.audioUrl} />
                 </div>
               )}
 
