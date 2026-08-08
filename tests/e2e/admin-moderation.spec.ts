@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { seed, openAdmin, submission, artwork, card, row, deleteArtwork, timeUntil, TINY_PNG } from './fixtures';
 import { BASE_URL, TEST_ADMIN } from '../../playwright.config';
+import { audioTextSignature } from '../../utils/audioNarrationText';
 
 /**
  * End-to-end coverage of the moderation loop: a card appears, moves between
@@ -268,7 +269,16 @@ test.describe('managing an approved artwork', () => {
         'room-1': [
           artwork('free', { title: 'Free placement' }),
           artwork('slot-3', { title: 'Slot three', slot: 2, shortDescription: 'Needs audio.' }),
-          artwork('slot-1', { title: 'Slot one', slot: 0, audioUrl: '/audio/ready.mp3' }),
+          artwork('slot-1', {
+            title: 'Slot one',
+            slot: 0,
+            shortDescription: 'Current text.',
+            audioUrl: '/audio/ready.mp3',
+            audioTextSignature: audioTextSignature(artwork('slot-1', {
+              title: 'Slot one',
+              shortDescription: 'Previous text.',
+            })),
+          }),
         ],
         'room-2': [
           artwork('taken', { title: 'Taken slot', slot: 3 }),
@@ -283,7 +293,7 @@ test.describe('managing an approved artwork', () => {
       .locator('p.text-white')
       .allTextContents();
     expect(roomOneTitles).toEqual(['Slot one', 'Slot three', 'Free placement']);
-    await expect(row(page, 'slot-1').getByTestId('audio-status')).toContainText('Audio ready');
+    await expect(row(page, 'slot-1').getByTestId('audio-status')).toContainText('Audio outdated');
     await expect(row(page, 'slot-3').getByTestId('audio-status')).toContainText('Audio missing');
     await expect(row(page, 'free').getByTestId('audio-status')).toContainText('Audio missing');
 

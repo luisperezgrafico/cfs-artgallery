@@ -10,6 +10,7 @@ import type { AudioSettings, EditableArtworkFields, Submission, GallerySettings 
 import { rooms } from '../../config/roomsConfig';
 import type { ImageMetadata } from '../../types/museum';
 import { artworkKey } from '../../utils/artworkKey';
+import { audioTextSignature } from '../../utils/audioNarrationText';
 import { hasArtworks } from './adminState';
 import { useAdminData, type AdminData } from './useAdminData';
 
@@ -382,6 +383,14 @@ function hasNarrationText(artwork: ImageMetadata): boolean {
   return !!(artwork.shortDescription?.trim() || artwork.longDescription?.trim());
 }
 
+function isAudioOutdated(artwork: ImageMetadata): boolean {
+  return !!(
+    artwork.audioUrl
+    && artwork.audioTextSignature
+    && audioTextSignature(artwork) !== artwork.audioTextSignature
+  );
+}
+
 function AudioStatusBadge({ artwork, busy = false }: { artwork: ImageMetadata; busy?: boolean }) {
   if (busy) {
     return (
@@ -393,6 +402,15 @@ function AudioStatusBadge({ artwork, busy = false }: { artwork: ImageMetadata; b
   }
 
   if (artwork.audioUrl) {
+    if (isAudioOutdated(artwork)) {
+      return (
+        <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-amber-300/90 bg-amber-950/35 border border-amber-800/40 rounded-full px-2 py-0.5"
+          data-testid="audio-status">
+          <AlertCircle size={11} /> Audio outdated
+        </span>
+      );
+    }
+
     return (
       <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-emerald-300/85 bg-emerald-950/30 border border-emerald-800/35 rounded-full px-2 py-0.5"
         data-testid="audio-status">
@@ -463,6 +481,7 @@ function ArtworkManageModal({
   const room = rooms.find(r => r.id === currentRoomId);
   const busy = busyArtworkId === key || saving || regenerating || uploadingAudio || removingAudio;
   const canRegenerateAudio = hasNarrationText(current);
+  const currentAudioOutdated = isAudioOutdated(current);
   const audioSourceLabel = current.audioSource === 'uploaded' ? 'Uploaded' : 'Generated';
   const occupiedSlots = new Set((artworks[targetRoomId] ?? [])
     .filter(item => artworkKey(item) !== key && item.slot !== undefined)
@@ -707,32 +726,39 @@ function ArtworkManageModal({
             <section className="space-y-3">
               <h4 className="text-white/45 text-xs font-semibold uppercase tracking-widest">Audio</h4>
               {current.audioUrl ? (
-                <div className="flex flex-wrap items-center gap-3">
-                  <button onClick={toggleAudio}
-                    className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-white/10 rounded-lg text-white/80 text-sm transition-colors"
-                    data-testid="manage-audio-button">
-                    {audioState === 'playing'
-                      ? <Pause size={14} />
-                      : audioState === 'ended'
-                        ? <RotateCcw size={14} />
-                        : <Volume2 size={14} />}
-                    {audioState === 'playing' ? 'Pause' : audioState === 'ended' ? 'Replay' : 'Play audio'}
-                  </button>
-                  <span className={`text-xs ${audioState === 'error' ? 'text-red-400' : 'text-white/35'}`}>
-                    {audioState === 'error'
-                      ? 'Audio unavailable'
-                      : current.audioGeneratedAt
-                        ? `${audioSourceLabel} ${timeAgo(current.audioGeneratedAt)}`
-                        : 'Audio ready'}
-                  </span>
-                  <audio
-                    ref={audioRef}
-                    src={current.audioUrl}
-                    preload="none"
-                    onEnded={() => setAudioState('ended')}
-                    onPause={() => setAudioState(state => state === 'playing' ? 'paused' : state)}
-                    onError={() => setAudioState('error')}
-                  />
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button onClick={toggleAudio}
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 border border-white/10 rounded-lg text-white/80 text-sm transition-colors"
+                      data-testid="manage-audio-button">
+                      {audioState === 'playing'
+                        ? <Pause size={14} />
+                        : audioState === 'ended'
+                          ? <RotateCcw size={14} />
+                          : <Volume2 size={14} />}
+                      {audioState === 'playing' ? 'Pause' : audioState === 'ended' ? 'Replay' : 'Play audio'}
+                    </button>
+                    <span className={`text-xs ${audioState === 'error' ? 'text-red-400' : 'text-white/35'}`}>
+                      {audioState === 'error'
+                        ? 'Audio unavailable'
+                        : current.audioGeneratedAt
+                          ? `${audioSourceLabel} ${timeAgo(current.audioGeneratedAt)}`
+                          : 'Audio ready'}
+                    </span>
+                    <audio
+                      ref={audioRef}
+                      src={current.audioUrl}
+                      preload="none"
+                      onEnded={() => setAudioState('ended')}
+                      onPause={() => setAudioState(state => state === 'playing' ? 'paused' : state)}
+                      onError={() => setAudioState('error')}
+                    />
+                  </div>
+                  {currentAudioOutdated && (
+                    <p className="text-amber-300/80 text-xs" data-testid="audio-outdated-note">
+                      Text changed since this audio was added.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <p className={canRegenerateAudio ? 'text-amber-300/80 text-sm' : 'text-white/30 text-sm'}>

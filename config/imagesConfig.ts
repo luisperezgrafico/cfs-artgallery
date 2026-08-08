@@ -10,9 +10,9 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Digital illustration',
     link: '#',
-    shortDescription: 'A meditation on light that refuses to fade — painted during a long relapse, when stillness became the only available canvas.',
+    shortDescription: 'A quiet study of soft light, muted edges, and a calm horizon.',
     longDescription:
-      `This piece began as a small study of morning light crossing a wall, but it slowly became a record of endurance. The pale center is not meant to be dramatic. It is the kind of light that stays almost unnoticed, returning day after day while the body waits for better hours.\n\nI wanted the image to feel quiet rather than hopeful in a forced way. The marks around the edge hold the fatigue, interruptions, and uncertainty of making work in short fragments. The light remains because sometimes the smallest constant thing is enough to orient yourself.`,
+      `This piece uses a narrow range of pale color to create a steady, quiet atmosphere. The central glow is intentionally soft rather than dramatic, giving the image a slow and open feeling.\n\nThe surrounding marks add texture without pulling attention away from the light. For audio testing, the description gives the voice a mix of short and medium-length sentences with a calm visual focus.`,
   },
   {
     id: 'static-hora-incerta',
@@ -23,9 +23,9 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Watercolour on paper',
     link: '#',
-    shortDescription: 'Time loses its edges when every hour looks the same. This piece tries to hold that feeling without fighting it.',
+    shortDescription: 'A warm abstract composition about uncertain time and gentle repetition.',
     longDescription:
-      `The title means uncertain hour. It comes from the way illness can loosen the structure of a day until morning, afternoon, and night feel less like separate places and more like changes in the same room.\n\nThe warmer areas are moments of attention: a cup cooling on a table, a message half written, a sound outside the window. The darker passages are not emptiness, but the time around those moments. I wanted the work to move slowly, as if it were breathing through a long pause.\n\nFor audio testing, this description includes longer sentences and gentler transitions so the narration can reveal whether the chosen voice handles reflective language with enough calm and clarity.`,
+      `The title means uncertain hour. The image is built from warm areas of color that seem to shift in and out of focus, suggesting time as something soft rather than sharply measured.\n\nThe darker passages give the composition weight, while the lighter marks create a sense of movement across the surface. For audio testing, this description includes longer sentences and gentle transitions so the narration can be evaluated for pacing and clarity.`,
   },
   {
     id: 'static-silva-quieta',
@@ -36,9 +36,9 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Pencil on paper',
     link: '#',
-    shortDescription: 'Drawn slowly, one small section at a time, across many weeks. The forest grew at the pace illness allowed.',
+    shortDescription: 'A detailed pencil study of dense forms, quiet rhythm, and layered marks.',
     longDescription:
-      `Silva Quieta means quiet wood. The drawing was made in very short sessions, with long rests between them. Each line had to be simple enough to begin again after a day, a week, or a setback.\n\nThe dense areas are built from repeated marks rather than continuous effort. That process became part of the meaning of the piece. It is about a place that appears slowly, without pressure, and about allowing an image to grow at the pace the body can sustain.`,
+      `Silva Quieta means quiet wood. The drawing is made from repeated pencil marks that build up into a dense but restrained image. The overall effect is still and textured, with small variations becoming more visible over time.\n\nThe composition is useful for narration testing because it gives the voice concrete visual details to describe without needing a strongly personal story.`,
   },
   {
     id: 'static-aqua-lenis',
@@ -49,9 +49,9 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Oil pastel',
     link: '#',
-    shortDescription: 'Water as rest, not motion. The tide does not ask permission to return.',
+    shortDescription: 'A soft pastel image of water, rounded movement, and muted color.',
     longDescription:
-      `This work imagines water as a soft form of time. The surface is calm, but it is not still; it carries a quiet movement that does not demand attention. I was thinking about rest as something active, something the body may be doing even when nothing visible is happening.\n\nThe rounded shapes and muted colors are meant to slow the eye. They suggest a tide returning without urgency. For me, the piece is less about escape and more about permission: permission to pause, to repeat, and to come back only when there is enough energy.`,
+      `This work imagines water as a slow visual rhythm. The surface is calm, but the rounded shapes suggest a gentle movement beneath it. The colors are muted so the image can feel open and easy to look at.\n\nThe description gives the audio voice simple sensory language: surface, color, rhythm, and return. It is meant as practical test copy rather than a personal statement.`,
   },
   {
     id: 'static-noctis-figura',
@@ -62,9 +62,9 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Ink on card',
     link: '#',
-    shortDescription: 'Night is the only time the body and the world agree on stillness.',
+    shortDescription: 'A dark ink composition with a quiet figure emerging from the background.',
     longDescription:
-      `Noctis Figura is about the strange comfort of late hours. At night, the expectations of the day loosen, and stillness can feel less like failure and more like atmosphere. The figure is not fully visible because the experience it holds is not fully explainable.\n\nThe dark field is layered with small variations so it does not become flat. I wanted the viewer to feel that something is present, but quiet; close, but not demanding. The piece gives shape to a kind of rest that arrives only when the world has gone soft around the edges.`,
+      `Noctis Figura uses a dark field with small tonal shifts so the surface does not feel flat. A partial figure appears from the background, giving the image a quiet focal point without making it too literal.\n\nThe work is useful for audio testing because it asks the narration to describe low contrast, atmosphere, and subtle visual detail in a clear and unhurried way.`,
   },
   {
     id: 'static-sine-titulo',
@@ -75,9 +75,9 @@ export const drawingImages: ImageMetadata[] = [
     date: '2023',
     medium: 'Digital',
     link: '#',
-    shortDescription: 'No title because naming it would have taken more energy than making it.',
+    shortDescription: 'An untitled abstract image made from simple color blocks and loose structure.',
     longDescription:
-      `This piece was made from the leftover energy of several unfinished days. It does not try to resolve into a single image. Instead, it keeps the feeling of fragments: a color chosen quickly, a shape placed before concentration disappeared, a composition held together by instinct.\n\nLeaving it untitled felt honest. Sometimes the act of explaining arrives later than the act of making, and sometimes it never arrives at all. The work remains as evidence that a brief creative impulse can still count, even when it comes without a polished story.`,
+      `This untitled piece keeps the composition deliberately open. Blocks of color and loose shapes sit beside each other without resolving into a single subject, leaving room for different readings.\n\nThe copy is intentionally simple for testing. It gives the audio model a short description, a longer description, and a few visual terms without adding a specific personal narrative.`,
   },
   { url: '', title: '', artist: '', date: '', link: '', aspectRatio: 1, isEmpty: true },
   { url: '', title: '', artist: '', date: '', link: '', aspectRatio: 1, isEmpty: true },

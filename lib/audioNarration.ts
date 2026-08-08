@@ -1,11 +1,17 @@
 import { store } from './blobStore';
 import { getSettings, type AudioSettings, type Submission } from './storage';
 import type { ImageMetadata } from '../types/museum';
+import {
+  audioTextSignature,
+  buildNarrationTextFromSource,
+  type NarrationSource,
+} from '../utils/audioNarrationText';
 
 export interface ArtworkAudio {
   url: string;
   generatedAt: string;
   voice: string;
+  textSignature: string;
 }
 
 interface OpenAiCompatibleTtsConfig {
@@ -28,8 +34,6 @@ interface ElevenLabsTtsConfig {
 }
 
 type TtsConfig = OpenAiCompatibleTtsConfig | ElevenLabsTtsConfig;
-
-const MAX_TTS_INPUT_CHARS = 4096;
 
 function trimSlash(value: string): string {
   return value.replace(/\/$/, '');
@@ -135,44 +139,6 @@ function voiceLabel(config: TtsConfig): string {
   return config.provider === 'elevenlabs' ? config.voiceId : config.voice;
 }
 
-function truncateForTts(text: string): string {
-  if (text.length <= MAX_TTS_INPUT_CHARS) return text;
-  return `${text.slice(0, MAX_TTS_INPUT_CHARS - 1).trimEnd()}.`;
-}
-
-interface NarrationSource {
-  id: string;
-  title: string;
-  artist: string;
-  year?: string;
-  date?: string;
-  medium?: string;
-  shortDescription?: string;
-  statement?: string;
-  longDescription?: string;
-}
-
-function buildNarrationTextFromSource(source: NarrationSource): string {
-  const meta = [
-    source.title,
-    source.artist ? `by ${source.artist}` : '',
-    source.year ?? source.date,
-    source.medium,
-  ].filter(Boolean).join(', ');
-
-  const body = [
-    source.shortDescription,
-    source.statement ?? source.longDescription,
-  ].filter((part): part is string => typeof part === 'string')
-    .map(part => part.trim())
-    .filter(Boolean)
-    .join('\n\n');
-
-  if (!body) return '';
-
-  return truncateForTts([meta, body].filter(Boolean).join('.\n\n'));
-}
-
 async function generateAudioForSource(source: NarrationSource): Promise<ArtworkAudio | null> {
   const text = buildNarrationTextFromSource(source);
   if (!text) return null;
@@ -229,12 +195,13 @@ async function generateAudioForSource(source: NarrationSource): Promise<ArtworkA
     const extension = extensionForConfig(config);
     const contentType = response.headers.get('content-type') || `audio/${extension}`;
     const audio = await response.blob();
-    const file = await store.putFile(`gallery/audio/${source.id}-${Date.now()}.${extension}`, audio, contentType);
+    const file = await store.putFile(`gallery/audio/${source.id ?? 'artwork'}-${Date.now()}.${extension}`, audio, contentType);
 
     return {
       url: file.url,
       generatedAt: new Date().toISOString(),
       voice: voiceLabel(config),
+      textSignature: audioTextSignature(source),
     };
   } finally {
     clearTimeout(timeout);

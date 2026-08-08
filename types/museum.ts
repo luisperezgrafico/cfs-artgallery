@@ -47,6 +47,7 @@ export interface ImageMetadata {
   audioGeneratedAt?: string;
   audioVoice?: string;
   audioSource?: 'generated' | 'uploaded';
+  audioTextSignature?: string;
   link: string;
   /** width / height — used by Frame to set size before texture loads */
   aspectRatio?: number;

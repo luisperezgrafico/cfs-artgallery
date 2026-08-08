@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '../../../../../../../lib/blobStore';
 import { getRoomArtworks, updateArtworkAudio } from '../../../../../../../lib/storage';
+import { audioTextSignature } from '../../../../../../../utils/audioNarrationText';
 import { artworkKey } from '../../../../../../../utils/artworkKey';
 
 export const dynamic = 'force-dynamic';
@@ -60,6 +61,7 @@ export async function POST(
       audioGeneratedAt: new Date().toISOString(),
       audioVoice: 'artist-upload',
       audioSource: 'uploaded',
+      audioTextSignature: audioTextSignature(artwork),
     });
     if (!updated) {
       return NextResponse.json({ error: 'Artwork not found.' }, { status: 404 });

@@ -225,6 +225,7 @@ describe('managed artworks', () => {
       audioGeneratedAt: '2026-08-08T12:00:00.000Z',
       audioVoice: 'coral',
       audioSource: 'generated',
+      audioTextSignature: 'sig-a',
     });
 
     expect(updated).toMatchObject({ id: 'a', audioVoice: 'coral', audioSource: 'generated' });
@@ -238,6 +239,7 @@ describe('managed artworks', () => {
       audioGeneratedAt: '2026-08-08T12:00:00.000Z',
       audioVoice: 'coral',
       audioSource: 'generated',
+      audioTextSignature: 'sig-a',
     });
 
     const updated = await clearArtworkAudio('room-1', 'a');
@@ -269,6 +271,7 @@ describe('approved artwork seed', () => {
       audioGeneratedAt: '2026-08-08T12:00:00.000Z',
       audioVoice: 'old-voice',
       audioSource: 'generated',
+      audioTextSignature: 'sig-a',
     });
 
     const stored = (await getRoomArtworks('room-1'))?.find(a => a.id === 'static-lux-perpetua');

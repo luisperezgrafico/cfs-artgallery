@@ -127,6 +127,7 @@ function hydrateSeedMetadata(roomId: string, artworks: ImageMetadata[]): ImageMe
       audioGeneratedAt: artwork.audioGeneratedAt,
       audioVoice: artwork.audioVoice,
       audioSource: artwork.audioSource,
+      audioTextSignature: artwork.audioTextSignature,
     };
   });
 }
@@ -363,7 +364,7 @@ export async function updateManagedArtwork(
 export async function updateArtworkAudio(
   roomId: string,
   id: string,
-  audio: Pick<ImageMetadata, 'audioUrl' | 'audioGeneratedAt' | 'audioVoice' | 'audioSource'>,
+  audio: Pick<ImageMetadata, 'audioUrl' | 'audioGeneratedAt' | 'audioVoice' | 'audioSource' | 'audioTextSignature'>,
 ): Promise<ImageMetadata | null> {
   return withLock(artworksPath(roomId), async () => {
     const existing = (await getRoomArtworks(roomId)) ?? [];
@@ -390,6 +391,7 @@ export async function clearArtworkAudio(roomId: string, id: string): Promise<Ima
       audioGeneratedAt: _audioGeneratedAt,
       audioVoice: _audioVoice,
       audioSource: _audioSource,
+      audioTextSignature: _audioTextSignature,
       ...artwork
     } = current;
 
