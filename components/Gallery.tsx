@@ -18,10 +18,37 @@ const EMPTY_SLOT: ImageMetadata = {
   isEmpty: true,
 };
 
-// Pad any room to exactly ROOM_CAPACITY slots so empty rooms show submit canvases
-function padImages(images: ImageMetadata[]): ImageMetadata[] {
+/**
+ * Lays a room's artworks out over exactly ROOM_CAPACITY wall slots, so empty
+ * positions render as "submit your work" canvases.
+ *
+ * An artwork with a `slot` is hung at that position — that's the canvas the
+ * artist submitted through, and moving their piece elsewhere is a small betrayal
+ * of what they chose. Everything else fills the remaining slots in order.
+ */
+export function layoutRoom(images: ImageMetadata[]): ImageMetadata[] {
   if (images.length >= ROOM_CAPACITY) return images;
-  return [...images, ...Array(ROOM_CAPACITY - images.length).fill(EMPTY_SLOT)];
+
+  const slots: (ImageMetadata | null)[] = Array(ROOM_CAPACITY).fill(null);
+  const unplaced: ImageMetadata[] = [];
+
+  for (const image of images) {
+    const wanted = image.slot;
+    if (wanted !== undefined && wanted >= 0 && wanted < ROOM_CAPACITY && slots[wanted] === null) {
+      slots[wanted] = image;
+    } else {
+      unplaced.push(image);
+    }
+  }
+
+  let next = 0;
+  for (const image of unplaced) {
+    while (next < ROOM_CAPACITY && slots[next] !== null) next++;
+    if (next >= ROOM_CAPACITY) break;   // room is full; the rest are dropped
+    slots[next] = image;
+  }
+
+  return slots.map(image => image ?? EMPTY_SLOT);
 }
 
 function VisitPositionPersistence({ roomId }: { roomId: string }) {
@@ -41,7 +68,7 @@ function GalleryContent({ liveArtworks }: { liveArtworks: Record<string, ImageMe
   const roomLive = liveArtworks[activeRoom.id];
   // KV artworks replace static config for that room; fall back to static if KV has none
   const baseImages = roomLive && roomLive.length > 0 ? roomLive : activeRoom.images;
-  const images = padImages(baseImages);
+  const images = layoutRoom(baseImages);
   const initialFrameIndex = getInitialFrameIndex(activeRoom.id, images.length);
 
   return (

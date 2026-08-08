@@ -196,7 +196,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
       const x = native?.clientX ?? window.innerWidth / 2;
       const y = native?.clientY ?? window.innerHeight * 0.75;
       window.dispatchEvent(
-        new CustomEvent('open-submit-artwork', { detail: { x, y, roomId } }),
+        new CustomEvent('open-submit-artwork', { detail: { x, y, roomId, slot: index } }),
       );
     };
 

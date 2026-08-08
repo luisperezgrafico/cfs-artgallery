@@ -10,3 +10,6 @@ docs/screenshots/
 .vercel/
 .env.local
 .env*
+test-results/
+playwright-report/
+.playwright/

@@ -78,6 +78,8 @@ const SubmitArtworkModal: React.FC = () => {
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
   const [preferredRoom, setPreferredRoom] = useState('');
+  // The empty canvas the artist tapped — the piece should be hung right there.
+  const [preferredSlot, setPreferredSlot] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
 
@@ -92,8 +94,9 @@ const SubmitArtworkModal: React.FC = () => {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ roomId?: string }>).detail;
+      const detail = (e as CustomEvent<{ roomId?: string; slot?: number }>).detail;
       setPreferredRoom(detail?.roomId ?? '');
+      setPreferredSlot(typeof detail?.slot === 'number' ? detail.slot : null);
       reset();
       setIsOpen(true);
     };
@@ -170,6 +173,7 @@ const SubmitArtworkModal: React.FC = () => {
       body.append('statement', values.statement.trim());
       body.append('aspectRatio', String(values.aspectRatio ?? 1));
       if (preferredRoom) body.append('preferredRoom', preferredRoom);
+      if (preferredSlot !== null) body.append('preferredSlot', String(preferredSlot));
       body.append('file', values.file);
 
       const res = await fetch('/api/submit', { method: 'POST', body });

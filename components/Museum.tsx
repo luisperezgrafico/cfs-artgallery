@@ -112,7 +112,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
                     if (setCurrentFrameIndex) {
                       if (idx === currentFrameIndex) {
                         if (images[idx]?.isEmpty) {
-                          window.dispatchEvent(new CustomEvent('open-submit-artwork', { detail: { roomId } }));
+                          window.dispatchEvent(new CustomEvent('open-submit-artwork', { detail: { roomId, slot: idx } }));
                         } else {
                           window.dispatchEvent(new CustomEvent('open-artwork-lightbox'));
                         }

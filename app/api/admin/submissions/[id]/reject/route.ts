@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSubmission, updateSubmissionStatus, getSettings } from '../../../../../../lib/storage';
+import { claimSubmission, getSettings } from '../../../../../../lib/storage';
 import { sendArtistRejection } from '../../../../../../lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -10,25 +10,30 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json() as { reason?: string };
+    const body = await request.json().catch(() => ({})) as { reason?: string };
 
-    const submission = await getSubmission(id);
+    const submission = await claimSubmission(id, 'rejected');
     if (!submission) {
-      return NextResponse.json({ error: 'Submission not found.' }, { status: 404 });
-    }
-    if (submission.status !== 'pending') {
-      return NextResponse.json({ error: 'Submission already processed.' }, { status: 409 });
+      return NextResponse.json(
+        { error: 'Submission not found or already processed.' },
+        { status: 409 },
+      );
     }
 
-    await updateSubmissionStatus(id, 'rejected');
-
-    const settings = await getSettings();
-    await sendArtistRejection(settings, {
-      artist: submission.artist,
-      title: submission.title,
-      email: submission.email,
-      reason: body.reason,
-    });
+    // As with approval: the rejection is already committed, so an email failure
+    // is reported but does not turn a successful moderation into an error.
+    try {
+      const settings = await getSettings();
+      await sendArtistRejection(settings, {
+        artist: submission.artist,
+        title: submission.title,
+        email: submission.email,
+        reason: body.reason,
+      });
+    } catch (err) {
+      console.error('[admin/reject] submission rejected but email failed:', err);
+      return NextResponse.json({ ok: true, emailFailed: true });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

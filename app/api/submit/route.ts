@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
-import { nanoid } from 'nanoid';
-import { saveSubmission } from '../../../lib/storage';
-import { getSettings, Submission } from '../../../lib/storage';
+import { store } from '../../../lib/blobStore';
+import { saveSubmission, getSettings, Submission } from '../../../lib/storage';
 import { notifyModerators } from '../../../lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -22,6 +20,8 @@ export async function POST(request: NextRequest) {
     const shortDescription = (form.get('shortDescription') as string | null)?.trim() ?? '';
     const statement = (form.get('statement') as string | null)?.trim() ?? '';
     const preferredRoom = (form.get('preferredRoom') as string | null)?.trim() ?? '';
+    const preferredSlotRaw = parseInt((form.get('preferredSlot') as string | null) ?? '', 10);
+    const preferredSlot = Number.isInteger(preferredSlotRaw) && preferredSlotRaw >= 0 ? preferredSlotRaw : undefined;
     const aspectRatio = parseFloat((form.get('aspectRatio') as string) ?? '1');
     const file = form.get('file') as File | null;
 
@@ -35,12 +35,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File must be under 5 MB.' }, { status: 400 });
     }
 
-    const id = nanoid();
+    const id = crypto.randomUUID();
     const ext = file.name.split('.').pop() ?? 'jpg';
-    const blob = await put(`submissions/${id}.${ext}`, file, {
-      access: 'public',
-      contentType: file.type,
-    });
+    const blob = await store.putFile(`submissions/${id}.${ext}`, file, file.type);
 
     const submission: Submission = {
       id,
@@ -56,17 +53,20 @@ export async function POST(request: NextRequest) {
       submittedAt: new Date().toISOString(),
       status: 'pending',
       preferredRoom: preferredRoom || undefined,
+      preferredSlot,
     };
 
     await saveSubmission(submission);
 
-    const origin = request.headers.get('origin') ?? '';
-    const settings = await getSettings();
-    await notifyModerators(settings, {
-      artist,
-      title,
-      adminUrl: `${origin}/admin`,
-    });
+    // The submission is saved; a failed moderator notification must not tell the
+    // artist their upload failed and prompt them to send it again.
+    try {
+      const origin = request.headers.get('origin') ?? '';
+      const settings = await getSettings();
+      await notifyModerators(settings, { artist, title, adminUrl: `${origin}/admin` });
+    } catch (err) {
+      console.error('[submit] saved but moderator notification failed:', err);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

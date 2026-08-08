@@ -45,5 +45,11 @@ export interface ImageMetadata {
   link: string;
   /** width / height — used by Frame to set size before texture loads */
   aspectRatio?: number;
+  /**
+   * Wall position the artwork was hung at, 0-based within the room's slots.
+   * Set from the empty canvas the artist submitted through, so the piece ends up
+   * where they put it. Undefined means "anywhere free", in order.
+   */
+  slot?: number;
   isEmpty?: true;
 }

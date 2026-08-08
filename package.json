@@ -5,7 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "dev:test": "GALLERY_STORAGE=memory ADMIN_USER=test-admin ADMIN_PASSWORD=test-password next dev -p 3100",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@react-three/drei": "^10",
@@ -21,6 +27,7 @@
     "three": "^0.178.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/react": "^19",
@@ -28,6 +35,7 @@
     "autoprefixer": "^10.5.2",
     "postcss": "^8.5.19",
     "tailwindcss": "^4.3.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

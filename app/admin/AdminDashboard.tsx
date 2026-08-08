@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CheckCircle, XCircle, Eye, X, ChevronDown, ChevronUp,
-  Plus, Trash2, Send, Save, Loader2, AlertCircle,
+  Plus, Trash2, Send, Save, Loader2, AlertCircle, RefreshCw, UploadCloud,
 } from 'lucide-react';
 import type { Submission, GallerySettings } from '../../lib/storage';
 import { rooms } from '../../config/roomsConfig';
 import type { ImageMetadata } from '../../types/museum';
+import { artworkKey } from '../../utils/artworkKey';
+import { hasArtworks } from './adminState';
+import { useAdminData, type AdminData } from './useAdminData';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -68,7 +71,7 @@ function ApproveModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" data-testid="approve-modal">
       <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-md p-6 space-y-4">
         <h3 className="text-white font-semibold text-base">Approve &ldquo;{submission.title}&rdquo;</h3>
 
@@ -87,6 +90,7 @@ function ApproveModal({
             value={roomId}
             onChange={e => setRoomId(e.target.value)}
             disabled={busy}
+            aria-label="Assign to room"
             className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
           >
             {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -94,13 +98,13 @@ function ApproveModal({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2" data-testid="approve-error">
             <AlertCircle size={13} /> {error}
           </div>
         )}
 
         <div className="flex gap-3 pt-1">
-          <button onClick={confirm} disabled={busy}
+          <button onClick={confirm} disabled={busy} data-testid="confirm-approve"
             className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-lg py-2 text-sm font-medium transition-colors">
             {busy ? <Loader2 size={14} className="animate-spin" /> : null}
             {busy ? 'Approving…' : 'Approve'}
@@ -142,7 +146,7 @@ function RejectModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" data-testid="reject-modal">
       <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-md p-6 space-y-4">
         <h3 className="text-white font-semibold text-base">Reject &ldquo;{submission.title}&rdquo;</h3>
 
@@ -151,19 +155,20 @@ function RejectModal({
             Note to the artist <span className="normal-case text-white/30">(optional)</span>
           </label>
           <textarea value={reason} onChange={e => setReason(e.target.value)} disabled={busy}
+            aria-label="Note to the artist"
             placeholder="Added to the rejection email if provided…" rows={3}
             className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-none"
           />
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2" data-testid="reject-error">
             <AlertCircle size={13} /> {error}
           </div>
         )}
 
         <div className="flex gap-3 pt-1">
-          <button onClick={confirm} disabled={busy}
+          <button onClick={confirm} disabled={busy} data-testid="confirm-reject"
             className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm font-medium transition-colors">
             {busy ? <Loader2 size={14} className="animate-spin" /> : null}
             {busy ? 'Rejecting…' : 'Reject'}
@@ -195,7 +200,8 @@ function SubmissionCard({
   return (
     <>
       {lightbox && <Lightbox url={submission.imageUrl} onClose={() => setLightbox(false)} />}
-      <div className="bg-zinc-900 border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-zinc-900 border border-white/10 rounded-xl overflow-hidden"
+        data-testid="submission-card" data-submission-id={submission.id}>
         <div className="flex gap-4 p-4">
           <button onClick={() => setLightbox(true)} title="View full image"
             className="shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-zinc-800 relative group">
@@ -241,12 +247,12 @@ function SubmissionCard({
         )}
 
         <div className="flex border-t border-white/10">
-          <button onClick={() => onApprove(submission)}
+          <button onClick={() => onApprove(submission)} data-testid="approve-button"
             className="flex-1 flex items-center justify-center gap-2 py-3 text-sm text-emerald-400 hover:bg-emerald-900/30 transition-colors">
             <CheckCircle size={15} /> Approve
           </button>
           <div className="w-px bg-white/10" />
-          <button onClick={() => onReject(submission)}
+          <button onClick={() => onReject(submission)} data-testid="reject-button"
             className="flex-1 flex items-center justify-center gap-2 py-3 text-sm text-red-400 hover:bg-red-900/30 transition-colors">
             <XCircle size={15} /> Reject
           </button>
@@ -256,75 +262,38 @@ function SubmissionCard({
   );
 }
 
-// ── Submissions tab ───────────────────────────────────────────────────────────
+// ── Submissions tab (presentational) ──────────────────────────────────────────
 
-function SubmissionsTab({ onApproved }: { onApproved: (roomId: string, artwork: ImageMetadata) => void }) {
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+function SubmissionsTab({
+  submissions,
+  onApprove,
+  onReject,
+}: {
+  submissions: Submission[];
+  onApprove: (s: Submission, roomId: string) => Promise<void>;
+  onReject: (s: Submission, reason: string) => Promise<void>;
+}) {
   const [activeModal, setActiveModal] = useState<{ submission: Submission; type: 'approve' | 'reject' } | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError('');
-    try {
-      const res = await fetch('/api/admin/submissions');
-      if (!res.ok) { setLoadError(`Error ${res.status}`); return; }
-      setSubmissions(await res.json());
-    } catch {
-      setLoadError('Failed to load submissions.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  const handleApproveConfirm = async (roomId: string) => {
-    if (!activeModal) return;
-    const res = await fetch(`/api/admin/submissions/${activeModal.submission.id}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId }),
-    });
-    const data = await res.json() as { ok?: boolean; error?: string; artwork?: ImageMetadata; roomId?: string };
-    if (!res.ok || !data.ok) throw new Error(data.error ?? 'Approval failed.');
-    const approvedId = activeModal.submission.id;
-    setActiveModal(null);
-    setSubmissions(prev => prev.filter(s => s.id !== approvedId));
-    if (data.artwork && data.roomId) onApproved(data.roomId, data.artwork);
-  };
-
-  const handleRejectConfirm = async (reason: string) => {
-    if (!activeModal) return;
-    const res = await fetch(`/api/admin/submissions/${activeModal.submission.id}/reject`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason }),
-    });
-    const data = await res.json() as { ok?: boolean; error?: string };
-    if (!res.ok || !data.ok) throw new Error(data.error ?? 'Rejection failed.');
-    const rejectedId = activeModal.submission.id;
-    setActiveModal(null);
-    setSubmissions(prev => prev.filter(s => s.id !== rejectedId));
-  };
-
-  if (loading) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
-  if (loadError) return (
-    <div className="flex flex-col items-center gap-3 py-20">
-      <p className="text-red-400 text-sm">{loadError}</p>
-      <button onClick={load} className="text-white/50 text-xs underline">Retry</button>
-    </div>
-  );
-  if (submissions.length === 0) return <div className="text-center py-20 text-white/35 text-sm">No pending submissions.</div>;
+  if (submissions.length === 0) {
+    return <div className="text-center py-20 text-white/35 text-sm" data-testid="submissions-empty">No pending submissions.</div>;
+  }
 
   return (
     <>
       {activeModal?.type === 'approve' && (
-        <ApproveModal submission={activeModal.submission} onConfirm={handleApproveConfirm} onClose={() => setActiveModal(null)} />
+        <ApproveModal
+          submission={activeModal.submission}
+          onConfirm={async roomId => { await onApprove(activeModal.submission, roomId); setActiveModal(null); }}
+          onClose={() => setActiveModal(null)}
+        />
       )}
       {activeModal?.type === 'reject' && (
-        <RejectModal submission={activeModal.submission} onConfirm={handleRejectConfirm} onClose={() => setActiveModal(null)} />
+        <RejectModal
+          submission={activeModal.submission}
+          onConfirm={async reason => { await onReject(activeModal.submission, reason); setActiveModal(null); }}
+          onClose={() => setActiveModal(null)}
+        />
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         {submissions.map(s => (
@@ -338,66 +307,71 @@ function SubmissionsTab({ onApproved }: { onApproved: (roomId: string, artwork: 
   );
 }
 
-// ── Approved tab (purely presentational) ─────────────────────────────────────
+// ── Approved tab (presentational) ─────────────────────────────────────────────
+
+/** Shown while storage catches up, so an approval is never invisible. */
+function PublishingChip() {
+  return (
+    <span data-testid="publishing-chip"
+      className="shrink-0 flex items-center gap-1 text-[11px] text-amber-300/90 bg-amber-900/25 border border-amber-700/40 rounded-full px-2 py-0.5">
+      <UploadCloud size={11} className="animate-pulse" /> Publishing…
+    </span>
+  );
+}
 
 function ApprovedTab({
   artworks,
-  loading,
-  loadError,
-  removing,
-  removeError,
-  onRetry,
+  publishingIds,
+  publishingSubmissions,
+  busyArtworkId,
+  actionError,
   onRemove,
 }: {
   artworks: Record<string, ImageMetadata[]>;
-  loading: boolean;
-  loadError: string;
-  removing: string | null;
-  removeError: string;
-  onRetry: () => void;
-  onRemove: (roomId: string, index: number) => void;
+  publishingIds: string[];
+  publishingSubmissions: Submission[];
+  busyArtworkId: string | null;
+  actionError: string;
+  onRemove: (roomId: string, artworkId: string) => Promise<void>;
 }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ roomId: string; index: number; title: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ roomId: string; id: string; title: string } | null>(null);
 
-  if (loading) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
-  if (loadError) return (
-    <div className="flex flex-col items-center gap-3 py-20">
-      <p className="text-red-400 text-sm">{loadError}</p>
-      <button onClick={onRetry} className="text-white/50 text-xs underline">Retry</button>
-    </div>
-  );
-
-  const hasAny = rooms.some(r => artworks[r.id]?.length > 0);
-
-  if (!hasAny) {
-    return <div className="text-center py-20 text-white/35 text-sm">No approved artworks yet. Approve a submission to add one.</div>;
+  if (!hasArtworks(artworks) && publishingSubmissions.length === 0) {
+    return <div className="text-center py-20 text-white/35 text-sm" data-testid="approved-empty">No approved artworks yet. Approve a submission to add one.</div>;
   }
+
+  const confirm = async () => {
+    if (!confirmDelete) return;
+    await onRemove(confirmDelete.roomId, confirmDelete.id);
+    setConfirmDelete(null);
+  };
 
   return (
     <>
       {lightbox && <Lightbox url={lightbox} onClose={() => setLightbox(null)} />}
 
+      {/* A failed delete rolls the row back; without this the artwork would just
+          reappear with no explanation. */}
+      {actionError && !confirmDelete && (
+        <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2 mb-4" data-testid="approved-error">
+          <AlertCircle size={13} /> {actionError}
+        </div>
+      )}
+
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" data-testid="delete-modal">
           <div className="bg-zinc-900 border border-white/10 rounded-xl w-full max-w-sm p-6 space-y-4">
             <h3 className="text-white font-semibold text-base">Remove artwork?</h3>
             <p className="text-white/60 text-sm">&ldquo;{confirmDelete.title}&rdquo; will be removed from the gallery. This cannot be undone.</p>
-            {removeError && (
-              <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
-                <AlertCircle size={13} /> {removeError}
-              </div>
-            )}
             <div className="flex gap-3 pt-1">
-              <button
-                onClick={() => { onRemove(confirmDelete.roomId, confirmDelete.index); setConfirmDelete(null); }}
-                disabled={!!removing}
+              <button onClick={confirm} disabled={!!busyArtworkId} data-testid="confirm-delete"
                 className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm font-medium transition-colors"
               >
-                {removing ? <Loader2 size={14} className="animate-spin" /> : null}
-                {removing ? 'Removing…' : 'Remove'}
+                {busyArtworkId ? <Loader2 size={14} className="animate-spin" /> : null}
+                {busyArtworkId ? 'Removing…' : 'Remove'}
               </button>
-              <button onClick={() => setConfirmDelete(null)} disabled={!!removing}
+              <button onClick={() => setConfirmDelete(null)} disabled={!!busyArtworkId}
                 className="flex-1 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-60 text-white rounded-lg py-2 text-sm transition-colors">
                 Cancel
               </button>
@@ -406,39 +380,78 @@ function ApprovedTab({
         </div>
       )}
 
+      {publishingIds.length > 0 && (
+        <p className="text-amber-300/70 text-xs mb-4 flex items-center gap-2" data-testid="publishing-banner">
+          <UploadCloud size={13} />
+          {publishingIds.length === 1 ? 'One artwork is' : `${publishingIds.length} artworks are`} still
+          being published. They are already approved — this clears by itself.
+        </p>
+      )}
+
+      {publishingSubmissions.length > 0 && (
+        <section className="mb-8" data-testid="publishing-section">
+          <div className="space-y-2">
+            {publishingSubmissions.map(s => (
+              <div key={s.id} data-testid="publishing-row" data-artwork-id={s.id}
+                className="flex items-center gap-3 bg-zinc-900/60 border border-amber-700/25 rounded-xl px-4 py-3">
+                <div className="shrink-0 w-10 h-10 rounded overflow-hidden bg-zinc-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.imageUrl} alt={s.title} className="w-full h-full object-cover opacity-60" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/80 text-sm font-medium truncate">{s.title}</p>
+                  <p className="text-white/40 text-xs truncate">
+                    {s.artist}
+                    {s.approvedRoom ? ` · ${rooms.find(r => r.id === s.approvedRoom)?.name ?? s.approvedRoom}` : ''}
+                  </p>
+                </div>
+                <PublishingChip />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="space-y-8">
         {rooms.map(room => {
           const list = artworks[room.id] ?? [];
           if (list.length === 0) return null;
           return (
-            <section key={room.id}>
+            <section key={room.id} data-testid="approved-room" data-room-id={room.id}>
               <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-3">{room.name}</h3>
               <div className="space-y-2">
-                {list.map((artwork, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-zinc-900 border border-white/10 rounded-xl px-4 py-3">
-                    <button onClick={() => setLightbox(artwork.url)} className="shrink-0 w-10 h-10 rounded overflow-hidden bg-zinc-800 group relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={artwork.url} alt={artwork.title} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Eye size={12} className="text-white" />
+                {list.map(artwork => {
+                  const key = artworkKey(artwork);
+                  return (
+                    <div key={key} data-testid="artwork-row" data-artwork-id={key}
+                      className="flex items-center gap-3 bg-zinc-900 border border-white/10 rounded-xl px-4 py-3">
+                      <button onClick={() => setLightbox(artwork.url)} className="shrink-0 w-10 h-10 rounded overflow-hidden bg-zinc-800 group relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={artwork.url} alt={artwork.title} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Eye size={12} className="text-white" />
+                        </div>
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">{artwork.title}</p>
+                        <p className="text-white/50 text-xs truncate">
+                          {artwork.artist}{artwork.date ? ` · ${artwork.date}` : ''}{artwork.medium ? ` · ${artwork.medium}` : ''}
+                          {artwork.slot !== undefined ? ` · slot ${artwork.slot + 1}` : ''}
+                        </p>
                       </div>
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{artwork.title}</p>
-                      <p className="text-white/50 text-xs truncate">
-                        {artwork.artist}{artwork.date ? ` · ${artwork.date}` : ''}{artwork.medium ? ` · ${artwork.medium}` : ''}
-                      </p>
+                      {publishingIds.includes(key) && <PublishingChip />}
+                      <button
+                        onClick={() => setConfirmDelete({ roomId: room.id, id: key, title: artwork.title })}
+                        disabled={!!busyArtworkId}
+                        data-testid="delete-button"
+                        className="shrink-0 text-white/30 hover:text-red-400 disabled:opacity-40 transition-colors p-1"
+                        title="Remove from gallery"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setConfirmDelete({ roomId: room.id, index: i, title: artwork.title })}
-                      disabled={!!removing}
-                      className="shrink-0 text-white/30 hover:text-red-400 disabled:opacity-40 transition-colors p-1"
-                      title="Remove from gallery"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           );
@@ -465,7 +478,8 @@ function SettingsTab() {
   useEffect(() => {
     fetch('/api/admin/settings')
       .then(r => r.json())
-      .then((data: DisplaySettings) => { setSettings(data); setLoading(false); });
+      .then((data: DisplaySettings) => { setSettings(data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   const save = async () => {
@@ -600,100 +614,96 @@ function SettingsTab() {
 
 type Tab = 'submissions' | 'approved' | 'settings';
 
+function TabBar({
+  tab,
+  onSelect,
+  counts,
+}: {
+  tab: Tab;
+  onSelect: (t: Tab) => void;
+  counts: { submissions: number; approved: number };
+}) {
+  return (
+    <nav className="border-b border-white/10 px-6">
+      <div className="flex">
+        {(['submissions', 'approved', 'settings'] as Tab[]).map(t => (
+          <button key={t} onClick={() => onSelect(t)} data-testid={`tab-${t}`}
+            className={`px-4 py-3 text-sm capitalize transition-colors border-b-2 -mb-px ${
+              tab === t ? 'border-white text-white' : 'border-transparent text-white/45 hover:text-white/70'
+            }`}>
+            {t}
+            {t === 'submissions' && counts.submissions > 0 && (
+              <span className="ml-2 text-xs text-white/40" data-testid="count-submissions">{counts.submissions}</span>
+            )}
+            {t === 'approved' && counts.approved > 0 && (
+              <span className="ml-2 text-xs text-white/40" data-testid="count-approved">{counts.approved}</span>
+            )}
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>('submissions');
 
-  // Artworks state lives here so tab switches don't trigger re-fetches
-  const [artworks, setArtworks] = useState<Record<string, ImageMetadata[]>>({});
-  const [artworksLoading, setArtworksLoading] = useState(true);
-  const [artworksError, setArtworksError] = useState('');
-  const [removing, setRemoving] = useState<string | null>(null);
-  const [removeError, setRemoveError] = useState('');
+  // One store for the whole panel, mounted here so tab switches never remount
+  // it: the tabs below are pure views over this state.
+  const { state, refresh, approve, reject, remove }: AdminData = useAdminData();
 
-  const loadArtworks = useCallback(async () => {
-    setArtworksLoading(true);
-    setArtworksError('');
-    try {
-      const res = await fetch('/api/admin/artworks');
-      if (!res.ok) { setArtworksError(`Error ${res.status}`); return; }
-      setArtworks(await res.json());
-    } catch {
-      setArtworksError('Failed to load artworks.');
-    } finally {
-      setArtworksLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadArtworks(); }, [loadArtworks]);
-
-  const handleApproved = (roomId: string, artwork: ImageMetadata) => {
-    // Add optimistically — no re-fetch needed
-    setArtworks(prev => ({
-      ...prev,
-      [roomId]: [...(prev[roomId] ?? []), artwork],
-    }));
+  const handleApprove = async (submission: Submission, roomId: string) => {
+    await approve(submission, roomId);
     setTab('approved');
   };
 
-  const handleRemove = async (roomId: string, index: number) => {
-    const key = `${roomId}-${index}`;
-    setRemoving(key);
-    setRemoveError('');
-    const snapshot = artworks[roomId] ?? [];
-    // Optimistic remove
-    setArtworks(prev => ({ ...prev, [roomId]: snapshot.filter((_, i) => i !== index) }));
-    try {
-      const res = await fetch(`/api/admin/artworks/${roomId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ index }),
-      });
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
-        setRemoveError(data.error ?? `Error ${res.status}`);
-      }
-    } catch {
-      setArtworks(prev => ({ ...prev, [roomId]: snapshot })); // rollback
-      setRemoveError('Failed to remove artwork.');
-    } finally {
-      setRemoving(null);
-    }
-  };
+  const approvedCount = Object.values(state.artworks).reduce((n, list) => n + list.length, 0);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      <header className="border-b border-white/10 px-6 py-4">
+      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <span className="font-semibold text-sm tracking-wide">ME/CFS Gallery — Admin</span>
+        <button onClick={() => refresh()} disabled={state.loading} data-testid="refresh"
+          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
+          title="Reload from the server">
+          <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
+        </button>
       </header>
 
-      <nav className="border-b border-white/10 px-6">
-        <div className="flex">
-          {(['submissions', 'approved', 'settings'] as Tab[]).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`px-4 py-3 text-sm capitalize transition-colors border-b-2 -mb-px ${
-                tab === t ? 'border-white text-white' : 'border-transparent text-white/45 hover:text-white/70'
-              }`}>
-              {t}
-            </button>
-          ))}
-        </div>
-      </nav>
+      <TabBar tab={tab} onSelect={setTab} counts={{ submissions: state.submissions.length, approved: approvedCount }} />
 
-      <main className="px-6 py-6">
-        {tab === 'submissions' && <SubmissionsTab onApproved={handleApproved} />}
-        {tab === 'approved' && (
-          <ApprovedTab
-            artworks={artworks}
-            loading={artworksLoading}
-            loadError={artworksError}
-            removing={removing}
-            removeError={removeError}
-            onRetry={loadArtworks}
-            onRemove={handleRemove}
-          />
+      <main className="px-6 py-6" data-testid="admin-main" data-loading={state.loading ? 'true' : 'false'}>
+        {state.loading && (
+          <div className="flex items-center justify-center py-20" data-testid="dashboard-loading">
+            <Loader2 size={24} className="animate-spin text-white/40" />
+          </div>
         )}
-        {tab === 'settings' && <SettingsTab />}
+
+        {!state.loading && state.loadError && (
+          <div className="flex flex-col items-center gap-3 py-20">
+            <p className="text-red-400 text-sm" data-testid="load-error">{state.loadError}</p>
+            <button onClick={() => refresh()} className="text-white/50 text-xs underline">Retry</button>
+          </div>
+        )}
+
+        {!state.loading && !state.loadError && (
+          <>
+            {tab === 'submissions' && (
+              <SubmissionsTab submissions={state.submissions} onApprove={handleApprove} onReject={reject} />
+            )}
+            {tab === 'approved' && (
+              <ApprovedTab
+                artworks={state.artworks}
+                publishingIds={state.publishingArtworkIds}
+                publishingSubmissions={state.publishingSubmissions}
+                busyArtworkId={state.busyArtworkId}
+                actionError={state.actionError}
+                onRemove={remove}
+              />
+            )}
+            {tab === 'settings' && <SettingsTab />}
+          </>
+        )}
       </main>
     </div>
   );

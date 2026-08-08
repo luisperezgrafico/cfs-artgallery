@@ -9,13 +9,21 @@ export async function DELETE(
 ) {
   try {
     const { roomId } = await params;
-    const body = await request.json() as { index: number };
+    const body = await request.json().catch(() => ({})) as { id?: unknown };
 
-    if (typeof body.index !== 'number') {
-      return NextResponse.json({ error: 'index is required.' }, { status: 400 });
+    // Deletion is by artwork identity, never by array position: the admin's
+    // index is a snapshot that goes stale as soon as anything else changes
+    // the room, and deleting the wrong piece is unrecoverable.
+    if (typeof body.id !== 'string' || !body.id) {
+      return NextResponse.json({ error: 'id is required.' }, { status: 400 });
     }
 
-    await removeArtworkFromRoom(roomId, body.index);
+    const removed = await removeArtworkFromRoom(roomId, body.id);
+    if (!removed) {
+      // Already gone — the caller's intent is satisfied either way.
+      return NextResponse.json({ ok: true, alreadyRemoved: true });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[admin/artworks DELETE]', err);
