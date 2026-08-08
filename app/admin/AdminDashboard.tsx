@@ -384,11 +384,9 @@ function hasNarrationText(artwork: ImageMetadata): boolean {
 }
 
 function isAudioOutdated(artwork: ImageMetadata): boolean {
-  return !!(
-    artwork.audioUrl
-    && artwork.audioTextSignature
-    && audioTextSignature(artwork) !== artwork.audioTextSignature
-  );
+  if (!artwork.audioUrl) return false;
+  if (!artwork.audioTextSignature) return true;
+  return audioTextSignature(artwork) !== artwork.audioTextSignature;
 }
 
 function AudioStatusBadge({ artwork, busy = false }: { artwork: ImageMetadata; busy?: boolean }) {
