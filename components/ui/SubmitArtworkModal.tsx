@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import ContentNotesDropdown from './ContentNotesDropdown';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
@@ -17,6 +18,7 @@ interface FormValues {
   year: string;
   shortDescription: string;
   statement: string;
+  contentNotes: string[];
   file: File | null;
   aspectRatio: number | null;
 }
@@ -74,7 +76,7 @@ const errorText: React.CSSProperties = {
 const SubmitArtworkModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [values, setValues] = useState<FormValues>({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', file: null, aspectRatio: null });
+  const [values, setValues] = useState<FormValues>({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', contentNotes: [], file: null, aspectRatio: null });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -86,7 +88,7 @@ const SubmitArtworkModal: React.FC = () => {
 
   const reset = useCallback(() => {
     setSubmitState('idle');
-    setValues({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', file: null, aspectRatio: null });
+    setValues({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', contentNotes: [], file: null, aspectRatio: null });
     setFieldErrors({});
     setSubmitError('');
     if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
@@ -175,6 +177,7 @@ const SubmitArtworkModal: React.FC = () => {
       body.append('year', values.year.trim());
       body.append('shortDescription', values.shortDescription.trim());
       body.append('statement', values.statement.trim());
+      body.append('contentNotes', JSON.stringify(values.contentNotes));
       body.append('aspectRatio', String(values.aspectRatio ?? 1));
       if (preferredRoom) body.append('preferredRoom', preferredRoom);
       if (preferredSlot !== null) body.append('preferredSlot', String(preferredSlot));
@@ -364,6 +367,22 @@ const SubmitArtworkModal: React.FC = () => {
                   placeholder="Your process, what this piece means to you…"
                   disabled={busy}
                 />
+              </div>
+
+              <div>
+                <label style={labelStyle}>
+                  Content notes{' '}
+                  <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+                </label>
+                <ContentNotesDropdown
+                  value={values.contentNotes}
+                  onChange={contentNotes => setValues(p => ({ ...p, contentNotes }))}
+                  disabled={busy}
+                  variant="panel"
+                />
+                <p style={{ fontFamily: 'system-ui, sans-serif', fontSize: '0.68rem', color: 'var(--field-hint)', marginTop: '0.35rem' }}>
+                  Choose any notes visitors may want before opening or reading the piece.
+                </p>
               </div>
 
               {/* File upload */}

@@ -17,7 +17,7 @@ export interface AdminData {
    * `quiet` skips the loading state, for background polling.
    */
   refresh: (opts?: { quiet?: boolean }) => Promise<void>;
-  approve: (submission: Submission, roomId: string, slot?: number | null, contentNotes?: string[]) => Promise<void>;
+  approve: (submission: Submission, roomId: string, slot?: number | null) => Promise<void>;
   reject: (submission: Submission, reason: string) => Promise<void>;
   remove: (roomId: string, artworkId: string) => Promise<void>;
   updateArtwork: (
@@ -99,14 +99,14 @@ export function useAdminData(): AdminData {
     return () => clearInterval(timer);
   }, [publishingCount, refresh]);
 
-  const approve = useCallback(async (submission: Submission, roomId: string, slot?: number | null, contentNotes: string[] = []) => {
+  const approve = useCallback(async (submission: Submission, roomId: string, slot?: number | null) => {
     dispatch({ type: 'approveStart', submissionId: submission.id });
     let res: Response;
     try {
       res = await fetch(`/api/admin/submissions/${submission.id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId, slot, contentNotes }),
+        body: JSON.stringify({ roomId, slot }),
       });
     } catch {
       dispatch({ type: 'approveFailure', message: 'Network error. Please try again.' });

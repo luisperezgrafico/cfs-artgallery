@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { store } from '../../../lib/blobStore';
 import { saveSubmission, getSettings, Submission } from '../../../lib/storage';
 import { notifyModerators } from '../../../lib/email';
+import { normalizeContentNotes } from '../../../config/contentNotes';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+function parseContentNotes(value: string): string[] {
+  try {
+    return normalizeContentNotes(JSON.parse(value));
+  } catch {
+    return [];
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +28,8 @@ export async function POST(request: NextRequest) {
     const year = (form.get('year') as string | null)?.trim() ?? '';
     const shortDescription = (form.get('shortDescription') as string | null)?.trim() ?? '';
     const statement = (form.get('statement') as string | null)?.trim() ?? '';
+    const contentNotesRaw = (form.get('contentNotes') as string | null) ?? '[]';
+    const contentNotes = parseContentNotes(contentNotesRaw);
     const preferredRoom = (form.get('preferredRoom') as string | null)?.trim() ?? '';
     const preferredSlotRaw = parseInt((form.get('preferredSlot') as string | null) ?? '', 10);
     const preferredSlot = Number.isInteger(preferredSlotRaw) && preferredSlotRaw >= 0 ? preferredSlotRaw : undefined;
@@ -48,6 +59,7 @@ export async function POST(request: NextRequest) {
       year,
       shortDescription,
       statement,
+      contentNotes: contentNotes.length > 0 ? contentNotes : undefined,
       imageUrl: blob.url,
       aspectRatio: isFinite(aspectRatio) ? aspectRatio : 1,
       submittedAt: new Date().toISOString(),

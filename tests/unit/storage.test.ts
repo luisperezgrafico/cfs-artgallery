@@ -48,9 +48,10 @@ beforeEach(() => memoryStore.reset());
 
 describe('submissions', () => {
   it('saves a submission and lists it as pending', async () => {
-    await saveSubmission(submission('a'));
+    await saveSubmission(submission('a', { contentNotes: ['dark-imagery'] }));
     const pending = await getPendingSubmissions();
     expect(pending.map(s => s.id)).toEqual(['a']);
+    expect(pending[0].contentNotes).toEqual(['dark-imagery']);
   });
 
   it('leaves processed submissions out of the pending list', async () => {

@@ -8,12 +8,13 @@ import {
 } from 'lucide-react';
 import type { AudioSettings, EditableArtworkFields, Submission, GallerySettings } from '../../lib/storage';
 import { rooms } from '../../config/roomsConfig';
-import { contentNoteOptions, type ContentNote } from '../../config/contentNotes';
+import { contentNoteLabel } from '../../config/contentNotes';
 import type { ImageMetadata } from '../../types/museum';
 import { artworkKey } from '../../utils/artworkKey';
 import { audioTextSignature } from '../../utils/audioNarrationText';
 import { hasArtworks } from './adminState';
 import { useAdminData, type AdminData } from './useAdminData';
+import ContentNotesDropdown from '../../components/ui/ContentNotesDropdown';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -25,42 +26,6 @@ function timeAgo(iso: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
-}
-
-function toggleContentNote(notes: string[], note: string): string[] {
-  return notes.includes(note)
-    ? notes.filter(item => item !== note)
-    : [...notes, note];
-}
-
-function ContentNotesPicker({
-  value,
-  onChange,
-  disabled = false,
-}: {
-  value: string[];
-  onChange: (value: string[]) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      {contentNoteOptions.map(note => (
-        <label
-          key={note.value}
-          className="flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-white/65"
-        >
-          <input
-            type="checkbox"
-            checked={value.includes(note.value)}
-            onChange={() => onChange(toggleContentNote(value, note.value))}
-            disabled={disabled}
-            className="h-3.5 w-3.5 accent-white"
-          />
-          {note.label}
-        </label>
-      ))}
-    </div>
-  );
 }
 
 // ── Image lightbox ────────────────────────────────────────────────────────────
@@ -93,14 +58,14 @@ function ApproveModal({
 }: {
   submission: Submission;
   artworks: Record<string, ImageMetadata[]>;
-  onConfirm: (roomId: string, slot: number | null, contentNotes: string[]) => Promise<void>;
+  onConfirm: (roomId: string, slot: number | null) => Promise<void>;
   onClose: () => void;
 }) {
   const [roomId, setRoomId] = useState(submission.preferredRoom ?? rooms[0]?.id ?? '');
   const [slot, setSlot] = useState(submission.preferredSlot !== undefined ? String(submission.preferredSlot) : '');
-  const [contentNotes, setContentNotes] = useState<ContentNote[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const contentNotes = submission.contentNotes ?? [];
   const preferredRoom = submission.preferredRoom
     ? rooms.find(r => r.id === submission.preferredRoom)?.name ?? submission.preferredRoom
     : null;
@@ -116,7 +81,7 @@ function ApproveModal({
     setBusy(true);
     setError('');
     try {
-      await onConfirm(roomId, slot === '' ? null : Number(slot), contentNotes);
+      await onConfirm(roomId, slot === '' ? null : Number(slot));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.');
       setBusy(false);
@@ -187,7 +152,17 @@ function ApproveModal({
           <label className="block text-xs text-white/50 mb-2 uppercase tracking-wider">
             Content notes
           </label>
-          <ContentNotesPicker value={contentNotes} onChange={value => setContentNotes(value as ContentNote[])} disabled={busy} />
+          {contentNotes.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {contentNotes.map(note => (
+                <span key={note} className="rounded border border-white/10 bg-zinc-950 px-2 py-1 text-xs text-white/55">
+                  {contentNoteLabel(note)}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-white/30 text-xs">No content notes selected by the artist.</p>
+          )}
         </div>
 
         {error && (
@@ -365,7 +340,7 @@ function SubmissionsTab({
 }: {
   submissions: Submission[];
   artworks: Record<string, ImageMetadata[]>;
-  onApprove: (s: Submission, roomId: string, slot: number | null, contentNotes: string[]) => Promise<void>;
+  onApprove: (s: Submission, roomId: string, slot: number | null) => Promise<void>;
   onReject: (s: Submission, reason: string) => Promise<void>;
 }) {
   const [activeModal, setActiveModal] = useState<{ submission: Submission; type: 'approve' | 'reject' } | null>(null);
@@ -380,7 +355,7 @@ function SubmissionsTab({
         <ApproveModal
           submission={activeModal.submission}
           artworks={artworks}
-          onConfirm={async (roomId, slot, contentNotes) => { await onApprove(activeModal.submission, roomId, slot, contentNotes); setActiveModal(null); }}
+          onConfirm={async (roomId, slot) => { await onApprove(activeModal.submission, roomId, slot); setActiveModal(null); }}
           onClose={() => setActiveModal(null)}
         />
       )}
@@ -755,7 +730,7 @@ function ArtworkManageModal({
                 className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y" />
               <div>
                 <p className="text-white/35 text-xs mb-2">Content notes</p>
-                <ContentNotesPicker
+                <ContentNotesDropdown
                   value={fields.contentNotes}
                   onChange={value => setFields(f => ({ ...f, contentNotes: value }))}
                   disabled={busy}
@@ -1003,17 +978,19 @@ function ApprovedTab({
                           {artwork.slot !== undefined ? ` · slot ${artwork.slot + 1}` : ''}
                         </p>
                       </div>
-                      {publishingIds.includes(key) && <PublishingChip />}
-                      <AudioStatusBadge artwork={artwork} busy={busyArtworkId === key} />
-                      <button
-                        onClick={() => setManageArtwork({ roomId: room.id, artwork })}
-                        disabled={!!busyArtworkId}
-                        data-testid="manage-button"
-                        className="shrink-0 inline-flex items-center gap-1.5 text-white/40 hover:text-white/75 disabled:opacity-40 transition-colors px-2 py-1 text-xs"
-                        title="Manage artwork"
-                      >
-                        <SlidersHorizontal size={14} /> Manage
-                      </button>
+                      <div className="shrink-0 flex flex-col items-end gap-1.5">
+                        {publishingIds.includes(key) && <PublishingChip />}
+                        <button
+                          onClick={() => setManageArtwork({ roomId: room.id, artwork })}
+                          disabled={!!busyArtworkId}
+                          data-testid="manage-button"
+                          className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/75 disabled:opacity-40 transition-colors px-2 py-1 text-xs"
+                          title="Manage artwork"
+                        >
+                          <SlidersHorizontal size={14} /> Manage
+                        </button>
+                        <AudioStatusBadge artwork={artwork} busy={busyArtworkId === key} />
+                      </div>
                     </div>
                   );
                 })}
@@ -1679,8 +1656,8 @@ export default function AdminDashboard() {
       .catch(() => setRole('admin'));
   }, []);
 
-  const handleApprove = async (submission: Submission, roomId: string, slot: number | null, contentNotes: string[]) => {
-    await approve(submission, roomId, slot, contentNotes);
+  const handleApprove = async (submission: Submission, roomId: string, slot: number | null) => {
+    await approve(submission, roomId, slot);
     setTab('approved');
   };
 

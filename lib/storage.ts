@@ -14,6 +14,7 @@ export interface Submission {
   year: string;
   shortDescription: string;
   statement: string;
+  contentNotes?: string[];
   imageUrl: string;
   aspectRatio: number;
   submittedAt: string;

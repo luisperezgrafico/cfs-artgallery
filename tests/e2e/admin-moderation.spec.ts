@@ -64,13 +64,14 @@ test.describe('approving', () => {
 
   test('shows artist room and slot preferences when approving', async ({ page, request }) => {
     await seed(request, {
-      submissions: [submission('a', { preferredRoom: 'room-2', preferredSlot: 3 })],
+      submissions: [submission('a', { preferredRoom: 'room-2', preferredSlot: 3, contentNotes: ['dark-imagery'] })],
       artworks: { 'room-2': [artwork('taken', { slot: 0 })] },
     });
     await openAdmin(page);
 
     await card(page, 'a').getByTestId('approve-button').click();
     await expect(page.getByText('Artist preference: Room II · slot 4')).toBeVisible();
+    await expect(page.getByText('Dark imagery')).toBeVisible();
     await expect(page.getByLabel('Assign to room')).toHaveValue('room-2');
     await expect(page.getByLabel('Assign to slot')).toHaveValue('3');
     await expect(page.getByLabel('Assign to slot').locator('option[value="0"]')).toBeDisabled();
@@ -79,6 +80,9 @@ test.describe('approving', () => {
     const approved = page.locator('[data-room-id="room-2"]').locator('[data-artwork-id="a"]');
     await expect(approved).toBeVisible();
     await expect(approved).toContainText('slot 4');
+    const publicArtworks = await request.get('/api/artworks');
+    const byRoom = await publicArtworks.json() as Record<string, Array<{ id?: string; contentNotes?: string[] }>>;
+    expect(byRoom['room-2']?.find(item => item.id === 'a')?.contentNotes).toEqual(['dark-imagery']);
   });
 
   test('the approved card does not come back when you revisit the tab', async ({ page, request }) => {
@@ -444,6 +448,7 @@ test.describe('the whole loop', () => {
         year: '2026',
         shortDescription: 'Made on a good day.',
         statement: 'A longer note about the piece.',
+        contentNotes: JSON.stringify(['loss']),
         preferredRoom: 'room-3',
         aspectRatio: '1',
         file: { name: 'morning.png', mimeType: 'image/png', buffer: TINY_PNG },
@@ -459,6 +464,7 @@ test.describe('the whole loop', () => {
     // The room select should default to the room the artist was standing in.
     await uploaded.getByTestId('approve-button').click();
     await expect(page.getByLabel('Assign to room')).toHaveValue('room-3');
+    await expect(page.getByText('Loss')).toBeVisible();
     await page.getByTestId('confirm-approve').click();
 
     const hung = page.locator('[data-room-id="room-3"]').getByTestId('artwork-row');
