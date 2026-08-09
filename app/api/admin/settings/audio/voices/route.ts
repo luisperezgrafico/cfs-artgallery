@@ -7,12 +7,14 @@ interface ElevenLabsVoice {
   voice_id?: string;
   voiceId?: string;
   name?: string;
+  preview_url?: string | null;
+  previewUrl?: string | null;
 }
 
 interface VoiceRequestResult {
   ok: boolean;
   status: number;
-  voices: { id: string; name: string }[];
+  voices: { id: string; name: string; previewUrl?: string }[];
   message: string;
 }
 
@@ -50,6 +52,7 @@ async function requestVoices(url: string, apiKey: string): Promise<VoiceRequestR
     .map(voice => ({
       id: voice.voice_id ?? voice.voiceId ?? '',
       name: voice.name ?? voice.voice_id ?? voice.voiceId ?? 'Untitled voice',
+      previewUrl: voice.preview_url ?? voice.previewUrl ?? undefined,
     }))
     .filter(voice => voice.id);
 

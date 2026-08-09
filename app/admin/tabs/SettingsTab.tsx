@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Plus, RefreshCw, Save, Send, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Pause, Play, Plus, RefreshCw, Save, Send, Trash2 } from 'lucide-react';
 import type { AudioSettings, GallerySettings } from '../../../lib/storage';
 
 type SettingsSectionId = 'email' | 'moderators' | 'templates' | 'audio';
@@ -43,7 +43,7 @@ function SettingsAccordionSection({
 export default function SettingsTab() {
   type DisplaySettings = GallerySettings & { resendApiKeySet?: boolean };
   type DisplayElevenLabsSettings = AudioSettings['elevenlabs'] & { apiKeySet?: boolean; apiKeySlotsSet?: boolean[] };
-  type ElevenLabsVoice = { id: string; name: string };
+  type ElevenLabsVoice = { id: string; name: string; previewUrl?: string };
   const [settings, setSettings] = useState<DisplaySettings | null>(null);
   const [elevenLabsSettings, setElevenLabsSettings] = useState<DisplayElevenLabsSettings | null>(null);
   const [voices, setVoices] = useState<ElevenLabsVoice[]>([]);
@@ -61,6 +61,8 @@ export default function SettingsTab() {
   const [elevenLabsApiKeyDrafts, setElevenLabsApiKeyDrafts] = useState<string[]>(['', '', '', '']);
   const [showKey, setShowKey] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const previewAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -73,6 +75,11 @@ export default function SettingsTab() {
       })
       .catch(() => undefined)
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => () => {
+    previewAudioRef.current?.pause();
+    previewAudioRef.current = null;
   }, []);
 
   const toggleSection = (id: SettingsSectionId) => {
@@ -112,6 +119,44 @@ export default function SettingsTab() {
       setVoicesMessage(err instanceof Error ? err.message : 'Failed to load voices.');
     } finally {
       setVoicesLoading(false);
+    }
+  };
+
+  const stopVoicePreview = () => {
+    previewAudioRef.current?.pause();
+    previewAudioRef.current = null;
+    setPreviewingVoiceId(null);
+  };
+
+  const playVoicePreview = async (voice: ElevenLabsVoice | undefined) => {
+    if (!voice?.previewUrl) {
+      setVoicesMessage('This voice does not include a preview sample.');
+      return;
+    }
+
+    if (previewingVoiceId === voice.id) {
+      stopVoicePreview();
+      return;
+    }
+
+    stopVoicePreview();
+    setVoicesMessage('');
+    const audio = new Audio(voice.previewUrl);
+    previewAudioRef.current = audio;
+    setPreviewingVoiceId(voice.id);
+    audio.onended = () => setPreviewingVoiceId(null);
+    audio.onerror = () => {
+      previewAudioRef.current = null;
+      setPreviewingVoiceId(null);
+      setVoicesMessage('Voice preview could not be played.');
+    };
+
+    try {
+      await audio.play();
+    } catch {
+      previewAudioRef.current = null;
+      setPreviewingVoiceId(null);
+      setVoicesMessage('Voice preview could not be played.');
     }
   };
 
@@ -167,6 +212,10 @@ export default function SettingsTab() {
   };
 
   if (loading || !settings || !elevenLabsSettings) return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-white/40" /></div>;
+
+  const selectedVoice = voices.find(voice => voice.id === elevenLabsSettings.voiceId);
+  const canPreviewSelectedVoice = Boolean(selectedVoice?.previewUrl);
+  const selectedVoiceIsPreviewing = previewingVoiceId === selectedVoice?.id;
 
   return (
     <div className="max-w-2xl space-y-3">
@@ -303,16 +352,31 @@ export default function SettingsTab() {
                 Load voices
               </button>
             </div>
-            <select
-              value={elevenLabsSettings.voiceId}
-              onChange={e => setElevenLabsSettings(s => s ? { ...s, voiceId: e.target.value } : s)}
-              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value={elevenLabsSettings.voiceId}>{voices.find(voice => voice.id === elevenLabsSettings.voiceId)?.name ?? 'Current saved voice'}</option>
-              {voices
-                .filter(voice => voice.id !== elevenLabsSettings.voiceId)
-                .map(voice => <option key={voice.id} value={voice.id}>{voice.name}</option>)}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={elevenLabsSettings.voiceId}
+                onChange={e => {
+                  stopVoicePreview();
+                  setElevenLabsSettings(s => s ? { ...s, voiceId: e.target.value } : s);
+                }}
+                className="min-w-0 flex-1 bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value={elevenLabsSettings.voiceId}>{selectedVoice?.name ?? 'Current saved voice'}</option>
+                {voices
+                  .filter(voice => voice.id !== elevenLabsSettings.voiceId)
+                  .map(voice => <option key={voice.id} value={voice.id}>{voice.name}</option>)}
+              </select>
+              <button
+                type="button"
+                onClick={() => playVoicePreview(selectedVoice)}
+                disabled={!canPreviewSelectedVoice}
+                title={canPreviewSelectedVoice ? 'Preview selected voice' : 'Load voices to preview samples'}
+                aria-label={selectedVoiceIsPreviewing ? 'Stop voice preview' : 'Preview selected voice'}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-zinc-800 text-white/60 transition-colors hover:bg-zinc-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                {selectedVoiceIsPreviewing ? <Pause size={15} /> : <Play size={15} />}
+              </button>
+            </div>
             {voicesMessage && <p className="text-white/35 text-xs mt-1">{voicesMessage}</p>}
           </div>
           <div>
