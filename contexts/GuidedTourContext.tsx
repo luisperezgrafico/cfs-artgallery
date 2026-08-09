@@ -24,7 +24,6 @@ import { DwellSeconds, DEFAULT_DWELL_SECONDS } from '../utils/tourEstimate';
 import { DEFAULT_REST_VIEW } from '../utils/restView';
 import { findNextRealIndex } from '../utils/roomLayout';
 
-const MUTE_UNDO_MS = 4000;
 const CONTENT_NOTE_LEAD_IN_MS = 5000;
 const NARRATION_LEAD_IN_MS = 3000;
 const ADVANCE_BEAT_MS = 900;
@@ -124,15 +123,12 @@ export function useGuidedTourPreferences(): GuidedTourPreferences {
 
 // ── Engine (per room) ────────────────────────────────────────────────────────
 
-type MuteState = 'idle' | 'pending';
-
 interface GuidedTourEngine {
   /** Narration currently sounding for the artwork on screen right now. */
   narrationPlaying: boolean;
-  muteState: MuteState;
-  /** Stops the current narration and starts the undo window; confirms after MUTE_UNDO_MS. */
+  /** Turns narration off and pauses any current audio. */
   muteNarration: () => void;
-  /** Resumes the paused narration and cancels the pending mute. */
+  /** Turns narration back on for guided mode. */
   undoMute: () => void;
 }
 
@@ -149,13 +145,9 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
   } = useTour();
 
   const [narrationPlaying, setNarrationPlaying] = useState(false);
-  const [muteState, setMuteState] = useState<MuteState>('idle');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const advanceRef = useRef<() => void>(() => {});
-  const muteUndoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const persistOffRef = useRef<() => void>(() => {});
-  persistOffRef.current = () => setNarrationEnabled(false);
 
   // Arriving via "Next room": let the visitor take the room in first, the
   // same beat a fresh visit gets, before the tour picks up on its own.
@@ -178,37 +170,15 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
     return () => clearTimeout(timer);
   }, [pendingAutoStart, autoAdvance, startTour, consumeAutoStart]);
 
-  const clearMuteTimer = useCallback(() => {
-    if (muteUndoTimerRef.current) {
-      clearTimeout(muteUndoTimerRef.current);
-      muteUndoTimerRef.current = null;
-    }
-  }, []);
-
   const muteNarration = useCallback(() => {
     audioRef.current?.pause();
     setNarrationPlaying(false);
-    setMuteState('pending');
-    clearMuteTimer();
-    muteUndoTimerRef.current = setTimeout(() => {
-      muteUndoTimerRef.current = null;
-      setMuteState('idle');
-      persistOffRef.current();
-    }, MUTE_UNDO_MS);
-  }, [clearMuteTimer]);
+    setNarrationEnabled(false);
+  }, [setNarrationEnabled]);
 
   const undoMute = useCallback(() => {
-    clearMuteTimer();
-    setMuteState('idle');
-    audioRef.current?.play().then(() => setNarrationPlaying(true)).catch(() => {});
-  }, [clearMuteTimer]);
-
-  // Reset the mute-undo window whenever the artwork changes — it only ever
-  // applies to "the narration that was just playing".
-  useEffect(() => {
-    clearMuteTimer();
-    setMuteState('idle');
-  }, [currentFrameIndex, clearMuteTimer]);
+    setNarrationEnabled(true);
+  }, [setNarrationEnabled]);
 
   useEffect(() => {
     const withinRoom = isTourStarted && !isResting && currentFrameIndex >= 0 && currentFrameIndex < totalFrames;
@@ -305,8 +275,8 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
   }, []);
 
   const value = useMemo<GuidedTourEngine>(() => ({
-    narrationPlaying, muteState, muteNarration, undoMute,
-  }), [narrationPlaying, muteState, muteNarration, undoMute]);
+    narrationPlaying, muteNarration, undoMute,
+  }), [narrationPlaying, muteNarration, undoMute]);
 
   return (
     <GuidedTourEngineContext.Provider value={value}>

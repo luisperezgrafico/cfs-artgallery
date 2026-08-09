@@ -3,14 +3,14 @@
 import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
-import { useGuidedTourEngine } from '../../contexts/GuidedTourContext';
+import { useGuidedTourEngine, useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import { contentNoteLabel } from '../../config/contentNotes';
 
 /**
  * Content notes live only in the plaque, which a guided visitor never opens —
  * this is what makes them visible without one. Two independent halves: the
- * notes text (if any) and the narration mute control (if narration is
- * currently sounding). Neither implies the other. See docs/guided-tour.md §5.
+ * notes text (if any) and the narration mute control (if this artwork has
+ * audio). Neither implies the other. See docs/guided-tour.md §5.
  *
  * The notes half stays visible even with the rest of the interface hidden —
  * it's a content warning, not a control, and hiding it would defeat the
@@ -21,7 +21,8 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationCont
   showNarrationControl = true,
 }) => {
   const { isTourStarted, isResting, currentFrameIndex, images } = useTour();
-  const { narrationPlaying, muteState, muteNarration, undoMute } = useGuidedTourEngine();
+  const { narrationPlaying, muteNarration, undoMute } = useGuidedTourEngine();
+  const { narrationEnabled } = useGuidedTourPreferences();
 
   if (!isTourStarted || isResting) return null;
 
@@ -30,7 +31,8 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationCont
 
   const notes = artwork.contentNotes ?? [];
   const hasNotes = notes.length > 0;
-  const showSpeaker = showNarrationControl && (narrationPlaying || muteState === 'pending');
+  const hasAudio = !!artwork.audioUrl;
+  const showSpeaker = showNarrationControl && hasAudio;
 
   if (!hasNotes && !showSpeaker) return null;
 
@@ -48,21 +50,20 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationCont
             </p>
           )}
 
-          {muteState === 'pending' ? (
+          {showSpeaker ? (
             <button
-              onClick={undoMute}
-              className="shrink-0 flex items-center gap-1.5 text-white/85 hover:text-white text-xs bg-white/10 hover:bg-white/20 rounded-full pl-2.5 pr-3 py-1.5 transition-colors"
+              onClick={narrationEnabled ? muteNarration : undoMute}
+              aria-label={narrationEnabled ? 'Mute narration' : 'Turn narration on'}
+              title={narrationEnabled ? 'Mute narration' : 'Turn narration on'}
+              className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                narrationEnabled
+                  ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20'
+                  : 'text-white/45 hover:text-white/75 bg-white/5 hover:bg-white/15'
+              }`}
             >
-              <VolumeX size={13} /> Narration off · Turn back on
-            </button>
-          ) : showSpeaker ? (
-            <button
-              onClick={muteNarration}
-              aria-label="Mute narration"
-              title="Mute narration"
-              className="shrink-0 w-8 h-8 flex items-center justify-center text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <Volume2 size={14} />
+              {narrationEnabled
+                ? <Volume2 size={14} className={narrationPlaying ? 'opacity-100' : 'opacity-75'} />
+                : <VolumeX size={14} />}
             </button>
           ) : null}
         </div>
