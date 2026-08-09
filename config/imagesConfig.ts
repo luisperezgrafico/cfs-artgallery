@@ -12,7 +12,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'A quiet study of soft light, muted edges, and a calm horizon.',
     longDescription:
-      `This piece uses a narrow range of pale color to create a steady, quiet atmosphere. The central glow is intentionally soft rather than dramatic, giving the image a slow and open feeling.\n\nThe surrounding marks add texture without pulling attention away from the light. For audio testing, the description gives the voice a mix of short and medium-length sentences with a calm visual focus.`,
+      `This piece uses a narrow range of pale color to create a steady, quiet atmosphere. The central glow is intentionally soft rather than dramatic, giving the image a slow and open feeling.\n\nThe surrounding marks add texture without pulling attention away from the light.`,
   },
   {
     id: 'static-hora-incerta',
@@ -26,7 +26,7 @@ export const drawingImages: ImageMetadata[] = [
     shortDescription: 'A warm abstract composition about uncertain time and gentle repetition.',
     contentNotes: ['sensory-intensity'],
     longDescription:
-      `The title means uncertain hour. The image is built from warm areas of color that seem to shift in and out of focus, suggesting time as something soft rather than sharply measured.\n\nThe darker passages give the composition weight, while the lighter marks create a sense of movement across the surface. For audio testing, this description includes longer sentences and gentle transitions so the narration can be evaluated for pacing and clarity.`,
+      `The title means uncertain hour. The image is built from warm areas of color that seem to shift in and out of focus, suggesting time as something soft rather than sharply measured.\n\nDarker passages give the composition weight, while lighter marks create a sense of movement across the surface.`,
   },
   {
     id: 'static-silva-quieta',
@@ -39,7 +39,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'A detailed pencil study of dense forms, quiet rhythm, and layered marks.',
     longDescription:
-      `Silva Quieta means quiet wood. The drawing is made from repeated pencil marks that build up into a dense but restrained image. The overall effect is still and textured, with small variations becoming more visible over time.\n\nThe composition is useful for narration testing because it gives the voice concrete visual details to describe without needing a strongly personal story.`,
+      `Silva Quieta means quiet wood. The drawing is made from repeated pencil marks that build up into a dense but restrained image.\n\nThe overall effect is still and textured, with small variations becoming more visible over time.`,
   },
   {
     id: 'static-aqua-lenis',
@@ -52,7 +52,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'A soft pastel image of water, rounded movement, and muted color.',
     longDescription:
-      `This work imagines water as a slow visual rhythm. The surface is calm, but the rounded shapes suggest a gentle movement beneath it. The colors are muted so the image can feel open and easy to look at.\n\nThe description gives the audio voice simple sensory language: surface, color, rhythm, and return. It is meant as practical test copy rather than a personal statement.`,
+      `This work imagines water as a slow visual rhythm. The surface is calm, but the rounded shapes suggest a gentle movement beneath it.\n\nThe muted colors keep the image open and light, with soft edges that return the eye to the center.`,
   },
   {
     id: 'static-noctis-figura',
@@ -66,7 +66,7 @@ export const drawingImages: ImageMetadata[] = [
     shortDescription: 'A dark ink composition with a quiet figure emerging from the background.',
     contentNotes: ['dark-imagery'],
     longDescription:
-      `Noctis Figura uses a dark field with small tonal shifts so the surface does not feel flat. A partial figure appears from the background, giving the image a quiet focal point without making it too literal.\n\nThe work is useful for audio testing because it asks the narration to describe low contrast, atmosphere, and subtle visual detail in a clear and unhurried way.`,
+      `Noctis Figura uses a dark field with small tonal shifts so the surface does not feel flat. A partial figure appears from the background, giving the image a quiet focal point without making it too literal.\n\nThe low contrast creates a slow, atmospheric composition with details that appear gradually.`,
   },
   {
     id: 'static-sine-titulo',
@@ -79,7 +79,7 @@ export const drawingImages: ImageMetadata[] = [
     link: '#',
     shortDescription: 'An untitled abstract image made from simple color blocks and loose structure.',
     longDescription:
-      `This untitled piece keeps the composition deliberately open. Blocks of color and loose shapes sit beside each other without resolving into a single subject, leaving room for different readings.\n\nThe copy is intentionally simple for testing. It gives the audio model a short description, a longer description, and a few visual terms without adding a specific personal narrative.`,
+      `This untitled piece keeps the composition deliberately open. Blocks of color and loose shapes sit beside each other without resolving into a single subject.\n\nThe image leaves room for different readings, balancing simple structure with a loose, unfinished quality.`,
   },
   { url: '', title: '', artist: '', date: '', link: '', aspectRatio: 1, isEmpty: true },
   { url: '', title: '', artist: '', date: '', link: '', aspectRatio: 1, isEmpty: true },
