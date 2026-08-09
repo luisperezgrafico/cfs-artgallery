@@ -16,7 +16,9 @@ function VisitPositionPersistence({ roomId }: { roomId: string }) {
   const { currentFrameIndex, totalFrames } = useTour();
 
   React.useEffect(() => {
-    if (currentFrameIndex >= totalFrames) return;
+    // -1 means "not on an artwork right now" (quit, or sitting at the bench) —
+    // never persist that, or exiting the tour would erase the resume point.
+    if (currentFrameIndex < 0 || currentFrameIndex >= totalFrames) return;
     saveVisitPosition(roomId, currentFrameIndex);
   }, [roomId, currentFrameIndex, totalFrames]);
 

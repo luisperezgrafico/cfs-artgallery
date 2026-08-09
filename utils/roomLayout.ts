@@ -39,3 +39,15 @@ export function layoutRoom(images: ImageMetadata[]): ImageMetadata[] {
 
   return slots.map(image => image ?? EMPTY_SLOT);
 }
+
+/**
+ * The next non-empty slot after `fromIndex`, or -1 if none remain. A gap can
+ * sit anywhere a pinned slot leaves a hole, not just trail at the end of the
+ * room — used by the guided tour to skip "submit your work" canvases.
+ */
+export function findNextRealIndex(images: ImageMetadata[], fromIndex: number): number {
+  for (let i = fromIndex + 1; i < images.length; i++) {
+    if (!images[i]?.isEmpty) return i;
+  }
+  return -1;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { layoutRoom } from '../../utils/roomLayout';
+import { layoutRoom, findNextRealIndex } from '../../utils/roomLayout';
 import type { ImageMetadata } from '../../types/museum';
 
 function art(id: string, slot?: number): ImageMetadata {
@@ -41,5 +41,25 @@ describe('layoutRoom', () => {
   it('leaves a full room untouched', () => {
     const full = Array.from({ length: 8 }, (_, i) => art(`a${i}`));
     expect(layoutRoom(full)).toEqual(full);
+  });
+});
+
+describe('findNextRealIndex', () => {
+  it('skips trailing empty submit canvases', () => {
+    const laid = layoutRoom([art('a'), art('b')]); // slots 2-7 empty
+    expect(findNextRealIndex(laid, 0)).toBe(1);
+    expect(findNextRealIndex(laid, 1)).toBe(-1);
+  });
+
+  it('jumps over a gap in the middle, left by a pinned slot', () => {
+    // Pinned to slot 5, only two free artworks — leaves slots 2-4 empty in the middle.
+    const laid = layoutRoom([art('free1'), art('free2'), art('pinned', 5)]);
+    expect(idsOf(laid)).toEqual(['free1', 'free2', null, null, null, 'pinned', null, null]);
+    expect(findNextRealIndex(laid, 1)).toBe(5);
+  });
+
+  it('returns -1 when every remaining slot is empty', () => {
+    const laid = layoutRoom([]);
+    expect(findNextRealIndex(laid, -1)).toBe(-1);
   });
 });

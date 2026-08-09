@@ -22,6 +22,7 @@ import {
 } from '../utils/userPreferences';
 import { DwellSeconds, DEFAULT_DWELL_SECONDS } from '../utils/tourEstimate';
 import { DEFAULT_REST_VIEW } from '../utils/restView';
+import { findNextRealIndex } from '../utils/roomLayout';
 
 const MUTE_UNDO_MS = 4000;
 const CONTENT_NOTE_LEAD_IN_MS = 3000;
@@ -123,7 +124,8 @@ const GuidedTourEngineContext = createContext<GuidedTourEngine | undefined>(unde
 export function GuidedTourEngineProvider({ children }: { children: React.ReactNode }) {
   const { autoAdvance, narrationEnabled, dwellSeconds, setNarrationEnabled, setAutoAdvance } = useGuidedTourPreferences();
   const {
-    isTourStarted, isResting, currentFrameIndex, totalFrames, images, nextFrame, sitAtRestView,
+    isTourStarted, isResting, currentFrameIndex, totalFrames, images,
+    setCurrentFrameIndex, sitAtRestView,
   } = useTour();
 
   const [narrationPlaying, setNarrationPlaying] = useState(false);
@@ -176,11 +178,22 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
     }
 
     const artwork = images[currentFrameIndex];
-    const isLastArtwork = currentFrameIndex >= totalFrames - 1;
+
+    // Empty "submit your work" canvases have nothing to show or narrate in
+    // auto-advance — jump straight past them (and any more that follow) in
+    // one camera move, rather than dwelling on a blank frame. A gap can land
+    // anywhere a pinned slot leaves a hole, not just at the end of the room.
+    if (!artwork || artwork.isEmpty) {
+      const next = findNextRealIndex(images, currentFrameIndex);
+      if (next === -1) sitAtRestView(DEFAULT_REST_VIEW);
+      else setCurrentFrameIndex(next);
+      return;
+    }
 
     const advance = () => {
-      if (isLastArtwork) sitAtRestView(DEFAULT_REST_VIEW);
-      else nextFrame();
+      const next = findNextRealIndex(images, currentFrameIndex);
+      if (next === -1) sitAtRestView(DEFAULT_REST_VIEW);
+      else setCurrentFrameIndex(next);
     };
     advanceRef.current = advance;
 
@@ -192,7 +205,7 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
       dwellTimer = setTimeout(advance, dwellSeconds * 1000);
     };
 
-    const canNarrate = narrationEnabled && !artwork?.isEmpty && !!artwork?.audioUrl;
+    const canNarrate = narrationEnabled && !!artwork.audioUrl;
 
     if (canNarrate) {
       const hasNotes = !!artwork!.contentNotes?.length;
@@ -220,7 +233,7 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
       if (leadInTimer) clearTimeout(leadInTimer);
       audioRef.current?.pause();
     };
-  }, [autoAdvance, narrationEnabled, dwellSeconds, isTourStarted, isResting, currentFrameIndex, totalFrames, images, nextFrame, sitAtRestView]);
+  }, [autoAdvance, narrationEnabled, dwellSeconds, isTourStarted, isResting, currentFrameIndex, totalFrames, images, setCurrentFrameIndex, sitAtRestView]);
 
   // Pause everything while the tab is hidden, instead of racing through artworks unseen.
   useEffect(() => {

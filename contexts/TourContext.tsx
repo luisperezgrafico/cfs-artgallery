@@ -12,7 +12,7 @@ interface TourContextType {
   setCurrentFrameIndex: (index: number) => void;
   totalFrames: number;
   images: ImageMetadata[];
-  startTour: () => void;
+  startTour: (atIndex?: number) => void;
   nextFrame: () => void;
   previousFrame: () => void;
   sitAtRestView: (viewpoint: RestViewpoint) => void;
@@ -46,11 +46,12 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   }, []);
 
   // Tour control functions
-  const startTour = useCallback(() => {
+  const startTour = useCallback((atIndex?: number) => {
     if (totalFrames <= 0) return;
+    const start = atIndex !== undefined && atIndex >= 0 && atIndex < totalFrames ? atIndex : 0;
     setRestView(null);
     setIsTourStarted(true);
-    setCurrentFrameIndexState(0);
+    setCurrentFrameIndexState(start);
   }, [totalFrames]);
 
   const nextFrame = useCallback(() => {

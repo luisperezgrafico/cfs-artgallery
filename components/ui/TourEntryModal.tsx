@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { useTour } from '../../contexts/TourContext';
+import { useRoom } from '../../contexts/RoomContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
-import { TourPreset } from '../../utils/userPreferences';
+import { TourPreset, getInitialFrameIndex } from '../../utils/userPreferences';
 import { estimateRoomSeconds, formatEstimate } from '../../utils/tourEstimate';
 
 const DOORS: Array<{ preset: TourPreset; title: string; subtitle: string }> = [
@@ -12,16 +13,23 @@ const DOORS: Array<{ preset: TourPreset; title: string; subtitle: string }> = [
   { preset: 'own-pace', title: 'At your own pace', subtitle: 'You move. Narration on any piece, if you want it.' },
 ];
 
-const presetLabel: Record<TourPreset, string> = {
-  guided: 'Guided',
-  silent: 'Silent',
-  'own-pace': 'At your own pace',
-};
-
-export default function TourEntryModal({ onClose, onStart }: { onClose: () => void; onStart: () => void }) {
-  const { images } = useTour();
+export default function TourEntryModal({
+  onClose,
+  onStart,
+}: {
+  onClose: () => void;
+  onStart: (atIndex?: number) => void;
+}) {
+  const { images, totalFrames } = useTour();
+  const { rooms, activeRoomIndex } = useRoom();
   const { applyPreset, dwellSeconds, lastPreset } = useGuidedTourPreferences();
-  const [view, setView] = useState<'quick' | 'doors'>(lastPreset ? 'quick' : 'doors');
+
+  const roomId = rooms[activeRoomIndex]?.id ?? '';
+  // > 0, not >= 0: being saved on the very first artwork isn't worth a
+  // separate "resume" choice — it's the same as starting over.
+  const resumeIndex = getInitialFrameIndex(roomId, totalFrames);
+  const canResume = resumeIndex > 0;
+  const [view, setView] = useState<'resume' | 'doors'>(canResume ? 'resume' : 'doors');
 
   const estimateFor = (preset: TourPreset): string | null => {
     if (preset === 'own-pace') return null;
@@ -34,6 +42,14 @@ export default function TourEntryModal({ onClose, onStart }: { onClose: () => vo
     onStart();
     onClose();
   };
+
+  const resume = () => {
+    if (lastPreset) applyPreset(lastPreset);
+    onStart(resumeIndex);
+    onClose();
+  };
+
+  const resumeArtwork = canResume ? images[resumeIndex] : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -53,71 +69,73 @@ export default function TourEntryModal({ onClose, onStart }: { onClose: () => vo
           animation: 'scaleInSmooth 0.3s ease-out forwards',
         }}
       >
-        <div>
-          <h2
-            className="text-lg"
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: 'var(--panel-title)', fontWeight: 600 }}
-          >
-            How would you like to visit?
-          </h2>
-          <p className="text-xs mt-1" style={{ color: 'var(--panel-subtitle)' }}>
-            You can change this at any time.
-          </p>
-        </div>
-
-        {view === 'quick' && lastPreset ? (
-          <div className="space-y-3">
-            <button
-              onClick={() => pick(lastPreset)}
-              className="w-full text-left px-4 py-3 transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
-              style={{ border: '1px solid var(--panel-border)', borderRadius: '2px' }}
-            >
-              <span className="block text-sm" style={{ color: 'var(--panel-btn-text)' }}>
-                Last time: {presetLabel[lastPreset]}
-              </span>
-              {estimateFor(lastPreset) && (
-                <span className="block text-xs mt-0.5" style={{ color: 'var(--panel-subtitle)' }}>
-                  {estimateFor(lastPreset)}
-                </span>
-              )}
-            </button>
-            <div className="flex gap-3">
+        {view === 'resume' && canResume ? (
+          <>
+            <div>
+              <h2
+                className="text-lg"
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: 'var(--panel-title)', fontWeight: 600 }}
+              >
+                Welcome back
+              </h2>
+              <p className="text-xs mt-1" style={{ color: 'var(--panel-subtitle)' }}>
+                {resumeArtwork && !resumeArtwork.isEmpty
+                  ? `You were on "${resumeArtwork.title}" — ${resumeIndex + 1} of ${totalFrames}.`
+                  : `You were on artwork ${resumeIndex + 1} of ${totalFrames}.`}
+              </p>
+            </div>
+            <div className="space-y-3">
               <button
-                onClick={() => pick(lastPreset)}
-                className="flex-1 py-2.5 text-sm font-medium transition-colors bg-[var(--panel-btn-bg-hover)]"
+                onClick={resume}
+                data-testid="tour-resume"
+                className="w-full py-3 text-sm font-medium text-center transition-colors bg-[var(--panel-btn-bg-hover)]"
                 style={{ color: 'var(--panel-btn-text)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
               >
-                Continue
+                Resume — artwork {resumeIndex + 1}
               </button>
               <button
                 onClick={() => setView('doors')}
-                className="flex-1 py-2.5 text-sm transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                data-testid="tour-start-over"
+                className="w-full py-2.5 text-sm text-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
                 style={{ color: 'var(--panel-subtitle)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
               >
-                Change
+                Start over
               </button>
             </div>
-          </div>
+          </>
         ) : (
-          <div className="space-y-3">
-            {DOORS.map(door => (
-              <button
-                key={door.preset}
-                onClick={() => pick(door.preset)}
-                data-testid={`tour-door-${door.preset}`}
-                className="w-full text-left px-4 py-3 transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
-                style={{ border: '1px solid var(--panel-border)', borderRadius: '2px' }}
+          <>
+            <div>
+              <h2
+                className="text-lg"
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: 'var(--panel-title)', fontWeight: 600 }}
               >
-                <span className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm font-medium" style={{ color: 'var(--panel-btn-text)' }}>{door.title}</span>
-                  {estimateFor(door.preset) && (
-                    <span className="text-xs shrink-0" style={{ color: 'var(--panel-subtitle)' }}>{estimateFor(door.preset)}</span>
-                  )}
-                </span>
-                <span className="block text-xs mt-1" style={{ color: 'var(--panel-subtitle)' }}>{door.subtitle}</span>
-              </button>
-            ))}
-          </div>
+                How would you like to visit?
+              </h2>
+              <p className="text-xs mt-1" style={{ color: 'var(--panel-subtitle)' }}>
+                You can change this at any time.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {DOORS.map(door => (
+                <button
+                  key={door.preset}
+                  onClick={() => pick(door.preset)}
+                  data-testid={`tour-door-${door.preset}`}
+                  className="w-full text-left px-4 py-3 transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                  style={{ border: '1px solid var(--panel-border)', borderRadius: '2px' }}
+                >
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="text-sm font-medium" style={{ color: 'var(--panel-btn-text)' }}>{door.title}</span>
+                    {estimateFor(door.preset) && (
+                      <span className="text-xs shrink-0" style={{ color: 'var(--panel-subtitle)' }}>{estimateFor(door.preset)}</span>
+                    )}
+                  </span>
+                  <span className="block text-xs mt-1" style={{ color: 'var(--panel-subtitle)' }}>{door.subtitle}</span>
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
         <button
