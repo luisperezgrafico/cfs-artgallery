@@ -19,8 +19,11 @@ const TourControls: React.FC<{
   const { autoAdvance, setAutoAdvance } = useGuidedTourPreferences();
   const [showEntryModal, setShowEntryModal] = useState(false);
 
-  const goNext = () => { setAutoAdvance(false); nextFrame(); };
-  const goPrevious = () => { setAutoAdvance(false); previousFrame(); };
+  // Arrows navigate without leaving Auto — that's the whole point of keeping
+  // them visible there: skipping past one artwork (e.g. one flagged with
+  // content notes) shouldn't require abandoning the guided tour to do it.
+  const goNext = () => nextFrame();
+  const goPrevious = () => previousFrame();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -86,26 +89,15 @@ const TourControls: React.FC<{
             <ChevronLeft size={20} />
           </button>
 
-          <div
-            role="group"
-            aria-label="Auto-advance"
-            className="flex items-center bg-white/10 rounded-full p-0.5 text-xs font-medium"
+          <button
+            onClick={() => setAutoAdvance(!autoAdvance)}
+            aria-label={autoAdvance ? 'Switch to manual navigation' : 'Resume auto-advance'}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              autoAdvance ? 'bg-white text-black' : 'bg-white/10 text-white/80 hover:bg-white/20'
+            }`}
           >
-            <button
-              onClick={() => setAutoAdvance(true)}
-              aria-pressed={autoAdvance}
-              className={`px-3 py-1.5 rounded-full transition-colors ${autoAdvance ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}
-            >
-              Auto
-            </button>
-            <button
-              onClick={() => setAutoAdvance(false)}
-              aria-pressed={!autoAdvance}
-              className={`px-3 py-1.5 rounded-full transition-colors ${!autoAdvance ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}
-            >
-              Manual
-            </button>
-          </div>
+            {autoAdvance ? 'Auto' : 'Manual'}
+          </button>
 
           <button
             onClick={goNext}

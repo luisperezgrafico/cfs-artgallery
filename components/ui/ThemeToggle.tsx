@@ -43,7 +43,7 @@ const ThemeToggle: React.FC<{ className?: string; style?: React.CSSProperties }>
       style={style}
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
     </button>
   );
 };

@@ -10,6 +10,37 @@ import { clampMenuTabY, readMenuTabY, saveMenuTabY, saveVisitPosition } from '..
 import { DWELL_SECONDS_OPTIONS } from '../../utils/tourEstimate';
 import ThemeToggle from './ThemeToggle';
 
+function CollapsibleSection({
+  title,
+  open,
+  onToggle,
+  children,
+  style,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div className="px-5 pt-4 border-t shrink-0" style={{ borderColor: 'var(--panel-separator)', ...style }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 pb-4"
+        aria-expanded={open}
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--panel-subtitle)]">
+          {title}
+        </span>
+        {open ? <ChevronUp size={14} className="text-[var(--panel-subtitle)]" /> : <ChevronDown size={14} className="text-[var(--panel-subtitle)]" />}
+      </button>
+      {open && <div className="pb-4 space-y-4">{children}</div>}
+    </div>
+  );
+}
+
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
   useEffect(() => {
@@ -26,7 +57,9 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'main' | 'shelf'>('main');
   const [tabY, setTabY] = useState(() => readMenuTabY());
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [guidedTourOpen, setGuidedTourOpen] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
   const isMobile = useIsMobile();
   const { rooms, activeRoomIndex, setActiveRoomIndex } = useRoom();
   const { quitTour, startTour, setCurrentFrameIndex } = useTour();
@@ -269,79 +302,57 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
           {view === 'main' && (
             <>
-              {/* Appearance */}
-              <div className="px-5 pt-4 pb-4 border-t shrink-0" style={{ borderColor: 'var(--panel-separator)' }}>
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 text-[var(--panel-subtitle)]">
-                  Appearance
-                </p>
+              <CollapsibleSection title="Appearance" open={appearanceOpen} onToggle={() => setAppearanceOpen(o => !o)}>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[var(--panel-text)]">Theme</span>
                   <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]" />
                 </div>
-              </div>
+              </CollapsibleSection>
 
-              {/* Guided tour */}
-              <div className="px-5 pt-4 border-t shrink-0" style={{ borderColor: 'var(--panel-separator)' }}>
-                <button
-                  type="button"
-                  onClick={() => setGuidedTourOpen(open => !open)}
-                  className="w-full flex items-center justify-between gap-3 pb-4"
-                  aria-expanded={guidedTourOpen}
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--panel-subtitle)]">
-                    Guided tour
-                  </span>
-                  {guidedTourOpen ? <ChevronUp size={14} className="text-[var(--panel-subtitle)]" /> : <ChevronDown size={14} className="text-[var(--panel-subtitle)]" />}
-                </button>
-                {guidedTourOpen && (
-                  <div className="pb-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-[var(--panel-text)]">Narration</span>
+              <CollapsibleSection title="Guided tour" open={guidedTourOpen} onToggle={() => setGuidedTourOpen(o => !o)}>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--panel-text)]">Narration</span>
+                  <button
+                    type="button"
+                    onClick={() => setNarrationEnabled(!narrationEnabled)}
+                    role="switch"
+                    aria-checked={narrationEnabled}
+                    aria-label="Narration"
+                    className="relative w-11 h-6 rounded-full transition-colors bg-[var(--panel-btn-bg)]"
+                  >
+                    <span
+                      className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-[var(--panel-btn-text)]"
+                      style={{ transform: narrationEnabled ? 'translateX(20px)' : 'translateX(0)' }}
+                    />
+                  </button>
+                </div>
+                <div>
+                  <span className="block text-sm mb-2 text-[var(--panel-text)]">Time per artwork (Silent tour)</span>
+                  <div className="flex items-center gap-2">
+                    {DWELL_SECONDS_OPTIONS.map(seconds => (
                       <button
-                        type="button"
-                        onClick={() => setNarrationEnabled(!narrationEnabled)}
-                        role="switch"
-                        aria-checked={narrationEnabled}
-                        aria-label="Narration"
-                        className="relative w-11 h-6 rounded-full transition-colors bg-[var(--panel-btn-bg)]"
+                        key={seconds}
+                        onClick={() => setDwellSeconds(seconds)}
+                        aria-pressed={dwellSeconds === seconds}
+                        className={`flex-1 py-2 rounded-lg text-xs transition-colors ${
+                          dwellSeconds === seconds
+                            ? 'bg-[var(--panel-btn-bg-hover)] text-[var(--panel-title)] font-medium'
+                            : 'bg-[var(--panel-btn-bg)] text-[var(--panel-subtitle)] hover:text-[var(--panel-title)]'
+                        }`}
                       >
-                        <span
-                          className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-[var(--panel-btn-text)]"
-                          style={{ transform: narrationEnabled ? 'translateX(20px)' : 'translateX(0)' }}
-                        />
+                        {seconds}s
                       </button>
-                    </div>
-                    <div>
-                      <span className="block text-sm mb-2 text-[var(--panel-text)]">Time per artwork (Silent tour)</span>
-                      <div className="flex items-center gap-2">
-                        {DWELL_SECONDS_OPTIONS.map(seconds => (
-                          <button
-                            key={seconds}
-                            onClick={() => setDwellSeconds(seconds)}
-                            aria-pressed={dwellSeconds === seconds}
-                            className={`flex-1 py-2 rounded-lg text-xs transition-colors ${
-                              dwellSeconds === seconds
-                                ? 'bg-[var(--panel-btn-bg-hover)] text-[var(--panel-title)] font-medium'
-                                : 'bg-[var(--panel-btn-bg)] text-[var(--panel-subtitle)] hover:text-[var(--panel-title)]'
-                            }`}
-                          >
-                            {seconds}s
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              </CollapsibleSection>
 
-              {/* Controls */}
-              <div
-                className="px-5 pt-4 border-t shrink-0"
-                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))', borderColor: 'var(--panel-separator)' }}
+              <CollapsibleSection
+                title="Controls"
+                open={controlsOpen}
+                onToggle={() => setControlsOpen(o => !o)}
+                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 text-[var(--panel-subtitle)]">
-                  Controls
-                </p>
                 {isMobile ? (
                   <ul className="space-y-2 text-xs text-[var(--panel-subtitle)]">
                     <li><span className="text-[var(--panel-text)]">Tap artwork</span> — zoom in</li>
@@ -361,7 +372,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                     <li><span className="text-[var(--panel-text)]">Escape</span> — exit zoom</li>
                   </ul>
                 )}
-              </div>
+              </CollapsibleSection>
             </>
           )}
         </div>
