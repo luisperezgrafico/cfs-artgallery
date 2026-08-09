@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertCircle, Eye, SlidersHorizontal, UploadCloud } from 'lucide-react';
+import { AlertCircle, UploadCloud } from 'lucide-react';
 import type { EditableArtworkFields, Submission } from '../../../lib/storage';
 import { rooms } from '../../../config/roomsConfig';
 import type { ImageMetadata } from '../../../types/museum';
 import { artworkKey } from '../../../utils/artworkKey';
 import { hasArtworks } from '../adminState';
 import { sortArtworksForAdmin } from '../helpers';
-import Lightbox from '../components/Lightbox';
 import ArtworkManageModal from '../components/ArtworkManageModal';
 import { AudioStatusBadge, PublishingChip } from '../components/AudioStatusBadge';
 
@@ -41,7 +40,6 @@ export default function ApprovedTab({
   onRemoveAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
   onUpdateAudioDuration: (roomId: string, artworkId: string, durationSec: number) => Promise<ImageMetadata | null>;
 }) {
-  const [lightbox, setLightbox] = useState<string | null>(null);
   const [manageArtwork, setManageArtwork] = useState<{ roomId: string; artwork: ImageMetadata } | null>(null);
 
   if (!hasArtworks(artworks) && publishingSubmissions.length === 0) {
@@ -50,7 +48,6 @@ export default function ApprovedTab({
 
   return (
     <>
-      {lightbox && <Lightbox url={lightbox} onClose={() => setLightbox(null)} />}
       {manageArtwork && (
         <ArtworkManageModal
           roomId={manageArtwork.roomId}
@@ -118,15 +115,20 @@ export default function ApprovedTab({
                 {list.map(artwork => {
                   const key = artworkKey(artwork);
                   return (
-                    <div key={key} data-testid="artwork-row" data-artwork-id={key}
-                      className="flex items-center gap-3 bg-zinc-900 border border-white/10 rounded-xl px-4 py-3">
-                      <button onClick={() => setLightbox(artwork.url)} className="shrink-0 w-10 h-10 rounded overflow-hidden bg-zinc-800 group relative">
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setManageArtwork({ roomId: room.id, artwork })}
+                      disabled={!!busyArtworkId}
+                      data-testid="artwork-row"
+                      data-artwork-id={key}
+                      className="flex w-full items-center gap-3 bg-zinc-900 hover:bg-zinc-800/80 disabled:opacity-60 border border-white/10 rounded-xl px-4 py-3 text-left transition-colors"
+                      title={`Manage ${artwork.title}`}
+                    >
+                      <span className="shrink-0 w-10 h-10 rounded overflow-hidden bg-zinc-800">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={artwork.url} alt={artwork.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Eye size={12} className="text-white" />
-                        </div>
-                      </button>
+                      </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">{artwork.title}</p>
                         <p className="text-white/50 text-xs truncate">
@@ -134,20 +136,11 @@ export default function ApprovedTab({
                           {artwork.slot !== undefined ? ` · slot ${artwork.slot + 1}` : ''}
                         </p>
                       </div>
-                      <div className="shrink-0 flex flex-col items-end gap-1.5">
+                      <span className="shrink-0 flex flex-col items-end justify-center gap-1.5">
                         {publishingIds.includes(key) && <PublishingChip />}
-                        <button
-                          onClick={() => setManageArtwork({ roomId: room.id, artwork })}
-                          disabled={!!busyArtworkId}
-                          data-testid="manage-button"
-                          className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/75 disabled:opacity-40 transition-colors px-2 py-1 text-xs"
-                          title="Manage artwork"
-                        >
-                          <SlidersHorizontal size={14} /> Manage
-                        </button>
                         <AudioStatusBadge artwork={artwork} busy={busyArtworkId === key} />
-                      </div>
-                    </div>
+                      </span>
+                    </button>
                   );
                 })}
               </div>

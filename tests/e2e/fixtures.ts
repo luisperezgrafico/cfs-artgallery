@@ -92,7 +92,7 @@ export const row = (page: Page, id: string) => page.locator(`[data-artwork-id="$
 export async function deleteArtwork(page: Page, id: string): Promise<void> {
   const responded = page.waitForResponse(r =>
     r.request().method() === 'DELETE' && r.url().includes('/api/admin/artworks/'));
-  await row(page, id).getByTestId('manage-button').click();
+  await row(page, id).click();
   await page.getByTestId('delete-button').click();
   await page.getByTestId('confirm-delete').click();
   await responded;

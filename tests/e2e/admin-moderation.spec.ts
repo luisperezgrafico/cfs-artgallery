@@ -245,7 +245,7 @@ test.describe('deleting an approved artwork', () => {
     await page.route('**/api/admin/artworks/*', route =>
       route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'Storage unavailable.' }) }));
 
-    await row(page, 'x').getByTestId('manage-button').click();
+    await row(page, 'x').click();
     await page.getByTestId('delete-button').click();
     await page.getByTestId('confirm-delete').click();
 
@@ -301,7 +301,7 @@ test.describe('managing an approved artwork', () => {
     await expect(row(page, 'slot-3').getByTestId('audio-status')).toContainText('Audio missing');
     await expect(row(page, 'free').getByTestId('audio-status')).toContainText('Audio missing');
 
-    await row(page, 'slot-1').getByTestId('manage-button').click();
+    await row(page, 'slot-1').click();
     await page.getByLabel('Room').selectOption('room-2');
     await expect(page.getByLabel('Slot').locator('option[value="3"]')).toBeDisabled();
   });
@@ -321,7 +321,7 @@ test.describe('managing an approved artwork', () => {
     await openAdmin(page);
     await page.getByTestId('tab-approved').click();
 
-    await row(page, 'x').getByTestId('manage-button').click();
+    await row(page, 'x').click();
     await page.getByLabel('Artwork title').fill('Edited title');
     await page.getByLabel('Short description').fill('Edited short description.');
     await page.getByLabel('Room').selectOption('room-2');
@@ -355,7 +355,7 @@ test.describe('managing an approved artwork', () => {
     await openAdmin(page);
     await page.getByTestId('tab-approved').click();
 
-    await row(page, 'x').getByTestId('manage-button').click();
+    await row(page, 'x').click();
     const uploaded = page.waitForResponse(r =>
       r.request().method() === 'POST' && r.url().includes('/api/admin/artworks/room-1/audio/upload'));
     await page.getByTestId('upload-audio-input').setInputFiles({
