@@ -11,8 +11,15 @@ import { contentNoteLabel } from '../../config/contentNotes';
  * this is what makes them visible without one. Two independent halves: the
  * notes text (if any) and the narration mute control (if narration is
  * currently sounding). Neither implies the other. See docs/guided-tour.md §5.
+ *
+ * The notes half stays visible even with the rest of the interface hidden —
+ * it's a content warning, not a control, and hiding it would defeat the
+ * point right when someone chose the least distracting way to look at art.
  */
-const NowPlayingStrip: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
+const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationControl?: boolean }> = ({
+  style,
+  showNarrationControl = true,
+}) => {
   const { isTourStarted, isResting, currentFrameIndex, images } = useTour();
   const { narrationPlaying, muteState, muteNarration, undoMute } = useGuidedTourEngine();
 
@@ -23,7 +30,7 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
 
   const notes = artwork.contentNotes ?? [];
   const hasNotes = notes.length > 0;
-  const showSpeaker = narrationPlaying || muteState === 'pending';
+  const showSpeaker = showNarrationControl && (narrationPlaying || muteState === 'pending');
 
   if (!hasNotes && !showSpeaker) return null;
 
@@ -33,7 +40,7 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         className="fixed left-0 right-0 z-20 flex justify-center px-4"
         style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
       >
-        <div className="flex items-center gap-3 max-w-md bg-black/50 backdrop-blur-md rounded-full pl-4 pr-2 py-2 shadow-lg">
+        <div className="flex items-center gap-3 max-w-md bg-black/50 backdrop-blur-md rounded-full px-3.5 py-2 shadow-lg">
           {hasNotes && (
             <p className="text-white/75 text-xs leading-snug">
               <span className="text-white/45">Content notes:</span>{' '}

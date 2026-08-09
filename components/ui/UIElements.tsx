@@ -9,7 +9,6 @@ import { useTour } from '../../contexts/TourContext';
 import { useRoom } from '../../contexts/RoomContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import { estimateRoomSeconds, formatEstimate } from '../../utils/tourEstimate';
-import { saveVisitPosition } from '../../utils/userPreferences';
 import LoadingScreen from './LoadingScreen';
 import TitleScreen from './TitleOverlay';
 import TourControls from './TourControls';
@@ -122,7 +121,7 @@ function RestControls({ style }: { style?: React.CSSProperties }) {
   const { isMobile } = useDetectGPU();
   const { quitTour } = useTour();
   const { rooms, activeRoomIndex, setActiveRoomIndex, getRoomImages } = useRoom();
-  const { narrationEnabled, dwellSeconds } = useGuidedTourPreferences();
+  const { narrationEnabled, dwellSeconds, requestAutoStart } = useGuidedTourPreferences();
 
   const nextRoom = rooms[activeRoomIndex + 1];
   const nextRoomEstimate = nextRoom
@@ -131,10 +130,10 @@ function RestControls({ style }: { style?: React.CSSProperties }) {
 
   const goToNextRoom = () => {
     if (!nextRoom) return;
-    // Reuses the existing visit-position resume mechanism to land the new room's
-    // TourProvider already started — auto-advance/narration carry over untouched,
-    // since GuidedTourPreferenceProvider sits above the per-room remount boundary.
-    saveVisitPosition(nextRoom.id, 0);
+    // The new room mounts idle, showing its own overview first (same as any
+    // fresh visit); requestAutoStart tells its engine to pick the tour back
+    // up on its own shortly after, since the mode already carries over.
+    requestAutoStart();
     setActiveRoomIndex(activeRoomIndex + 1);
   };
 
@@ -240,33 +239,40 @@ const UIElements: React.FC = () => {
       )}
 
       {currentScreen === 'scene' && (
-        isInterfaceHidden ? (
-          <HiddenInterfaceLayer onShow={showInterface} />
-        ) : (
-          <div
-            style={{
-              opacity: isInterfaceFadingOut ? 0 : 1,
-              pointerEvents: isInterfaceFadingOut ? 'none' : 'auto',
-              transition: `opacity ${HIDE_INTERFACE_FADE_MS}ms ease-out`,
-            }}
-          >
-            {isResting ? (
-              <RestControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-            ) : (
-              <>
-                <TourControls
-                  style={{ animation: 'fadeIn 1s ease-out forwards' }}
-                  onHideInterface={hideInterface}
-                />
-                <NowPlayingStrip style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-                <ArtworkInfoModal />
-                <ArtworkLightbox />
-                <SubmitArtworkModal />
-                <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-              </>
-            )}
-          </div>
-        )
+        <>
+          {/* Outside the hidden-interface branch on purpose — a content note
+              is information, not a control, so it survives "hide interface". */}
+          <NowPlayingStrip
+            style={{ animation: 'fadeIn 1s ease-out forwards' }}
+            showNarrationControl={!isInterfaceHidden && !isInterfaceFadingOut}
+          />
+          {isInterfaceHidden ? (
+            <HiddenInterfaceLayer onShow={showInterface} />
+          ) : (
+            <div
+              style={{
+                opacity: isInterfaceFadingOut ? 0 : 1,
+                pointerEvents: isInterfaceFadingOut ? 'none' : 'auto',
+                transition: `opacity ${HIDE_INTERFACE_FADE_MS}ms ease-out`,
+              }}
+            >
+              {isResting ? (
+                <RestControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+              ) : (
+                <>
+                  <TourControls
+                    style={{ animation: 'fadeIn 1s ease-out forwards' }}
+                    onHideInterface={hideInterface}
+                  />
+                  <ArtworkInfoModal />
+                  <ArtworkLightbox />
+                  <SubmitArtworkModal />
+                  <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
     </>
   );

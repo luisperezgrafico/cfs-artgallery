@@ -28,6 +28,7 @@ const MUTE_UNDO_MS = 4000;
 const CONTENT_NOTE_LEAD_IN_MS = 3000;
 const NARRATION_LEAD_IN_MS = 400;
 const ADVANCE_BEAT_MS = 900;
+const NEXT_ROOM_OVERVIEW_MS = 1500;
 
 // ── Preferences (room-independent) ──────────────────────────────────────────
 
@@ -36,6 +37,15 @@ interface GuidedTourPreferences {
   narrationEnabled: boolean;
   dwellSeconds: DwellSeconds;
   lastPreset: TourPreset | null;
+  /**
+   * True right after "Next room" is tapped, until the freshly-mounted room's
+   * engine consumes it. Lets that room show its overview first — the same
+   * beat a first-time visit gets — instead of jumping straight to artwork 1
+   * with the tour UI already up before the camera gets there.
+   */
+  pendingAutoStart: boolean;
+  requestAutoStart: () => void;
+  consumeAutoStart: () => void;
   setAutoAdvance: (value: boolean) => void;
   setNarrationEnabled: (value: boolean) => void;
   setDwellSeconds: (value: DwellSeconds) => void;
@@ -47,6 +57,7 @@ const GuidedTourPreferenceContext = createContext<GuidedTourPreferences | undefi
 
 export function GuidedTourPreferenceProvider({ children }: { children: React.ReactNode }) {
   const [autoAdvance, setAutoAdvance] = useState(false);
+  const [pendingAutoStart, setPendingAutoStart] = useState(false);
   const [mode, setMode] = useState<VisitMode>({
     narrationEnabled: true,
     dwellSeconds: DEFAULT_DWELL_SECONDS,
@@ -81,16 +92,22 @@ export function GuidedTourPreferenceProvider({ children }: { children: React.Rea
     }
   }, [persist]);
 
+  const requestAutoStart = useCallback(() => setPendingAutoStart(true), []);
+  const consumeAutoStart = useCallback(() => setPendingAutoStart(false), []);
+
   const value = useMemo<GuidedTourPreferences>(() => ({
     autoAdvance,
     narrationEnabled: mode.narrationEnabled,
     dwellSeconds: mode.dwellSeconds,
     lastPreset: mode.lastPreset,
+    pendingAutoStart,
+    requestAutoStart,
+    consumeAutoStart,
     setAutoAdvance,
     setNarrationEnabled,
     setDwellSeconds,
     applyPreset,
-  }), [autoAdvance, mode, setNarrationEnabled, setDwellSeconds, applyPreset]);
+  }), [autoAdvance, mode, pendingAutoStart, requestAutoStart, consumeAutoStart, setNarrationEnabled, setDwellSeconds, applyPreset]);
 
   return (
     <GuidedTourPreferenceContext.Provider value={value}>
@@ -122,10 +139,13 @@ interface GuidedTourEngine {
 const GuidedTourEngineContext = createContext<GuidedTourEngine | undefined>(undefined);
 
 export function GuidedTourEngineProvider({ children }: { children: React.ReactNode }) {
-  const { autoAdvance, narrationEnabled, dwellSeconds, setNarrationEnabled, setAutoAdvance } = useGuidedTourPreferences();
+  const {
+    autoAdvance, narrationEnabled, dwellSeconds, setNarrationEnabled, setAutoAdvance,
+    pendingAutoStart, consumeAutoStart,
+  } = useGuidedTourPreferences();
   const {
     isTourStarted, isResting, currentFrameIndex, totalFrames, images,
-    setCurrentFrameIndex, sitAtRestView,
+    setCurrentFrameIndex, sitAtRestView, startTour,
   } = useTour();
 
   const [narrationPlaying, setNarrationPlaying] = useState(false);
@@ -136,6 +156,27 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
   const muteUndoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const persistOffRef = useRef<() => void>(() => {});
   persistOffRef.current = () => setNarrationEnabled(false);
+
+  // Arriving via "Next room": let the visitor take the room in first, the
+  // same beat a fresh visit gets, before the tour picks up on its own.
+  // pendingAutoStart itself is what makes this idempotent (it's consumed
+  // exactly once) — a ref-guarded "fire once" flag doesn't survive React's
+  // dev-mode double-invoke of effects, which cancels the first timer and
+  // then refuses to create a replacement.
+  useEffect(() => {
+    if (!pendingAutoStart) return;
+
+    if (!autoAdvance) {
+      consumeAutoStart();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      startTour();
+      consumeAutoStart();
+    }, NEXT_ROOM_OVERVIEW_MS);
+    return () => clearTimeout(timer);
+  }, [pendingAutoStart, autoAdvance, startTour, consumeAutoStart]);
 
   const clearMuteTimer = useCallback(() => {
     if (muteUndoTimerRef.current) {

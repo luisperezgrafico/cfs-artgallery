@@ -16,7 +16,7 @@ const TourControls: React.FC<{
     isTourStarted, currentFrameIndex, totalFrames,
     startTour, nextFrame, previousFrame, quitTour,
   } = useTour();
-  const { autoAdvance, setAutoAdvance } = useGuidedTourPreferences();
+  const { autoAdvance, setAutoAdvance, pendingAutoStart } = useGuidedTourPreferences();
   const [showEntryModal, setShowEntryModal] = useState(false);
 
   // Arrows navigate without leaving Auto — that's the whole point of keeping
@@ -28,7 +28,7 @@ const TourControls: React.FC<{
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isTourStarted) {
-        if (e.key === ' ' || e.key === 'Enter') setShowEntryModal(true);
+        if (!pendingAutoStart && (e.key === ' ' || e.key === 'Enter')) setShowEntryModal(true);
       } else {
         if (e.key === 'ArrowRight' || e.key === 'd') {
           if (currentFrameIndex < totalFrames - 1) goNext();
@@ -41,13 +41,17 @@ const TourControls: React.FC<{
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTourStarted, currentFrameIndex, totalFrames, quitTour]);
+  }, [isTourStarted, currentFrameIndex, totalFrames, quitTour, pendingAutoStart]);
 
   const bottomStyle: React.CSSProperties = {
     paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))',
   };
 
   if (!isTourStarted) {
+    // Arriving via "Next room": let the overview show quietly, with no
+    // "Start the Tour" button to press — the tour resumes on its own shortly.
+    if (pendingAutoStart) return <div style={style} />;
+
     return (
       <div style={style}>
         {showEntryModal && (
@@ -92,7 +96,7 @@ const TourControls: React.FC<{
           <button
             onClick={() => setAutoAdvance(!autoAdvance)}
             aria-label={autoAdvance ? 'Switch to manual navigation' : 'Resume auto-advance'}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`h-10 w-20 shrink-0 flex items-center justify-center rounded-full text-xs font-medium transition-colors ${
               autoAdvance ? 'bg-white text-black' : 'bg-white/10 text-white/80 hover:bg-white/20'
             }`}
           >
