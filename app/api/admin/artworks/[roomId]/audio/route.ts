@@ -34,6 +34,9 @@ export async function POST(
       audioVoice: audio.voice,
       audioSource: 'generated',
       audioTextSignature: audio.textSignature,
+      // Cleared here; the client measures the new clip and backfills it via PATCH
+      // right after — better an honest "unknown" than the previous clip's length.
+      audioDurationSec: undefined,
     });
     if (!updated) {
       return NextResponse.json({ error: 'Artwork not found.' }, { status: 404 });
@@ -43,6 +46,42 @@ export async function POST(
   } catch (err) {
     console.error('[admin/artworks audio]', err);
     const message = err instanceof Error ? err.message : 'Failed to regenerate audio.';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/**
+ * Backfills the playback length of an artwork's existing audio, measured by
+ * the browser after generate/upload (we don't decode audio server-side).
+ * Best-effort: the caller doesn't surface failures here as a user-facing error.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ roomId: string }> },
+) {
+  try {
+    const { roomId } = await params;
+    const body = await request.json().catch(() => ({})) as { id?: unknown; durationSec?: unknown };
+
+    if (typeof body.id !== 'string' || !body.id) {
+      return NextResponse.json({ error: 'id is required.' }, { status: 400 });
+    }
+    const durationSec = typeof body.durationSec === 'number' && Number.isFinite(body.durationSec) && body.durationSec > 0
+      ? body.durationSec
+      : undefined;
+    if (durationSec === undefined) {
+      return NextResponse.json({ error: 'durationSec must be a positive number.' }, { status: 400 });
+    }
+
+    const updated = await updateArtworkAudio(roomId, body.id, { audioDurationSec: durationSec });
+    if (!updated) {
+      return NextResponse.json({ error: 'Artwork not found.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ ok: true, artwork: updated, roomId });
+  } catch (err) {
+    console.error('[admin/artworks audio duration]', err);
+    const message = err instanceof Error ? err.message : 'Failed to save audio duration.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

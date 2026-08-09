@@ -6,45 +6,20 @@ import Frame from './museum/Frame';
 import Room from './museum/Room';
 import { calculateFramePositions } from '../utils/framePositioning';
 import { defaultRoomDimensions } from '../config/roomConfig';
-import { ImageMetadata, RestViewpoint, RoomTheme } from '../types/museum';
+import { ImageMetadata, RoomTheme } from '../types/museum';
 import { ZoomProvider } from '../contexts/ZoomContext';
 import { CameraManager } from './museum/CameraManager';
 import SpotlightGroup from './museum/SpotlightGroup';
 import { useTour } from '../contexts/TourContext';
+import { useGuidedTourPreferences } from '../contexts/GuidedTourContext';
 import CeilingLight from './museum/CeilingLight';
 import Bench from './museum/Bench';
+import { BENCH_LAYOUT } from '../utils/restView';
 
 const DEFAULT_THEME: RoomTheme = {
   wallColor: '#1A1637', ceilingColor: '#1a1538', floorColor: '#050505',
   hemisphereTop: '#3d2b6b', hemisphereBottom: '#0a0816', ambientIntensity: 0.2,
 };
-
-const sideWallTilt = defaultRoomDimensions.wallTiltAngle;
-const leftWallBenchRotation: [number, number, number] = [0, Math.PI / 2 - sideWallTilt, 0];
-const rightWallBenchRotation: [number, number, number] = [0, -Math.PI / 2 + sideWallTilt, 0];
-
-const BENCH_LAYOUT: Array<{
-  position: [number, number, number];
-  rotation: [number, number, number];
-  restView: RestViewpoint;
-}> = [
-  {
-    position: [-1.75, 0, 5.7],
-    rotation: leftWallBenchRotation,
-    restView: {
-      position: [-1.75, 1.05, 5.7],
-      target: [1.6, 1.45, 5.2],
-    },
-  },
-  {
-    position: [1.75, 0, 5.7],
-    rotation: rightWallBenchRotation,
-    restView: {
-      position: [1.75, 1.05, 5.7],
-      target: [-1.6, 1.45, 5.2],
-    },
-  },
-];
 
 interface MuseumProps {
   images: ImageMetadata[];
@@ -61,6 +36,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
     sitAtRestView,
     quitTour,
   } = useTour();
+  const { setAutoAdvance } = useGuidedTourPreferences();
   const frameRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   React.useEffect(() => {
@@ -110,6 +86,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
                   }}
                   onFrameClick={(idx) => {
                     if (setCurrentFrameIndex) {
+                      setAutoAdvance(false);
                       if (idx === currentFrameIndex) {
                         if (images[idx]?.isEmpty) {
                           window.dispatchEvent(new CustomEvent('open-submit-artwork', { detail: { roomId, slot: idx } }));

@@ -10,7 +10,7 @@ import UIElements from './ui/UIElements';
 import { ImageMetadata } from '../types/museum';
 import { getInitialFrameIndex, saveVisitPosition } from '../utils/userPreferences';
 import { ShelfProvider } from '../contexts/ShelfContext';
-import { layoutRoom } from '../utils/roomLayout';
+import { GuidedTourPreferenceProvider, GuidedTourEngineProvider } from '../contexts/GuidedTourContext';
 
 function VisitPositionPersistence({ roomId }: { roomId: string }) {
   const { currentFrameIndex, totalFrames } = useTour();
@@ -23,30 +23,33 @@ function VisitPositionPersistence({ roomId }: { roomId: string }) {
   return null;
 }
 
-function GalleryContent({ liveArtworks }: { liveArtworks: Record<string, ImageMetadata[]> }) {
-  const { rooms, activeRoomIndex } = useRoom();
+function GalleryContent() {
+  const { rooms, activeRoomIndex, getRoomImages } = useRoom();
   const activeRoom = rooms[activeRoomIndex];
-  const roomLive = liveArtworks[activeRoom.id];
-  // KV artworks replace static config for that room; fall back to static if KV has none
-  const baseImages = roomLive && roomLive.length > 0 ? roomLive : activeRoom.images;
-  const images = layoutRoom(baseImages);
+  const images = getRoomImages(activeRoom.id);
   const initialFrameIndex = getInitialFrameIndex(activeRoom.id, images.length);
 
   return (
-    <AnimationProvider>
-      <TourProvider
-        key={activeRoom.id}
-        totalFrames={images.length}
-        initialFrameIndex={initialFrameIndex}
-        images={images}
-      >
-        <VisitPositionPersistence roomId={activeRoom.id} />
-        <SwipeableContainer>
-          <MuseumStage images={images} theme={activeRoom.theme} roomId={activeRoom.id} />
-          <UIElements />
-        </SwipeableContainer>
-      </TourProvider>
-    </AnimationProvider>
+    // Preferences live above the per-room remount boundary so "Next room" carries
+    // auto-advance / narration over; the engine below is per-room on purpose.
+    <GuidedTourPreferenceProvider>
+      <AnimationProvider>
+        <TourProvider
+          key={activeRoom.id}
+          totalFrames={images.length}
+          initialFrameIndex={initialFrameIndex}
+          images={images}
+        >
+          <GuidedTourEngineProvider>
+            <VisitPositionPersistence roomId={activeRoom.id} />
+            <SwipeableContainer>
+              <MuseumStage images={images} theme={activeRoom.theme} roomId={activeRoom.id} />
+              <UIElements />
+            </SwipeableContainer>
+          </GuidedTourEngineProvider>
+        </TourProvider>
+      </AnimationProvider>
+    </GuidedTourPreferenceProvider>
   );
 }
 
@@ -63,8 +66,8 @@ export default function Gallery() {
   return (
     <div className="relative w-full h-full overflow-hidden bg-black">
       <ShelfProvider>
-        <RoomProvider>
-          <GalleryContent liveArtworks={liveArtworks} />
+        <RoomProvider liveArtworks={liveArtworks}>
+          <GalleryContent />
         </RoomProvider>
       </ShelfProvider>
     </div>

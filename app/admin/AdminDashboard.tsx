@@ -55,7 +55,10 @@ export default function AdminDashboard() {
 
   // One store for the whole panel, mounted here so tab switches never remount
   // it: the tabs below are pure views over this state.
-  const { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio, removeAudio }: AdminData = useAdminData();
+  const {
+    state, refresh, approve, reject, remove, updateArtwork,
+    regenerateAudio, uploadAudio, removeAudio, updateAudioDuration,
+  }: AdminData = useAdminData();
 
   useEffect(() => {
     fetch('/api/admin/session')
@@ -124,6 +127,7 @@ export default function AdminDashboard() {
                 onRegenerateAudio={regenerateAudio}
                 onUploadAudio={uploadAudio}
                 onRemoveAudio={removeAudio}
+                onUpdateAudioDuration={updateAudioDuration}
               />
             )}
             {tab === 'settings' && <SettingsTab />}

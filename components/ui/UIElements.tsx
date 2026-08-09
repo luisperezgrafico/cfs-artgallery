@@ -1,14 +1,19 @@
 'use client';
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import { useDetectGPU } from '@react-three/drei';
 import { useSwipeable, SwipeEventData } from 'react-swipeable';
 import { useAnimation } from '../../contexts/AnimationContext';
 import { useTour } from '../../contexts/TourContext';
+import { useRoom } from '../../contexts/RoomContext';
+import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
+import { estimateRoomSeconds, formatEstimate } from '../../utils/tourEstimate';
+import { saveVisitPosition } from '../../utils/userPreferences';
 import LoadingScreen from './LoadingScreen';
 import TitleScreen from './TitleOverlay';
 import TourControls from './TourControls';
+import NowPlayingStrip from './NowPlayingStrip';
 import ArtworkInfoModal from './ArtworkInfoModal';
 import ArtworkLightbox from './ArtworkLightbox';
 import SubmitArtworkModal from './SubmitArtworkModal';
@@ -116,23 +121,51 @@ function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
 function RestControls({ style }: { style?: React.CSSProperties }) {
   const { isMobile } = useDetectGPU();
   const { quitTour } = useTour();
+  const { rooms, activeRoomIndex, setActiveRoomIndex, getRoomImages } = useRoom();
+  const { narrationEnabled, dwellSeconds } = useGuidedTourPreferences();
+
+  const nextRoom = rooms[activeRoomIndex + 1];
+  const nextRoomEstimate = nextRoom
+    ? formatEstimate(estimateRoomSeconds(getRoomImages(nextRoom.id), { narrated: narrationEnabled, dwellSeconds }))
+    : null;
+
+  const goToNextRoom = () => {
+    if (!nextRoom) return;
+    // Reuses the existing visit-position resume mechanism to land the new room's
+    // TourProvider already started — auto-advance/narration carry over untouched,
+    // since GuidedTourPreferenceProvider sits above the per-room remount boundary.
+    saveVisitPosition(nextRoom.id, 0);
+    setActiveRoomIndex(activeRoomIndex + 1);
+  };
 
   return (
     <div style={style}>
       <div
-        className="fixed bottom-0 left-0 right-0 z-30 flex flex-col items-center"
+        className="fixed bottom-0 left-0 right-0 z-30 flex flex-col items-center gap-3"
         style={{ paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
       >
-        <button
-          onClick={quitTour}
-          aria-label="Exit rest view"
-          className="h-10 rounded-full bg-black/40 hover:bg-black/55 backdrop-blur-md px-4 text-white flex items-center gap-2 shadow-lg transition-colors"
-        >
-          <X size={17} />
-          <span className="text-sm font-medium">Exit rest</span>
-        </button>
-        <div className="text-white/60 text-xs mt-2">
+        <div className="text-white/60 text-xs">
           {isMobile ? 'Drag your finger to look around' : 'Drag with the mouse to look around'}
+        </div>
+        <div className="flex gap-3">
+          {nextRoom && (
+            <button
+              onClick={goToNextRoom}
+              className="h-11 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 text-white flex items-center gap-2 shadow-lg transition-colors"
+            >
+              <span className="text-sm font-medium">Next room</span>
+              {nextRoomEstimate && <span className="text-xs text-white/70">— {nextRoomEstimate}</span>}
+              <ArrowRight size={16} />
+            </button>
+          )}
+          <button
+            onClick={quitTour}
+            aria-label="Exit rest view"
+            className="h-11 rounded-full bg-black/40 hover:bg-black/55 backdrop-blur-md px-4 text-white flex items-center gap-2 shadow-lg transition-colors"
+          >
+            <X size={17} />
+            <span className="text-sm font-medium">Exit rest</span>
+          </button>
         </div>
       </div>
     </div>
@@ -225,6 +258,7 @@ const UIElements: React.FC = () => {
                   style={{ animation: 'fadeIn 1s ease-out forwards' }}
                   onHideInterface={hideInterface}
                 />
+                <NowPlayingStrip style={{ animation: 'fadeIn 1s ease-out forwards' }} />
                 <ArtworkInfoModal />
                 <ArtworkLightbox />
                 <SubmitArtworkModal />

@@ -367,7 +367,10 @@ export async function updateManagedArtwork(
 export async function updateArtworkAudio(
   roomId: string,
   id: string,
-  audio: Pick<ImageMetadata, 'audioUrl' | 'audioGeneratedAt' | 'audioVoice' | 'audioSource' | 'audioTextSignature'>,
+  audio: Partial<Pick<
+    ImageMetadata,
+    'audioUrl' | 'audioGeneratedAt' | 'audioVoice' | 'audioSource' | 'audioTextSignature' | 'audioDurationSec'
+  >>,
 ): Promise<ImageMetadata | null> {
   return withLock(artworksPath(roomId), async () => {
     const existing = (await getRoomArtworks(roomId)) ?? [];
@@ -395,6 +398,7 @@ export async function clearArtworkAudio(roomId: string, id: string): Promise<Ima
       audioVoice: _audioVoice,
       audioSource: _audioSource,
       audioTextSignature: _audioTextSignature,
+      audioDurationSec: _audioDurationSec,
       ...artwork
     } = current;
 

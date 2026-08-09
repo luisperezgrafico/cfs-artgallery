@@ -9,6 +9,32 @@ export const TINY_PNG = Buffer.from(
   'base64',
 );
 
+/**
+ * Builds a real, valid 16-bit PCM WAV of silence at the given duration — the
+ * browser can decode this and report its duration, unlike an arbitrary byte
+ * buffer. Constructed rather than embedded as a fixture to avoid shipping a
+ * binary (or a fragile hand-copied base64 blob) for a couple hundred bytes.
+ */
+export function tinyWav(durationSec: number, sampleRate = 8000): Buffer {
+  const samples = Math.round(durationSec * sampleRate);
+  const dataSize = samples * 2; // 16-bit mono
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + dataSize, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(sampleRate * 2, 28); // byte rate
+  header.writeUInt16LE(2, 32); // block align
+  header.writeUInt16LE(16, 34); // bits per sample
+  header.write('data', 36);
+  header.writeUInt32LE(dataSize, 40);
+  return Buffer.concat([header, Buffer.alloc(dataSize)]);
+}
+
 export function submission(id: string, overrides: Partial<Submission> = {}): Submission {
   return {
     id,

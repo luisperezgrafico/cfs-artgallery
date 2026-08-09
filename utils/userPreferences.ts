@@ -1,7 +1,23 @@
+import { DEFAULT_DWELL_SECONDS, DwellSeconds, isDwellSeconds } from './tourEstimate';
+
 type StoredVisitPosition = {
   roomId: string;
   frameIndex: number;
   updatedAt: number;
+};
+
+export type TourPreset = 'guided' | 'silent' | 'own-pace';
+
+export interface VisitMode {
+  narrationEnabled: boolean;
+  dwellSeconds: DwellSeconds;
+  lastPreset: TourPreset | null;
+}
+
+const DEFAULT_VISIT_MODE: VisitMode = {
+  narrationEnabled: true,
+  dwellSeconds: DEFAULT_DWELL_SECONDS,
+  lastPreset: null,
 };
 
 export interface ShelfItem {
@@ -17,6 +33,7 @@ export interface ShelfItem {
 const VISIT_POSITION_KEY = 'cfs-gallery:visit-position:v1';
 const MENU_TAB_Y_KEY = 'cfs-gallery:menu-tab-y:v1';
 const SHELF_KEY = 'cfs-gallery:shelf:v1';
+const VISIT_MODE_KEY = 'cfs-gallery:visit-mode:v1';
 const DEFAULT_MENU_TAB_Y = 0.5;
 const MIN_MENU_TAB_Y = 0.18;
 const MAX_MENU_TAB_Y = 0.82;
@@ -154,6 +171,42 @@ export function writeShelf(items: ShelfItem[]): void {
   if (!ls) return;
   try {
     ls.setItem(SHELF_KEY, JSON.stringify(items));
+  } catch {
+    /* storage disabled/full */
+  }
+}
+
+/**
+ * Narration + dwell preference, plus which entry-modal door was picked last
+ * (so the modal can lead with "Last time: X"). `autoAdvance` is deliberately
+ * not part of this — every fresh mount starts paused (docs/guided-tour.md §9).
+ */
+export function readVisitMode(): VisitMode {
+  const ls = storage();
+  if (!ls) return DEFAULT_VISIT_MODE;
+
+  try {
+    const raw = ls.getItem(VISIT_MODE_KEY);
+    if (!raw) return DEFAULT_VISIT_MODE;
+
+    const parsed = JSON.parse(raw) as Partial<VisitMode>;
+    return {
+      narrationEnabled: typeof parsed.narrationEnabled === 'boolean' ? parsed.narrationEnabled : DEFAULT_VISIT_MODE.narrationEnabled,
+      dwellSeconds: isDwellSeconds(parsed.dwellSeconds) ? parsed.dwellSeconds : DEFAULT_VISIT_MODE.dwellSeconds,
+      lastPreset: parsed.lastPreset === 'guided' || parsed.lastPreset === 'silent' || parsed.lastPreset === 'own-pace'
+        ? parsed.lastPreset
+        : null,
+    };
+  } catch {
+    return DEFAULT_VISIT_MODE;
+  }
+}
+
+export function saveVisitMode(mode: VisitMode): void {
+  const ls = storage();
+  if (!ls) return;
+  try {
+    ls.setItem(VISIT_MODE_KEY, JSON.stringify({ ...mode, updatedAt: Date.now() }));
   } catch {
     /* storage disabled/full */
   }

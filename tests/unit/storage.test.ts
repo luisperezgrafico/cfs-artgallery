@@ -242,13 +242,51 @@ describe('managed artworks', () => {
       audioVoice: 'coral',
       audioSource: 'generated',
       audioTextSignature: 'sig-a',
+      audioDurationSec: 42,
     });
 
     const updated = await clearArtworkAudio('room-1', 'a');
 
     expect(updated).toMatchObject({ id: 'a', title: 'Piece a' });
     expect(updated?.audioUrl).toBeUndefined();
+    expect(updated?.audioDurationSec).toBeUndefined();
     expect((await getRoomArtworks('room-1'))?.[0].audioUrl).toBeUndefined();
+  });
+
+  it('backfills a measured audio duration without touching other audio fields', async () => {
+    await addArtworkToRoom('room-1', {
+      ...artwork('a'),
+      audioUrl: 'https://example.test/audio.mp3',
+      audioGeneratedAt: '2026-08-08T12:00:00.000Z',
+      audioVoice: 'coral',
+      audioSource: 'generated',
+      audioTextSignature: 'sig-a',
+    });
+
+    const updated = await updateArtworkAudio('room-1', 'a', { audioDurationSec: 37.4 });
+
+    expect(updated).toMatchObject({
+      id: 'a',
+      audioUrl: 'https://example.test/audio.mp3',
+      audioVoice: 'coral',
+      audioDurationSec: 37.4,
+    });
+  });
+
+  it('clears a stale audio duration when regenerating passes it as undefined', async () => {
+    await addArtworkToRoom('room-1', {
+      ...artwork('a'),
+      audioUrl: 'https://example.test/old.mp3',
+      audioDurationSec: 99,
+    });
+
+    const updated = await updateArtworkAudio('room-1', 'a', {
+      audioUrl: 'https://example.test/new.mp3',
+      audioDurationSec: undefined,
+    });
+
+    expect(updated?.audioUrl).toBe('https://example.test/new.mp3');
+    expect(updated?.audioDurationSec).toBeUndefined();
   });
 });
 

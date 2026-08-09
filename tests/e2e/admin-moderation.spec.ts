@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { seed, openAdmin, submission, artwork, card, row, deleteArtwork, timeUntil, TINY_PNG } from './fixtures';
+import { seed, openAdmin, submission, artwork, card, row, deleteArtwork, timeUntil, TINY_PNG, tinyWav } from './fixtures';
 import { BASE_URL, TEST_ADMIN } from '../../playwright.config';
 import { audioTextSignature } from '../../utils/audioNarrationText';
 
@@ -359,11 +359,17 @@ test.describe('managing an approved artwork', () => {
     const uploaded = page.waitForResponse(r =>
       r.request().method() === 'POST' && r.url().includes('/api/admin/artworks/room-1/audio/upload'));
     await page.getByTestId('upload-audio-input').setInputFiles({
-      name: 'artist-audio.mp3',
-      mimeType: 'audio/mpeg',
-      buffer: Buffer.from([1, 2, 3, 4]),
+      name: 'artist-audio.wav',
+      mimeType: 'audio/wav',
+      buffer: tinyWav(0.1),
     });
-    await uploaded;
+    const uploadResponse = await uploaded;
+
+    // The browser measures the clip's real length before uploading it — this
+    // is what feeds the guided tour's per-room time estimate (docs/guided-tour.md §7).
+    const uploadBody = await uploadResponse.json();
+    expect(uploadBody.artwork.audioDurationSec).toBeGreaterThan(0);
+    expect(uploadBody.artwork.audioDurationSec).toBeCloseTo(0.1, 1);
 
     await expect(page.getByText('Uploaded just now')).toBeVisible();
     const removed = page.waitForResponse(r =>

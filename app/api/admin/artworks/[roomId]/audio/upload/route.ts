@@ -30,6 +30,8 @@ export async function POST(
     const form = await request.formData();
     const id = (form.get('id') as string | null)?.trim() ?? '';
     const file = form.get('file') as File | null;
+    const durationRaw = Number(form.get('duration'));
+    const durationSec = Number.isFinite(durationRaw) && durationRaw > 0 ? durationRaw : undefined;
 
     if (!id) {
       return NextResponse.json({ error: 'id is required.' }, { status: 400 });
@@ -62,6 +64,7 @@ export async function POST(
       audioVoice: 'artist-upload',
       audioSource: 'uploaded',
       audioTextSignature: audioTextSignature(artwork),
+      audioDurationSec: durationSec,
     });
     if (!updated) {
       return NextResponse.json({ error: 'Artwork not found.' }, { status: 404 });

@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { useTour } from '../../contexts/TourContext';
+import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 
 interface SwipeableContainerProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface SwipeableContainerProps {
 
 const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => {
   const { isTourStarted, nextFrame, previousFrame, quitTour } = useTour();
+  const { setAutoAdvance } = useGuidedTourPreferences();
   // True whenever any overlay/drawer owns touch gestures.
   const anyModalOpen = useRef(false);
 
@@ -27,8 +29,8 @@ const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => 
   }, []);
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft:  isTourStarted ? () => { if (!anyModalOpen.current) nextFrame();     } : undefined,
-    onSwipedRight: isTourStarted ? () => { if (!anyModalOpen.current) previousFrame(); } : undefined,
+    onSwipedLeft:  isTourStarted ? () => { if (!anyModalOpen.current) { setAutoAdvance(false); nextFrame();     } } : undefined,
+    onSwipedRight: isTourStarted ? () => { if (!anyModalOpen.current) { setAutoAdvance(false); previousFrame(); } } : undefined,
     onSwipedDown:  isTourStarted ? () => { if (!anyModalOpen.current) quitTour();      } : undefined,
     preventScrollOnSwipe: false,
     trackMouse: false,

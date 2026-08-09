@@ -26,8 +26,15 @@ export interface AdminData {
     input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
   ) => Promise<ImageMetadata>;
   regenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
-  uploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
+  uploadAudio: (roomId: string, artworkId: string, file: File, durationSec?: number) => Promise<ImageMetadata>;
   removeAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
+  /**
+   * Backfills a measured audio length after the fact (typically right after a
+   * regenerate, once the browser has decoded the new clip). Silent and
+   * best-effort: it doesn't touch busy/list state, so a failure here is never
+   * user-visible — the estimate just falls back to the word-count guess.
+   */
+  updateAudioDuration: (roomId: string, artworkId: string, durationSec: number) => Promise<ImageMetadata | null>;
   dismissError: () => void;
 }
 
@@ -258,11 +265,12 @@ export function useAdminData(): AdminData {
     return data.artwork;
   }, []);
 
-  const uploadAudio = useCallback(async (roomId: string, artworkId: string, file: File): Promise<ImageMetadata> => {
+  const uploadAudio = useCallback(async (roomId: string, artworkId: string, file: File, durationSec?: number): Promise<ImageMetadata> => {
     dispatch({ type: 'artworkUpdateStart', artworkId });
     const body = new FormData();
     body.append('id', artworkId);
     body.append('file', file);
+    if (durationSec) body.append('duration', String(durationSec));
 
     let res: Response;
     try {
@@ -329,7 +337,24 @@ export function useAdminData(): AdminData {
     return data.artwork;
   }, []);
 
+  const updateAudioDuration = useCallback(async (roomId: string, artworkId: string, durationSec: number): Promise<ImageMetadata | null> => {
+    try {
+      const res = await fetch(`/api/admin/artworks/${roomId}/audio`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: artworkId, durationSec }),
+      });
+      const data = await res.json().catch(() => null) as { ok?: boolean; artwork?: ImageMetadata } | null;
+      return res.ok && data?.ok && data.artwork ? data.artwork : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const dismissError = useCallback(() => dispatch({ type: 'dismissError' }), []);
 
-  return { state, refresh, approve, reject, remove, updateArtwork, regenerateAudio, uploadAudio, removeAudio, dismissError };
+  return {
+    state, refresh, approve, reject, remove, updateArtwork,
+    regenerateAudio, uploadAudio, removeAudio, updateAudioDuration, dismissError,
+  };
 }

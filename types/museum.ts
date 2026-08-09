@@ -50,6 +50,8 @@ export interface ImageMetadata {
   audioVoice?: string;
   audioSource?: 'generated' | 'uploaded';
   audioTextSignature?: string;
+  /** Playback length of audioUrl, in seconds — feeds the guided tour's time estimate. Not yet captured on generate/upload; falls back to a word-count estimate when absent. */
+  audioDurationSec?: number;
   link: string;
   /** width / height — used by Frame to set size before texture loads */
   aspectRatio?: number;

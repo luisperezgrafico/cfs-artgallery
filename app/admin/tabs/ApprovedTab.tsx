@@ -23,6 +23,7 @@ export default function ApprovedTab({
   onRegenerateAudio,
   onUploadAudio,
   onRemoveAudio,
+  onUpdateAudioDuration,
 }: {
   artworks: Record<string, ImageMetadata[]>;
   publishingIds: string[];
@@ -36,8 +37,9 @@ export default function ApprovedTab({
     input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
   ) => Promise<ImageMetadata>;
   onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
-  onUploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
+  onUploadAudio: (roomId: string, artworkId: string, file: File, durationSec?: number) => Promise<ImageMetadata>;
   onRemoveAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
+  onUpdateAudioDuration: (roomId: string, artworkId: string, durationSec: number) => Promise<ImageMetadata | null>;
 }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [manageArtwork, setManageArtwork] = useState<{ roomId: string; artwork: ImageMetadata } | null>(null);
@@ -61,6 +63,7 @@ export default function ApprovedTab({
           onRegenerateAudio={onRegenerateAudio}
           onUploadAudio={onUploadAudio}
           onRemoveAudio={onRemoveAudio}
+          onUpdateAudioDuration={onUpdateAudioDuration}
         />
       )}
 

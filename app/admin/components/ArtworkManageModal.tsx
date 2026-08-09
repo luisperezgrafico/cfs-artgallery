@@ -10,6 +10,7 @@ import { rooms } from '../../../config/roomsConfig';
 import type { ImageMetadata } from '../../../types/museum';
 import { artworkKey } from '../../../utils/artworkKey';
 import { useAudioPlayer } from '../../../utils/useAudioPlayer';
+import { measureAudioDurationSec, measureFileDurationSec } from '../../../utils/measureAudioDuration';
 import ContentNotesDropdown from '../../../components/ui/ContentNotesDropdown';
 import { hasNarrationText, isAudioOutdated, timeAgo } from '../helpers';
 
@@ -24,6 +25,7 @@ export default function ArtworkManageModal({
   onRegenerateAudio,
   onUploadAudio,
   onRemoveAudio,
+  onUpdateAudioDuration,
 }: {
   roomId: string;
   artwork: ImageMetadata;
@@ -37,8 +39,9 @@ export default function ArtworkManageModal({
     input: { targetRoomId: string; slot?: number; fields: Partial<EditableArtworkFields> },
   ) => Promise<ImageMetadata>;
   onRegenerateAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
-  onUploadAudio: (roomId: string, artworkId: string, file: File) => Promise<ImageMetadata>;
+  onUploadAudio: (roomId: string, artworkId: string, file: File, durationSec?: number) => Promise<ImageMetadata>;
   onRemoveAudio: (roomId: string, artworkId: string) => Promise<ImageMetadata>;
+  onUpdateAudioDuration: (roomId: string, artworkId: string, durationSec: number) => Promise<ImageMetadata | null>;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { audioState, toggle: toggleAudio, reset: resetAudio, audioProps } = useAudioPlayer();
@@ -63,6 +66,8 @@ export default function ArtworkManageModal({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const audioUploadRef = useRef<HTMLInputElement | null>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   const key = artworkKey(current);
   const room = rooms.find(r => r.id === currentRoomId);
   const busy = busyArtworkId === key || saving || regenerating || uploadingAudio || removingAudio;
@@ -131,6 +136,16 @@ export default function ArtworkManageModal({
     try {
       const updated = await onRegenerateAudio(currentRoomId, key);
       setCurrent(updated);
+      // Best-effort: measure the new clip's length and backfill it. Never
+      // surfaced as an error — the time estimate just falls back if this fails.
+      if (updated.audioUrl) {
+        measureAudioDurationSec(updated.audioUrl).then(durationSec => {
+          if (!durationSec || !mountedRef.current) return;
+          onUpdateAudioDuration(currentRoomId, key, durationSec).then(withDuration => {
+            if (withDuration && mountedRef.current) setCurrent(withDuration);
+          });
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate audio.');
     } finally {
@@ -144,7 +159,8 @@ export default function ArtworkManageModal({
     setError('');
     resetAudio();
     try {
-      const updated = await onUploadAudio(currentRoomId, key, file);
+      const durationSec = await measureFileDurationSec(file);
+      const updated = await onUploadAudio(currentRoomId, key, file, durationSec);
       setCurrent(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload audio.');
