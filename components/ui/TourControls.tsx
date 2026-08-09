@@ -96,7 +96,7 @@ const TourControls: React.FC<{
           <button
             onClick={() => setAutoAdvance(!autoAdvance)}
             aria-label={autoAdvance ? 'Switch to manual navigation' : 'Resume auto-advance'}
-            className={`h-10 w-20 shrink-0 flex items-center justify-center rounded-full text-xs font-medium transition-colors ${
+            className={`h-10 w-20 shrink-0 flex items-center justify-center rounded-full text-sm font-medium transition-colors ${
               autoAdvance ? 'bg-white text-black' : 'bg-white/10 text-white/80 hover:bg-white/20'
             }`}
           >

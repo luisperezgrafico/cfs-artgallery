@@ -25,8 +25,8 @@ import { DEFAULT_REST_VIEW } from '../utils/restView';
 import { findNextRealIndex } from '../utils/roomLayout';
 
 const MUTE_UNDO_MS = 4000;
-const CONTENT_NOTE_LEAD_IN_MS = 3000;
-const NARRATION_LEAD_IN_MS = 400;
+const CONTENT_NOTE_LEAD_IN_MS = 5000;
+const NARRATION_LEAD_IN_MS = 3000;
 const ADVANCE_BEAT_MS = 900;
 const NEXT_ROOM_OVERVIEW_MS = 1500;
 
