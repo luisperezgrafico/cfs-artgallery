@@ -34,7 +34,7 @@ describe('admin Resend settings routes', () => {
     memoryStore.reset();
     resendMocks.constructor.mockClear();
     resendMocks.send.mockReset();
-    resendMocks.send.mockResolvedValue({ id: 'email-one' });
+    resendMocks.send.mockResolvedValue({ data: { id: 'email-one' }, error: null });
   });
 
   it('returns the updated masked key state after saving a Resend API key', async () => {
@@ -73,9 +73,26 @@ describe('admin Resend settings routes', () => {
     expect(res.ok).toBe(true);
     expect(resendMocks.constructor).toHaveBeenCalledWith('re_draft_key');
     expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
+      from: 'ME/CFS Gallery <onboarding@resend.dev>',
       to: 'moderator@example.test',
     }));
     const settings = await getSettings();
     expect(settings.resendApiKey).toBe('');
+  });
+
+  it('returns the Resend error when the provider rejects a test email', async () => {
+    resendMocks.send.mockResolvedValue({
+      data: null,
+      error: { message: 'You can only send testing emails to your own email address.' },
+    });
+
+    const res = await postTestEmail({
+      to: 'someone@example.test',
+      resendApiKey: 're_draft_key',
+    });
+    const body = await res.json() as { error?: string };
+
+    expect(res.status).toBe(502);
+    expect(body.error).toContain('your own email address');
   });
 });

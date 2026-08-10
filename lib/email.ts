@@ -1,6 +1,14 @@
 import { Resend } from 'resend';
 import { GallerySettings } from './storage';
 
+type ResendSendResult = Awaited<ReturnType<Resend['emails']['send']>>;
+
+function assertEmailAccepted(result: ResendSendResult): void {
+  if (result.error) {
+    throw new Error(result.error.message || 'Resend rejected the email.');
+  }
+}
+
 function renderTemplate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
 }
@@ -22,12 +30,13 @@ export async function sendArtistApproval(
     gallery_url: opts.galleryUrl,
   });
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: 'ME/CFS Gallery <gallery@notifications.cfs-gallery.art>',
     to: opts.email,
     subject: `Your artwork "${opts.title}" has been accepted`,
     text: body,
   });
+  assertEmailAccepted(result);
 }
 
 export async function sendArtistRejection(
@@ -47,12 +56,13 @@ export async function sendArtistRejection(
   });
   const body = opts.reason ? `${baseBody}\n\nNote from the curators: ${opts.reason}` : baseBody;
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: 'ME/CFS Gallery <gallery@notifications.cfs-gallery.art>',
     to: opts.email,
     subject: `Your submission "${opts.title}"`,
     text: body,
   });
+  assertEmailAccepted(result);
 }
 
 export async function notifyModerators(
@@ -66,10 +76,11 @@ export async function notifyModerators(
   }
 
   const resend = new Resend(apiKey);
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: 'ME/CFS Gallery <gallery@notifications.cfs-gallery.art>',
     to: settings.moderatorEmails,
     subject: `New artwork submission: "${opts.title}" by ${opts.artist}`,
     text: `A new artwork has been submitted to the gallery.\n\nTitle: ${opts.title}\nArtist: ${opts.artist}\n\nReview it at: ${opts.adminUrl}`,
   });
+  assertEmailAccepted(result);
 }

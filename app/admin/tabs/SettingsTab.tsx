@@ -57,10 +57,11 @@ export default function SettingsTab() {
   const [voicesMessage, setVoicesMessage] = useState('');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<'ok' | 'fail' | null>(null);
+  const [testMessage, setTestMessage] = useState('');
   const [saveError, setSaveError] = useState('');
   const [apiKeyDraft, setApiKeyDraft] = useState('');
   const [elevenLabsApiKeyDrafts, setElevenLabsApiKeyDrafts] = useState<string[]>(['', '', '', '']);
-  const [showKey, setShowKey] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const previewAudioRef = React.useRef<HTMLAudioElement | null>(null);
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
@@ -73,6 +74,7 @@ export default function SettingsTab() {
       .then(([settingsData, audioData]) => {
         setSettings(settingsData);
         setElevenLabsSettings(audioData);
+        setTestEmail(settingsData.moderatorEmails[0] ?? '');
       })
       .catch(() => undefined)
       .finally(() => setLoading(false));
@@ -210,9 +212,10 @@ export default function SettingsTab() {
   const sendTestEmail = async () => {
     setTesting(true);
     setTestResult(null);
+    setTestMessage('');
     try {
-      const to = settings?.moderatorEmails[0];
-      if (!to) { setTestResult('fail'); return; }
+      const to = testEmail.trim();
+      if (!to) throw new Error('Enter a test recipient email address.');
       const res = await fetch('/api/admin/settings/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -221,9 +224,16 @@ export default function SettingsTab() {
           resendApiKey: apiKeyDraft.trim() || undefined,
         }),
       });
-      setTestResult(res.ok ? 'ok' : 'fail');
-    } catch { setTestResult('fail'); }
-    finally { setTesting(false); setTimeout(() => setTestResult(null), 4000); }
+      const data = await res.json().catch(() => null) as { ok?: boolean; error?: string } | null;
+      if (!res.ok || !data?.ok) throw new Error(data?.error ?? 'Failed to send test email.');
+      setTestResult('ok');
+      setTestMessage(`Test email sent to ${to}.`);
+    } catch (err) {
+      setTestResult('fail');
+      setTestMessage(err instanceof Error ? err.message : 'Failed to send test email.');
+    } finally {
+      setTesting(false);
+    }
   };
 
   const addEmail = () => {
@@ -252,25 +262,37 @@ export default function SettingsTab() {
           <label className="block text-xs text-white/40 mb-1">API key</label>
           <div className="flex flex-wrap gap-2">
             <input
-              type={showKey ? 'text' : 'password'}
+              type="password"
               value={apiKeyDraft}
               onChange={e => setApiKeyDraft(e.target.value)}
               placeholder={settings.resendApiKeySet ? 'Saved Resend API key' : 're_xxxxxxxxxxxxxxxx'}
               className="flex-1 bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
             />
-            <button onClick={() => setShowKey(s => !s)}
-              className="px-3 py-2 text-white/40 hover:text-white/70 bg-zinc-800 border border-white/10 rounded-lg text-xs transition-colors">
-              {showKey ? 'Hide' : 'Show'}
-            </button>
-            <button onClick={sendTestEmail} disabled={testing || (!settings.resendApiKeySet && !apiKeyDraft)}
+          </div>
+          <p className="text-white/25 text-xs mt-1">
+            {settings.resendApiKeySet ? <span className="mr-2 text-emerald-400/70">API key saved.</span> : null}
+            Saved keys cannot be revealed. Paste a new key here to replace the current one.{' '}
+            <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">resend.com</a>
+          </p>
+        </div>
+        <div>
+          <label className="block text-xs text-white/40 mb-1">Test recipient</label>
+          <div className="flex flex-wrap gap-2">
+            <input
+              type="email"
+              value={testEmail}
+              onChange={e => setTestEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="min-w-0 flex-1 bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
+            />
+            <button onClick={sendTestEmail} disabled={testing || !testEmail.trim() || (!settings.resendApiKeySet && !apiKeyDraft.trim())}
               className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white/70 hover:text-white border border-white/10 rounded-lg text-xs transition-colors disabled:opacity-40">
               {testing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
               {testResult === 'ok' ? 'Sent!' : testResult === 'fail' ? 'Failed' : 'Test'}
             </button>
           </div>
-          <p className="text-white/25 text-xs mt-1">
-            {settings.resendApiKeySet ? <span className="mr-2 text-emerald-400/70">API key saved.</span> : null}
-            <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">resend.com</a>
+          <p className={`mt-1 text-xs ${testResult === 'fail' ? 'text-red-300/80' : testResult === 'ok' ? 'text-emerald-400/70' : 'text-white/25'}`}>
+            {testMessage || 'Before domain verification, Resend only delivers tests to the email address on its account.'}
           </p>
         </div>
       </SettingsAccordionSection>
