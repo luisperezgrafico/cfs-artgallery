@@ -253,9 +253,9 @@ export default function SettingsTab() {
           <div className="flex flex-wrap gap-2">
             <input
               type={showKey ? 'text' : 'password'}
-              value={apiKeyDraft || (settings.resendApiKeySet ? '••••••••••••••••••••••••' : '')}
+              value={apiKeyDraft}
               onChange={e => setApiKeyDraft(e.target.value)}
-              placeholder="re_xxxxxxxxxxxxxxxx"
+              placeholder={settings.resendApiKeySet ? 'Saved Resend API key' : 're_xxxxxxxxxxxxxxxx'}
               className="flex-1 bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm font-mono"
             />
             <button onClick={() => setShowKey(s => !s)}
@@ -269,6 +269,7 @@ export default function SettingsTab() {
             </button>
           </div>
           <p className="text-white/25 text-xs mt-1">
+            {settings.resendApiKeySet ? <span className="mr-2 text-emerald-400/70">API key saved.</span> : null}
             <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">resend.com</a>
           </p>
         </div>
