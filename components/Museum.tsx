@@ -11,7 +11,6 @@ import { ZoomProvider } from '../contexts/ZoomContext';
 import { CameraManager } from './museum/CameraManager';
 import SpotlightGroup from './museum/SpotlightGroup';
 import { useTour } from '../contexts/TourContext';
-import { useGuidedTourPreferences } from '../contexts/GuidedTourContext';
 import CeilingLight from './museum/CeilingLight';
 import Bench from './museum/Bench';
 import { BENCH_LAYOUT } from '../utils/restView';
@@ -36,7 +35,6 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
     sitAtRestView,
     quitTour,
   } = useTour();
-  const { setAutoAdvance } = useGuidedTourPreferences();
   const frameRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   React.useEffect(() => {
@@ -86,7 +84,11 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
                   }}
                   onFrameClick={(idx) => {
                     if (setCurrentFrameIndex) {
-                      setAutoAdvance(false);
+                      // Zooming in to look closer, or jumping to a frame you
+                      // clicked directly, are navigation — same as arrows or
+                      // swipe, neither forces Manual. See the lightbox pause
+                      // in GuidedTourContext for what keeps the room from
+                      // changing underneath a zoomed-in image.
                       if (idx === currentFrameIndex) {
                         if (images[idx]?.isEmpty) {
                           window.dispatchEvent(new CustomEvent('open-submit-artwork', { detail: { roomId, slot: idx } }));

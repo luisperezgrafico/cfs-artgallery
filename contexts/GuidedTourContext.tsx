@@ -26,6 +26,8 @@ import { findNextRealIndex } from '../utils/roomLayout';
 
 const CONTENT_NOTE_LEAD_IN_MS = 5000;
 const NARRATION_LEAD_IN_MS = 3000;
+/** Used instead of the two above when narration resumes on an artwork already on screen — entering Auto from Manual, or toggling narration back on — rather than the full "just arrived" pause. */
+const RESUME_LEAD_IN_MS = 1000;
 const ADVANCE_BEAT_MS = 900;
 const NEXT_ROOM_OVERVIEW_MS = 1500;
 
@@ -148,6 +150,32 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const advanceRef = useRef<() => void>(() => {});
+  // Which artwork the lead-in/dwell logic last evaluated — lets the effect
+  // tell "just arrived at a new artwork" apart from "still on the same one,
+  // something else changed" (entering Auto, toggling narration back on).
+  const lastEvaluatedIndexRef = useRef<number | null>(null);
+  // Tapping the artwork to zoom in shouldn't drop you out of Auto, but it
+  // also shouldn't let the room change underneath the zoomed image — defer
+  // the advance until the lightbox closes instead of skipping it.
+  const lightboxOpenRef = useRef(false);
+  const pendingAdvanceRef = useRef(false);
+
+  useEffect(() => {
+    const handleOpen = () => { lightboxOpenRef.current = true; };
+    const handleClose = () => {
+      lightboxOpenRef.current = false;
+      if (pendingAdvanceRef.current) {
+        pendingAdvanceRef.current = false;
+        advanceRef.current();
+      }
+    };
+    window.addEventListener('open-artwork-lightbox', handleOpen);
+    window.addEventListener('close-artwork-lightbox', handleClose);
+    return () => {
+      window.removeEventListener('open-artwork-lightbox', handleOpen);
+      window.removeEventListener('close-artwork-lightbox', handleClose);
+    };
+  }, []);
 
   // Arriving via "Next room": let the visitor take the room in first, the
   // same beat a fresh visit gets, before the tour picks up on its own.
@@ -181,6 +209,9 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
   }, [setNarrationEnabled]);
 
   useEffect(() => {
+    const isFreshArrival = lastEvaluatedIndexRef.current !== currentFrameIndex;
+    lastEvaluatedIndexRef.current = currentFrameIndex;
+
     const withinRoom = isTourStarted && !isResting && currentFrameIndex >= 0 && currentFrameIndex < totalFrames;
 
     if (!autoAdvance || !withinRoom) {
@@ -202,6 +233,12 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
     }
 
     const advance = () => {
+      // The zoomed image would change out from under the visitor otherwise —
+      // wait for the lightbox to close instead of skipping the advance.
+      if (lightboxOpenRef.current) {
+        pendingAdvanceRef.current = true;
+        return;
+      }
       const next = findNextRealIndex(images, currentFrameIndex);
       if (next === -1) sitAtRestView(DEFAULT_REST_VIEW);
       else setCurrentFrameIndex(next);
@@ -220,6 +257,11 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
 
     if (canNarrate) {
       const hasNotes = !!artwork!.contentNotes?.length;
+      // A fresh arrival gets the full pause (time to read a content note, or
+      // just settle before the voice starts); resuming narration on an
+      // artwork already on screen — entering Auto, toggling narration back
+      // on — only needs a short beat, not another full "just arrived" wait.
+      const leadIn = isFreshArrival ? (hasNotes ? CONTENT_NOTE_LEAD_IN_MS : NARRATION_LEAD_IN_MS) : RESUME_LEAD_IN_MS;
       leadInTimer = setTimeout(() => {
         const player = audioRef.current;
         if (!player || cancelled) return;
@@ -232,7 +274,7 @@ export function GuidedTourEngineProvider({ children }: { children: React.ReactNo
             setNarrationPlaying(false);
             startDwell();
           });
-      }, hasNotes ? CONTENT_NOTE_LEAD_IN_MS : NARRATION_LEAD_IN_MS);
+      }, leadIn);
     } else {
       startDwell();
     }
