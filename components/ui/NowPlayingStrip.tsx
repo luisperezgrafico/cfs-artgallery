@@ -9,8 +9,8 @@ import { contentNoteLabel } from '../../config/contentNotes';
 /**
  * Content notes live only in the plaque, which a guided visitor never opens —
  * this is what makes them visible without one. Two independent halves: the
- * notes text (if any) and the narration mute control (if this artwork has
- * audio). Neither implies the other. See docs/guided-tour.md §5.
+ * notes text (if any) and the auto-mode narration mute control (if this artwork
+ * has audio). Neither implies the other. See docs/guided-tour.md §5.
  *
  * The notes half stays visible even with the rest of the interface hidden —
  * it's a content warning, not a control, and hiding it would defeat the
@@ -22,7 +22,7 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationCont
 }) => {
   const { isTourStarted, isResting, currentFrameIndex, images } = useTour();
   const { narrationPlaying, muteNarration, undoMute } = useGuidedTourEngine();
-  const { narrationEnabled } = useGuidedTourPreferences();
+  const { autoAdvance, narrationEnabled } = useGuidedTourPreferences();
 
   if (!isTourStarted || isResting) return null;
 
@@ -32,7 +32,7 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationCont
   const notes = artwork.contentNotes ?? [];
   const hasNotes = notes.length > 0;
   const hasAudio = !!artwork.audioUrl;
-  const showSpeaker = showNarrationControl && hasAudio;
+  const showSpeaker = showNarrationControl && autoAdvance && hasAudio;
 
   if (!hasNotes && !showSpeaker) return null;
 
@@ -42,7 +42,11 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationCont
         className="fixed left-0 right-0 z-20 flex justify-center px-4"
         style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
       >
-        <div className="flex items-center gap-3 max-w-md bg-black/50 backdrop-blur-md rounded-full px-3.5 py-2 shadow-lg">
+        <div
+          className={`flex items-center max-w-md bg-black/50 backdrop-blur-md rounded-full shadow-lg ${
+            hasNotes ? 'gap-3 px-3 py-1.5' : 'p-1'
+          }`}
+        >
           {hasNotes && (
             <p className="text-white/75 text-xs leading-snug">
               <span className="text-white/45">Content notes:</span>{' '}
