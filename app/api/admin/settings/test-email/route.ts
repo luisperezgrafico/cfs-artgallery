@@ -6,9 +6,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { to } = await request.json() as { to: string };
+    const { to, resendApiKey } = await request.json() as { to: string; resendApiKey?: string };
     const settings = await getSettings();
-    const apiKey = settings.resendApiKey || process.env.RESEND_API_KEY;
+    const apiKey = resendApiKey?.trim() || settings.resendApiKey || process.env.RESEND_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json({ error: 'No API key configured.' }, { status: 400 });

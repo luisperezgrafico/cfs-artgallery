@@ -57,6 +57,7 @@ export default function SettingsTab() {
   const [voicesMessage, setVoicesMessage] = useState('');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<'ok' | 'fail' | null>(null);
+  const [saveError, setSaveError] = useState('');
   const [apiKeyDraft, setApiKeyDraft] = useState('');
   const [elevenLabsApiKeyDrafts, setElevenLabsApiKeyDrafts] = useState<string[]>(['', '', '', '']);
   const [showKey, setShowKey] = useState(false);
@@ -93,17 +94,33 @@ export default function SettingsTab() {
   const save = async () => {
     if (!settings) return;
     setSaving(true);
+    setSaved(false);
+    setSaveError('');
     const body: Record<string, unknown> = {
       moderatorEmails: settings.moderatorEmails,
       approvalTemplate: settings.approvalTemplate,
       rejectionTemplate: settings.rejectionTemplate,
     };
-    if (apiKeyDraft) body.resendApiKey = apiKeyDraft;
-    await fetch('/api/admin/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    setSaving(false);
-    setSaved(true);
-    setApiKeyDraft('');
-    setTimeout(() => setSaved(false), 2500);
+    if (apiKeyDraft.trim()) body.resendApiKey = apiKeyDraft.trim();
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => null) as
+        | { ok?: boolean; error?: string; settings?: DisplaySettings }
+        | null;
+      if (!res.ok || !data?.ok) throw new Error(data?.error ?? 'Failed to save settings.');
+      if (data.settings) setSettings(data.settings);
+      setSaved(true);
+      setApiKeyDraft('');
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save settings.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const loadVoices = async () => {
@@ -197,7 +214,12 @@ export default function SettingsTab() {
       const to = settings?.moderatorEmails[0];
       if (!to) { setTestResult('fail'); return; }
       const res = await fetch('/api/admin/settings/test-email', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to,
+          resendApiKey: apiKeyDraft.trim() || undefined,
+        }),
       });
       setTestResult(res.ok ? 'ok' : 'fail');
     } catch { setTestResult('fail'); }
@@ -416,6 +438,7 @@ export default function SettingsTab() {
           {saving ? 'Saving…' : 'Save settings'}
         </button>
         {saved && <span className="text-emerald-400 text-sm">Saved</span>}
+        {saveError && <span className="text-red-400 text-sm">{saveError}</span>}
       </div>
     </div>
   );

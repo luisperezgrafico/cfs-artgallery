@@ -3,19 +3,23 @@ import { getSettings, saveSettings, GallerySettings } from '../../../../lib/stor
 
 export const dynamic = 'force-dynamic';
 
+function publicSettings(settings: GallerySettings) {
+  return {
+    moderatorEmails: settings.moderatorEmails,
+    approvalTemplate: settings.approvalTemplate,
+    rejectionTemplate: settings.rejectionTemplate,
+    resendApiKey: settings.resendApiKey
+      ? `${settings.resendApiKey.slice(0, 6)}${'•'.repeat(20)}`
+      : '',
+    resendApiKeySet: Boolean(settings.resendApiKey),
+  };
+}
+
 export async function GET() {
   try {
     const settings = await getSettings();
     // Never expose the API key in full — mask it for display
-    return NextResponse.json({
-      moderatorEmails: settings.moderatorEmails,
-      approvalTemplate: settings.approvalTemplate,
-      rejectionTemplate: settings.rejectionTemplate,
-      resendApiKey: settings.resendApiKey
-        ? `${settings.resendApiKey.slice(0, 6)}${'•'.repeat(20)}`
-        : '',
-      resendApiKeySet: Boolean(settings.resendApiKey),
-    });
+    return NextResponse.json(publicSettings(settings));
   } catch (err) {
     console.error('[admin/settings GET]', err);
     return NextResponse.json({}, { status: 500 });
@@ -41,7 +45,7 @@ export async function PUT(request: NextRequest) {
     };
 
     await saveSettings(updated);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, settings: publicSettings(updated) });
   } catch (err) {
     console.error('[admin/settings PUT]', err);
     return NextResponse.json({ error: 'Failed to save settings.' }, { status: 500 });
