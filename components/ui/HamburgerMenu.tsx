@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { ChevronDown, ChevronLeft, ChevronUp, Heart, Menu, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronDown, ChevronLeft, ChevronUp, Heart, List, Menu, X } from 'lucide-react';
 import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
 import { useShelf } from '../../contexts/ShelfContext';
@@ -61,8 +62,9 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [guidedTourOpen, setGuidedTourOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const router = useRouter();
   const { rooms, activeRoomIndex, setActiveRoomIndex, getRoomImages } = useRoom();
-  const { quitTour, startTour } = useTour();
+  const { quitTour, startTour, currentFrameIndex } = useTour();
   const { items: shelfItems, remove: removeFromShelf } = useShelf();
   const { narrationEnabled, setNarrationEnabled, dwellSeconds, setDwellSeconds } = useGuidedTourPreferences();
   const dragState = useRef<{
@@ -129,6 +131,13 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     }
     setView('main');
     setIsOpen(false);
+  };
+
+  const handleSwitchToList = () => {
+    const activeRoom = rooms[activeRoomIndex];
+    if (activeRoom) saveVisitPosition(activeRoom.id, currentFrameIndex);
+    setIsOpen(false);
+    router.push('/list');
   };
 
   const handleTabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -264,6 +273,16 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
             </div>
           ) : (
             <>
+              <div className="px-4 pt-5 pb-2 shrink-0">
+                <button
+                  onClick={handleSwitchToList}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors text-[var(--panel-text)] hover:bg-[var(--panel-btn-bg-hover)] hover:text-[var(--panel-title)]"
+                >
+                  <List size={14} />
+                  Simple list view
+                </button>
+              </div>
+
               {shelfItems.length > 0 && (
                 <div className="px-4 pt-5 pb-2 shrink-0">
                   <button
@@ -280,7 +299,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
               )}
 
               {/* Rooms */}
-              <div className={`px-4 ${shelfItems.length > 0 ? 'pt-3' : 'pt-5'} pb-3 shrink-0`}>
+              <div className="px-4 pt-3 pb-3 shrink-0">
                 <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 text-[var(--panel-subtitle)]">
                   Rooms
                 </p>

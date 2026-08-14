@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 import { rooms as allRooms, RoomConfig } from '../config/roomsConfig';
 import { getInitialRoomIndex } from '../utils/userPreferences';
 import { ImageMetadata } from '../types/museum';
-import { layoutRoom } from '../utils/roomLayout';
+import { mergeRoomArtworks } from '../utils/roomArtworks';
 
 interface RoomContextValue {
   rooms: RoomConfig[];
@@ -25,16 +25,10 @@ export function RoomProvider({
 }) {
   const [activeRoomIndex, setActiveRoomIndex] = useState(() => getInitialRoomIndex(allRooms));
 
-  const roomImages = useMemo(() => {
-    const map: Record<string, ImageMetadata[]> = {};
-    for (const room of allRooms) {
-      const live = liveArtworks[room.id];
-      const base = live && live.length > 0 ? live : room.images;
-      map[room.id] = layoutRoom(base);
-    }
-    return map;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveArtworks]);
+  const roomImages = useMemo(
+    () => mergeRoomArtworks(allRooms, liveArtworks),
+    [liveArtworks],
+  );
 
   const getRoomImages = useCallback(
     (roomId: string) => roomImages[roomId] ?? [],
