@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { rooms as allRooms, RoomConfig } from '../config/roomsConfig';
 import { getInitialRoomIndex } from '../utils/userPreferences';
 import { ImageMetadata } from '../types/museum';
@@ -36,7 +36,10 @@ export function RoomProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveArtworks]);
 
-  const getRoomImages = (roomId: string) => roomImages[roomId] ?? [];
+  const getRoomImages = useCallback(
+    (roomId: string) => roomImages[roomId] ?? [],
+    [roomImages],
+  );
 
   return (
     <RoomContext.Provider value={{ rooms: allRooms, activeRoomIndex, setActiveRoomIndex, getRoomImages }}>

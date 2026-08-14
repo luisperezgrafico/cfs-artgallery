@@ -30,6 +30,17 @@ export interface ShelfItem {
   frameIndex: number;
 }
 
+export interface ShelfRoomSnapshot {
+  roomId: string;
+  images: Array<{
+    id?: string;
+    title: string;
+    artist: string;
+    url: string;
+    contentNotes?: string[];
+  }>;
+}
+
 const VISIT_POSITION_KEY = 'cfs-gallery:visit-position:v1';
 const MENU_TAB_Y_KEY = 'cfs-gallery:menu-tab-y:v1';
 const SHELF_KEY = 'cfs-gallery:shelf:v1';
@@ -174,6 +185,34 @@ export function writeShelf(items: ShelfItem[]): void {
   } catch {
     /* storage disabled/full */
   }
+}
+
+/**
+ * Refreshes saved display data and locations by stable artwork id, dropping
+ * favourites whose artwork is no longer part of the rendered gallery.
+ */
+export function reconcileShelf(items: ShelfItem[], rooms: ShelfRoomSnapshot[]): ShelfItem[] {
+  const current = new Map<string, ShelfItem>();
+
+  for (const room of rooms) {
+    room.images.forEach((artwork, frameIndex) => {
+      if (!artwork.id) return;
+      current.set(artwork.id, {
+        id: artwork.id,
+        title: artwork.title,
+        artist: artwork.artist,
+        url: artwork.url,
+        contentNotes: artwork.contentNotes,
+        roomId: room.roomId,
+        frameIndex,
+      });
+    });
+  }
+
+  return items.flatMap(item => {
+    const artwork = current.get(item.id);
+    return artwork ? [artwork] : [];
+  });
 }
 
 /**

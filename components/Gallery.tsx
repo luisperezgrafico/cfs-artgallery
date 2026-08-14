@@ -9,7 +9,7 @@ import MuseumStage from './MuseumStage';
 import UIElements from './ui/UIElements';
 import { ImageMetadata } from '../types/museum';
 import { getInitialFrameIndex, saveVisitPosition } from '../utils/userPreferences';
-import { ShelfProvider } from '../contexts/ShelfContext';
+import { ShelfProvider, useShelf } from '../contexts/ShelfContext';
 import { GuidedTourPreferenceProvider, GuidedTourEngineProvider } from '../contexts/GuidedTourContext';
 
 function VisitPositionPersistence({ roomId }: { roomId: string }) {
@@ -25,7 +25,19 @@ function VisitPositionPersistence({ roomId }: { roomId: string }) {
   return null;
 }
 
-function GalleryContent() {
+function ShelfCatalogSync({ enabled }: { enabled: boolean }) {
+  const { rooms, getRoomImages } = useRoom();
+  const { sync } = useShelf();
+
+  useEffect(() => {
+    if (!enabled) return;
+    sync(rooms.map(room => ({ roomId: room.id, images: getRoomImages(room.id) })));
+  }, [enabled, getRoomImages, rooms, sync]);
+
+  return null;
+}
+
+function GalleryContent({ catalogReady }: { catalogReady: boolean }) {
   const { rooms, activeRoomIndex, getRoomImages } = useRoom();
   const activeRoom = rooms[activeRoomIndex];
   const images = getRoomImages(activeRoom.id);
@@ -43,6 +55,7 @@ function GalleryContent() {
           images={images}
         >
           <GuidedTourEngineProvider>
+            <ShelfCatalogSync enabled={catalogReady} />
             <VisitPositionPersistence roomId={activeRoom.id} />
             <SwipeableContainer>
               <MuseumStage images={images} theme={activeRoom.theme} roomId={activeRoom.id} />
@@ -57,21 +70,28 @@ function GalleryContent() {
 
 export default function Gallery() {
   const [liveArtworks, setLiveArtworks] = useState<Record<string, ImageMetadata[]>>({});
+  const [catalogReady, setCatalogReady] = useState(false);
 
   useEffect(() => {
     fetch('/api/artworks')
-      .then(r => r.json())
-      .then(data => setLiveArtworks(data))
+      .then(r => {
+        if (!r.ok) throw new Error('Failed to load artworks.');
+        return r.json();
+      })
+      .then(data => {
+        setLiveArtworks(data);
+        setCatalogReady(true);
+      })
       .catch(() => {});
   }, []);
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-black">
-      <ShelfProvider>
-        <RoomProvider liveArtworks={liveArtworks}>
-          <GalleryContent />
-        </RoomProvider>
-      </ShelfProvider>
+      <RoomProvider liveArtworks={liveArtworks}>
+        <ShelfProvider>
+          <GalleryContent catalogReady={catalogReady} />
+        </ShelfProvider>
+      </RoomProvider>
     </div>
   );
 }

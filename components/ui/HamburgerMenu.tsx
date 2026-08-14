@@ -61,9 +61,9 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [guidedTourOpen, setGuidedTourOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { rooms, activeRoomIndex, setActiveRoomIndex } = useRoom();
-  const { quitTour, startTour, setCurrentFrameIndex } = useTour();
-  const { items: shelfItems } = useShelf();
+  const { rooms, activeRoomIndex, setActiveRoomIndex, getRoomImages } = useRoom();
+  const { quitTour, startTour } = useTour();
+  const { items: shelfItems, remove: removeFromShelf } = useShelf();
   const { narrationEnabled, setNarrationEnabled, dwellSeconds, setDwellSeconds } = useGuidedTourPreferences();
   const dragState = useRef<{
     pointerId: number | null;
@@ -107,16 +107,25 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   };
 
   const handleShelfNavigate = (item: typeof shelfItems[0]) => {
-    const targetRoomIndex = rooms.findIndex(r => r.id === item.roomId);
-    if (targetRoomIndex === -1) return;
+    const target = rooms
+      .map((room, roomIndex) => ({
+        room,
+        roomIndex,
+        frameIndex: getRoomImages(room.id).findIndex(artwork => artwork.id === item.id),
+      }))
+      .find(location => location.frameIndex >= 0);
 
-    if (targetRoomIndex === activeRoomIndex) {
-      startTour();
-      setCurrentFrameIndex(item.frameIndex);
+    if (!target) {
+      removeFromShelf(item.id);
+      return;
+    }
+
+    if (target.roomIndex === activeRoomIndex) {
+      startTour(target.frameIndex);
     } else {
-      saveVisitPosition(item.roomId, item.frameIndex);
+      saveVisitPosition(target.room.id, target.frameIndex);
       quitTour();
-      setActiveRoomIndex(targetRoomIndex);
+      setActiveRoomIndex(target.roomIndex);
     }
     setView('main');
     setIsOpen(false);
