@@ -36,6 +36,19 @@ test.describe('list view', () => {
     await expect(page.getByRole('button', { name: 'Enter the gallery' })).toHaveCount(0);
   });
 
+  test('the zoom button opens the full-size lightbox', async ({ page, request }) => {
+    await seed(request, {
+      artworks: { 'room-1': [artwork('a', { title: 'Piece A' })] },
+    });
+    await page.goto('/list');
+
+    await page.getByRole('button', { name: 'View full image of Piece A' }).click();
+    await expect(page.getByRole('img', { name: 'Piece A' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('img', { name: 'Piece A' })).toHaveCount(0);
+  });
+
   test('the door links to the list view', async ({ page, request }) => {
     await seed(request);
     await page.goto('/');

@@ -273,16 +273,6 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
             </div>
           ) : (
             <>
-              <div className="px-4 pt-5 pb-2 shrink-0">
-                <button
-                  onClick={handleSwitchToList}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors text-[var(--panel-text)] hover:bg-[var(--panel-btn-bg-hover)] hover:text-[var(--panel-title)]"
-                >
-                  <List size={14} />
-                  Simple list view
-                </button>
-              </div>
-
               {shelfItems.length > 0 && (
                 <div className="px-4 pt-5 pb-2 shrink-0">
                   <button
@@ -299,7 +289,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
               )}
 
               {/* Rooms */}
-              <div className="px-4 pt-3 pb-3 shrink-0">
+              <div className={`px-4 ${shelfItems.length > 0 ? 'pt-3' : 'pt-5'} pb-3 shrink-0`}>
                 <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 text-[var(--panel-subtitle)]">
                   Rooms
                 </p>
@@ -334,6 +324,17 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[var(--panel-text)]">Theme</span>
                   <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--panel-text)]">List view</span>
+                  <button
+                    type="button"
+                    onClick={handleSwitchToList}
+                    aria-label="Switch to list view"
+                    className="w-11 h-11 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]"
+                  >
+                    <List size={18} />
+                  </button>
                 </div>
               </CollapsibleSection>
 
