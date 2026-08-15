@@ -177,7 +177,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
       () => createPlaqueTexture({
         title: image.isEmpty ? 'Submit Your Artwork' : image.title,
         subtitle: image.isEmpty ? 'Tap to Contribute' : artistLine,
-        footer: image.isEmpty ? undefined : 'Tap to read more',
+        footer: undefined,
         isSubmit: Boolean(image.isEmpty),
       }),
       [artistLine, image.isEmpty, image.title],

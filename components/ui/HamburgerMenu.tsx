@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, ChevronLeft, ChevronUp, Heart, List, Menu, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronUp, Heart, List, Menu, Music, X } from 'lucide-react';
 import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
 import { useShelf } from '../../contexts/ShelfContext';
@@ -332,15 +332,15 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                   <button
                     type="button"
                     onClick={() => void toggleAmbientMusic()}
-                    role="switch"
-                    aria-checked={ambientMusicPlaying}
-                    aria-label="Ambient music"
-                    className="relative w-11 h-6 rounded-full transition-colors bg-[var(--panel-btn-bg)]"
+                    aria-pressed={ambientMusicPlaying}
+                    aria-label={ambientMusicPlaying ? 'Turn ambient music off' : 'Turn ambient music on'}
+                    className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors text-[var(--panel-btn-text)] ${
+                      ambientMusicPlaying
+                        ? 'bg-[var(--panel-btn-bg-hover)]'
+                        : 'bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]'
+                    }`}
                   >
-                    <span
-                      className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-[var(--panel-btn-text)]"
-                      style={{ transform: ambientMusicPlaying ? 'translateX(20px)' : 'translateX(0)' }}
-                    />
+                    <Music size={18} strokeWidth={ambientMusicPlaying ? 2.5 : 1.75} />
                   </button>
                 </div>
                 <div className="flex items-center justify-between">

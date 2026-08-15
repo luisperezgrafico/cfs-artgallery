@@ -40,6 +40,10 @@ export function AmbientMusicProvider({ children }: { children: React.ReactNode }
     audioRef.current?.pause();
   }, []);
 
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = 0.15;
+  }, []);
+
   return (
     <AmbientMusicContext.Provider value={{ isPlaying, toggle }}>
       {children}
