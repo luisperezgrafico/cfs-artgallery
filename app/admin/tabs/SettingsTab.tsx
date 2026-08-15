@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp, Loader2, Pause, Play, Plus, RefreshCw, Save, Send, Trash2 } from 'lucide-react';
 import type { AudioSettings, GallerySettings } from '../../../lib/storage';
 
-type SettingsSectionId = 'email' | 'moderators' | 'templates' | 'audio';
+type SettingsSectionId = 'email' | 'moderators' | 'templates' | 'audio' | 'ambient';
 
 function SettingsAccordionSection({
   id,
@@ -102,6 +102,7 @@ export default function SettingsTab() {
       moderatorEmails: settings.moderatorEmails,
       approvalTemplate: settings.approvalTemplate,
       rejectionTemplate: settings.rejectionTemplate,
+      ambientMusic: settings.ambientMusic,
     };
     if (apiKeyDraft.trim()) body.resendApiKey = apiKeyDraft.trim();
     try {
@@ -251,6 +252,48 @@ export default function SettingsTab() {
 
   return (
     <div className="max-w-2xl space-y-3">
+      <SettingsAccordionSection
+        id="ambient"
+        title="Ambient music"
+        summary={`${settings.ambientMusic.title || 'No track'} — gallery only, off by default`}
+        open={openSections.includes('ambient')}
+        onToggle={toggleSection}
+      >
+        <p className="text-white/35 text-xs">This track only loads after a visitor turns Ambient music on in the gallery menu.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="block text-xs text-white/40 mb-1">Title</label>
+            <input value={settings.ambientMusic.title}
+              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, title: e.target.value } } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs text-white/40 mb-1">Artist</label>
+            <input value={settings.ambientMusic.artist}
+              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, artist: e.target.value } } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs text-white/40 mb-1">Direct audio URL</label>
+            <input type="url" value={settings.ambientMusic.sourceUrl}
+              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, sourceUrl: e.target.value } } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs text-white/40 mb-1">License</label>
+            <input value={settings.ambientMusic.license}
+              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, license: e.target.value } } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs text-white/40 mb-1">Source page</label>
+            <input type="url" value={settings.ambientMusic.sourcePage}
+              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, sourcePage: e.target.value } } : s)}
+              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
+          </div>
+        </div>
+      </SettingsAccordionSection>
+
       <SettingsAccordionSection
         id="email"
         title="Email - Resend"

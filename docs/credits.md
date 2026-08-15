@@ -2,7 +2,7 @@
 
 ## Ambient music
 
-- **“Project Utopia”** by **congusbongus**, used as an optional, gallery-only
-  ambient loop. Source: <https://opengameart.org/content/project-utopia-seamless-loop>.
-  The source is published under **CC0 / public domain**; attribution is not
-  required, but is retained here for provenance.
+- The default is **“Calm Loop”** by **wipics**, a 314 KB CC0/public-domain
+  ambient loop: <https://opengameart.org/content/calm-loop>.
+- The current track, credit, licence, and source are editable in Admin →
+  Settings → Ambient music. Keep those fields accurate when changing it.

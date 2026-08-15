@@ -34,7 +34,7 @@ const TourControls: React.FC<{
         if (!pendingAutoStart && (e.key === ' ' || e.key === 'Enter')) setShowEntryModal(true);
       } else {
         if (e.key === 'ArrowRight' || e.key === 'd') {
-          if (hasNextArtwork) goNext();
+          goNext();
         } else if (e.key === 'ArrowLeft' || e.key === 'q' || e.key === 'a') {
           if (hasPreviousArtwork) goPrevious();
         } else if (e.key === 'Escape') {
@@ -108,10 +108,9 @@ const TourControls: React.FC<{
 
           <button
             onClick={goNext}
-            disabled={!hasNextArtwork}
-            aria-label="Next artwork"
+            aria-label={hasNextArtwork ? 'Next artwork' : 'Finish tour at the rest view'}
             className={`bg-white/20 p-2 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors
-              ${!hasNextArtwork ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
+              hover:bg-white/30`}
           >
             <ChevronRight size={20} />
           </button>

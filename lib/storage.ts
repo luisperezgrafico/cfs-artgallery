@@ -3,6 +3,7 @@ import { ImageMetadata } from '../types/museum';
 import { artworkKey } from '../utils/artworkKey';
 import { approvedArtworksSeed } from '../config/approvedArtworksSeed';
 import { ROOM_CAPACITY } from '../config/roomConfig';
+import { AmbientMusicSettings, DEFAULT_AMBIENT_MUSIC } from '../config/ambientMusic';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ export interface GallerySettings {
   approvalTemplate: string;
   rejectionTemplate: string;
   audioSettings: AudioSettings;
+  ambientMusic: AmbientMusicSettings;
 }
 
 export type AudioProvider = 'local' | 'openai' | 'elevenlabs' | 'disabled';
@@ -103,6 +105,7 @@ export const DEFAULT_SETTINGS: GallerySettings = {
       timeoutMs: 120_000,
     },
   },
+  ambientMusic: DEFAULT_AMBIENT_MUSIC,
 };
 
 // ── Data paths ────────────────────────────────────────────────────────────────
@@ -439,6 +442,10 @@ export async function getSettings(): Promise<GallerySettings> {
   return {
     ...DEFAULT_SETTINGS,
     ...stored,
+    ambientMusic: {
+      ...DEFAULT_SETTINGS.ambientMusic,
+      ...(stored.ambientMusic ?? {}),
+    },
     audioSettings: {
       ...DEFAULT_SETTINGS.audioSettings,
       ...(stored.audioSettings ?? {}),

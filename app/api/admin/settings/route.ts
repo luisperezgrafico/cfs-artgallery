@@ -8,6 +8,7 @@ function publicSettings(settings: GallerySettings) {
     moderatorEmails: settings.moderatorEmails,
     approvalTemplate: settings.approvalTemplate,
     rejectionTemplate: settings.rejectionTemplate,
+    ambientMusic: settings.ambientMusic,
     resendApiKey: settings.resendApiKey
       ? `${settings.resendApiKey.slice(0, 6)}${'•'.repeat(20)}`
       : '',
@@ -42,6 +43,7 @@ export async function PUT(request: NextRequest) {
       approvalTemplate: body.approvalTemplate ?? current.approvalTemplate,
       rejectionTemplate: body.rejectionTemplate ?? current.rejectionTemplate,
       audioSettings: current.audioSettings,
+      ambientMusic: body.ambientMusic ?? current.ambientMusic,
     };
 
     await saveSettings(updated);

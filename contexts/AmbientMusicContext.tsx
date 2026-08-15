@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { AMBIENT_MUSIC } from '../config/ambientMusic';
+import { AmbientMusicSettings, DEFAULT_AMBIENT_MUSIC } from '../config/ambientMusic';
 
 interface AmbientMusicContextValue {
   isPlaying: boolean;
@@ -17,6 +17,16 @@ const AmbientMusicContext = createContext<AmbientMusicContextValue | undefined>(
 export function AmbientMusicProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [track, setTrack] = useState<AmbientMusicSettings>(DEFAULT_AMBIENT_MUSIC);
+
+  useEffect(() => {
+    fetch('/api/ambient-music')
+      .then(response => response.ok ? response.json() : null)
+      .then((music: AmbientMusicSettings | null) => {
+        if (music?.sourceUrl) setTrack(music);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const toggle = useCallback(async () => {
     const audio = audioRef.current;
@@ -49,7 +59,7 @@ export function AmbientMusicProvider({ children }: { children: React.ReactNode }
       {children}
       <audio
         ref={audioRef}
-        src={AMBIENT_MUSIC.sourceUrl}
+        src={track.sourceUrl}
         loop
         preload="none"
         aria-hidden="true"

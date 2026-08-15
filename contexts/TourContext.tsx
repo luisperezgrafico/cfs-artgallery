@@ -4,6 +4,7 @@
 import React, { createContext, useCallback, useContext, useState, ReactNode } from "react";
 import { ImageMetadata, RestViewpoint } from "../types/museum";
 import { findNextRealIndex, findPreviousRealIndex } from "../utils/roomLayout";
+import { DEFAULT_REST_VIEW } from '../utils/restView';
 
 interface TourContextType {
   isTourStarted: boolean;
@@ -59,7 +60,10 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     setRestView(null);
     setCurrentFrameIndexState(prev => {
       const next = findNextRealIndex(images, prev);
-      return next === -1 ? prev : next;
+      if (next !== -1) return next;
+      setIsTourStarted(false);
+      setRestView(DEFAULT_REST_VIEW);
+      return -1;
     });
   }, [images]);
 
