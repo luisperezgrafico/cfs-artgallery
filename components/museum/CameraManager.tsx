@@ -28,7 +28,6 @@ const SMOOTH_TIME_PER_WORLD_UNIT = 0.095;
 const MAX_CAMERA_SPEED = 5.5;
 const REST_VIEW_DURATION_MS = 4200;
 const REST_SWITCH_DURATION_MS = 5800;
-const REST_LOOK_DISTANCE = 4;
 const REST_LOOK_SENSITIVITY = 0.003;
 const REST_LOOK_MIN_PITCH = -0.45;
 const REST_LOOK_MAX_PITCH = 0.45;
@@ -112,6 +111,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     lastY: 0,
     yaw: 0,
     pitch: 0,
+    distance: 4,
     position: new THREE.Vector3(),
   });
   const { setZoomedFrameId } = useContext(ZoomContext);
@@ -328,9 +328,9 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const look = restLookRef.current;
     const horizontal = Math.cos(look.pitch);
     const target = new THREE.Vector3(
-      look.position.x + Math.sin(look.yaw) * horizontal * REST_LOOK_DISTANCE,
-      look.position.y + Math.sin(look.pitch) * REST_LOOK_DISTANCE,
-      look.position.z + Math.cos(look.yaw) * horizontal * REST_LOOK_DISTANCE,
+      look.position.x + Math.sin(look.yaw) * horizontal * look.distance,
+      look.position.y + Math.sin(look.pitch) * look.distance,
+      look.position.z + Math.cos(look.yaw) * horizontal * look.distance,
     );
 
     controls.setLookAt(
@@ -347,9 +347,11 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   const syncRestLook = useCallback((viewpoint: RestViewpoint) => {
     const position = new THREE.Vector3(...viewpoint.position);
     const target = new THREE.Vector3(...viewpoint.target);
-    const direction = target.clone().sub(position).normalize();
+    const offset = target.clone().sub(position);
+    const direction = offset.clone().normalize();
 
     restLookRef.current.position.copy(position);
+    restLookRef.current.distance = Math.max(offset.length(), 0.0001);
     restLookRef.current.yaw = Math.atan2(direction.x, direction.z);
     restLookRef.current.pitch = clamp(
       Math.asin(clamp(direction.y, -1, 1)),
@@ -384,6 +386,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     );
     const startDirection = getDirection(startPosition, startTarget);
     const endDirection = getDirection(endPosition, endTarget);
+    const startLookDistance = startPosition.distanceTo(startTarget);
+    const endLookDistance = endPosition.distanceTo(endTarget);
     const startQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, startDirection);
     const endQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, endDirection);
     const quaternion = new THREE.Quaternion();
@@ -401,7 +405,12 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       quadraticBezier(position, startPosition, positionControl, endPosition, eased);
       quaternion.slerpQuaternions(startQuaternion, endQuaternion, eased);
       direction.copy(CAMERA_FORWARD).applyQuaternion(quaternion).normalize();
-      target.copy(position).addScaledVector(direction, REST_LOOK_DISTANCE);
+      const lookDistance = THREE.MathUtils.lerp(
+        startLookDistance,
+        endLookDistance,
+        eased,
+      );
+      target.copy(position).addScaledVector(direction, lookDistance);
       controls.setLookAt(
         position.x,
         position.y,
@@ -420,7 +429,6 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       restAnimationFrameRef.current = null;
       restLookEnabledRef.current = true;
       onRestArrival?.();
-      applyRestLook();
     };
 
     restAnimationFrameRef.current = window.requestAnimationFrame(step);
