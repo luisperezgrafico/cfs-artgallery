@@ -11,6 +11,7 @@ import { useAmbientMusic } from '../../contexts/AmbientMusicContext';
 import { clampMenuTabY, readMenuTabY, saveMenuTabY, saveVisitPosition } from '../../utils/userPreferences';
 import { DWELL_SECONDS_OPTIONS } from '../../utils/tourEstimate';
 import ThemeToggle from './ThemeToggle';
+import FeedbackModal from './FeedbackModal';
 
 function CollapsibleSection({
   title,
@@ -62,6 +63,9 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [guidedTourOpen, setGuidedTourOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [feedbackSectionOpen, setFeedbackSectionOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const feedbackButtonRef = useRef<HTMLButtonElement | null>(null);
   const isMobile = useIsMobile();
   const router = useRouter();
   const { rooms, activeRoomIndex, setActiveRoomIndex, openArtworkInRoom, getRoomImages } = useRoom();
@@ -190,6 +194,18 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
       return;
     }
     setIsOpen(!isOpen);
+  };
+
+  const openFeedback = () => {
+    setIsOpen(false);
+    setFeedbackModalOpen(true);
+  };
+
+  const closeFeedback = () => {
+    setFeedbackModalOpen(false);
+    setFeedbackSectionOpen(true);
+    setIsOpen(true);
+    window.requestAnimationFrame(() => feedbackButtonRef.current?.focus());
   };
 
   return (
@@ -402,7 +418,6 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 title="Controls"
                 open={controlsOpen}
                 onToggle={() => setControlsOpen(o => !o)}
-                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
               >
                 {isMobile ? (
                   <ul className="space-y-2 text-xs text-[var(--panel-subtitle)]">
@@ -424,10 +439,28 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                   </ul>
                 )}
               </CollapsibleSection>
+
+              <CollapsibleSection
+                title="Feedback"
+                open={feedbackSectionOpen}
+                onToggle={() => setFeedbackSectionOpen(o => !o)}
+                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+              >
+                <button
+                  ref={feedbackButtonRef}
+                  type="button"
+                  onClick={openFeedback}
+                  className="w-full px-3 py-2.5 text-left text-sm transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                  style={{ color: 'var(--panel-btn-text)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
+                >
+                  Share feedback or a suggestion
+                </button>
+              </CollapsibleSection>
             </>
           )}
         </div>
       </div>
+      <FeedbackModal isOpen={feedbackModalOpen} onClose={closeFeedback} />
     </div>
   );
 };

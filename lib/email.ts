@@ -87,3 +87,30 @@ export async function notifyModerators(
   });
   assertEmailAccepted(result);
 }
+
+/** Sends a visitor's message to the configured moderator list. Unlike
+ * submission notifications, this deliberately ignores test mode: feedback is
+ * a direct message for the real moderation team. */
+export async function sendGalleryFeedback(
+  settings: GallerySettings,
+  opts: { message: string; replyTo?: string },
+): Promise<void> {
+  const apiKey = settings.resendApiKey || process.env.RESEND_API_KEY;
+  if (!apiKey || settings.moderatorEmails.length === 0) {
+    throw new Error('Feedback email is not configured.');
+  }
+
+  const result = await new Resend(apiKey).emails.send({
+    from: 'ME/CFS Gallery <gallery@notifications.cfs-gallery.art>',
+    to: settings.moderatorEmails,
+    replyTo: opts.replyTo || undefined,
+    subject: 'Gallery feedback',
+    text: [
+      'A visitor shared feedback with the gallery.',
+      '',
+      opts.message,
+      ...(opts.replyTo ? ['', `Reply email: ${opts.replyTo}`] : []),
+    ].join('\n'),
+  });
+  assertEmailAccepted(result);
+}

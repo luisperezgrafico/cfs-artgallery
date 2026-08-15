@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST as SUBMIT } from '../../app/api/submit/route';
+import { POST as FEEDBACK } from '../../app/api/feedback/route';
 import { POST as APPROVE } from '../../app/api/admin/submissions/[id]/approve/route';
 import { POST as REJECT } from '../../app/api/admin/submissions/[id]/reject/route';
 import { memoryStore } from '../../lib/blobStore';
@@ -203,6 +204,30 @@ describe('submission email flow', () => {
 
     expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
       to: ['partner@example.test'],
+    }));
+  });
+
+  it('sends feedback to every moderator, outside submission test mode', async () => {
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      resendApiKey: 're_test_key',
+      moderatorEmails: [TEST_EMAIL, 'partner@example.test'],
+      testModeEnabled: true,
+      testModeRecipient: TEST_EMAIL,
+    });
+
+    const response = await FEEDBACK(new NextRequest('https://gallery.test/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'The list view was very helpful.', email: 'visitor@example.test' }),
+    }));
+
+    expect(response.ok).toBe(true);
+    expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
+      to: [TEST_EMAIL, 'partner@example.test'],
+      replyTo: 'visitor@example.test',
+      subject: 'Gallery feedback',
+      text: expect.stringContaining('The list view was very helpful.'),
     }));
   });
 

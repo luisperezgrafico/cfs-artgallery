@@ -80,6 +80,7 @@ No database. Everything persists as JSON and images in **Vercel Blob**.
 | Route | Auth | What it does |
 |---|:--:|---|
 | `POST /api/submit` | — | Uploads the image, saves a pending submission, notifies moderators |
+| `POST /api/feedback` | — | Sends visitor feedback to the configured moderator list |
 | `GET /api/artworks` | — | Approved artworks per room, for the gallery |
 | `GET /api/admin/submissions` | ✔️ | The pending queue |
 | `POST /api/admin/submissions/[id]/approve` | ✔️ | Claims, hangs the artwork, emails the artist. Returns `{ ok, artwork, roomId }` |
