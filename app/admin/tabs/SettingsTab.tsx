@@ -67,6 +67,7 @@ export default function SettingsTab() {
   const [ambientMessage, setAmbientMessage] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const previewAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const ambientFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -140,6 +141,7 @@ export default function SettingsTab() {
       if (!response.ok || !data.ambientMusic) throw new Error(data.error ?? 'Upload failed.');
       setSettings(current => current ? { ...current, ambientMusic: data.ambientMusic! } : current);
       setAmbientFile(null);
+      if (ambientFileInputRef.current) ambientFileInputRef.current.value = '';
       setAmbientMessage('Ambient music updated.');
     } catch (error) {
       setAmbientMessage(error instanceof Error ? error.message : 'Upload failed.');
@@ -285,11 +287,16 @@ export default function SettingsTab() {
         <p className="text-sm text-white/80">Current: {settings.ambientMusic.title}</p>
         <audio controls src={settings.ambientMusic.sourceUrl} className="w-full" />
         <div className="flex flex-wrap items-center gap-2">
-          <input type="file" accept="audio/mpeg,audio/ogg,audio/wav" onChange={e => setAmbientFile(e.target.files?.[0] ?? null)} className="min-w-0 text-xs text-white/60" />
+          <input ref={ambientFileInputRef} type="file" accept="audio/mpeg,audio/ogg,audio/wav" onChange={e => setAmbientFile(e.target.files?.[0] ?? null)} className="sr-only" />
+          <button type="button" onClick={() => ambientFileInputRef.current?.click()}
+            className="px-4 py-2 border border-white/15 text-white/80 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors">
+            Select file
+          </button>
+          {ambientFile && <span className="max-w-48 truncate text-xs text-white/50">{ambientFile.name}</span>}
           <button type="button" onClick={uploadAmbientMusic} disabled={!ambientFile || ambientUploading}
             className="flex items-center gap-2 px-4 py-2 bg-white text-zinc-900 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50">
             {ambientUploading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {ambientUploading ? 'Uploading…' : 'Upload replacement'}
+            {ambientUploading ? 'Saving…' : 'Save'}
           </button>
         </div>
         {ambientMessage && <p className={`text-xs ${ambientMessage.includes('updated') ? 'text-emerald-400' : 'text-red-400'}`}>{ambientMessage}</p>}
