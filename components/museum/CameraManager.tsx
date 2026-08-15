@@ -17,10 +17,15 @@ interface CameraManagerProps {
   targetRevision?: number;
 }
 
-const CAMERA_SMOOTH_TIME = 0.85;
-const OVERVIEW_SMOOTH_TIME = 1.15;
-const REST_VIEW_DURATION_MS = 3600;
-const REST_SWITCH_DURATION_MS = 5200;
+// CameraControls reaches its target in roughly the same time regardless of
+// distance. Scale its smoothing for longer moves so skipping across empty
+// frames does not make the gallery suddenly feel fast or frantic.
+const CAMERA_SMOOTH_TIME = 0.95;
+const MAX_TRAVEL_SMOOTH_TIME = 2.1;
+const SMOOTH_TIME_PER_WORLD_UNIT = 0.095;
+const MAX_CAMERA_SPEED = 5.5;
+const REST_VIEW_DURATION_MS = 4200;
+const REST_SWITCH_DURATION_MS = 5800;
 const REST_LOOK_DISTANCE = 4;
 const REST_LOOK_SENSITIVITY = 0.003;
 const REST_LOOK_MIN_PITCH = -0.45;
@@ -63,6 +68,21 @@ const getDirection = (position: THREE.Vector3, target: THREE.Vector3) => {
   if (direction.lengthSq() < 0.0001) return CAMERA_FORWARD.clone();
   return direction.normalize();
 };
+
+function smoothTimeForTravel(
+  controls: CameraControls,
+  endPosition: THREE.Vector3,
+  endTarget: THREE.Vector3,
+): number {
+  const position = controls.getPosition(new THREE.Vector3(), false);
+  const target = controls.getTarget(new THREE.Vector3(), false);
+  const travel = Math.max(position.distanceTo(endPosition), target.distanceTo(endTarget));
+  return clamp(
+    CAMERA_SMOOTH_TIME + travel * SMOOTH_TIME_PER_WORLD_UNIT,
+    CAMERA_SMOOTH_TIME,
+    MAX_TRAVEL_SMOOTH_TIME,
+  );
+}
 
 const CameraManager: React.FC<CameraManagerProps> = ({
   onFrameChange,
@@ -144,7 +164,8 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
   const zoomToFrame = useCallback(
     async (index: number) => {
-      if (!cameraControlsRef.current) return;
+      const controls = cameraControlsRef.current;
+      if (!controls) return;
       const mesh = frameRefs.current[index];
       if (!mesh) return;
 
@@ -162,15 +183,25 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
       const targetPosition = frameWorldPosition.clone().add(frontDirection);
 
-      await cameraControlsRef.current.setLookAt(
-        targetPosition.x,
-        targetPosition.y - getYOffset(),
-        targetPosition.z,
-        frameWorldPosition.x,
-        frameWorldPosition.y - getYOffset(),
-        frameWorldPosition.z,
-        true,
-      );
+      const endPosition = targetPosition.clone();
+      endPosition.y -= getYOffset();
+      const endTarget = frameWorldPosition.clone();
+      endTarget.y -= getYOffset();
+      const previousSmoothTime = controls.smoothTime;
+      try {
+        controls.smoothTime = smoothTimeForTravel(controls, endPosition, endTarget);
+        await controls.setLookAt(
+          endPosition.x,
+          endPosition.y,
+          endPosition.z,
+          endTarget.x,
+          endTarget.y,
+          endTarget.z,
+          true,
+        );
+      } finally {
+        controls.smoothTime = previousSmoothTime;
+      }
 
       if (transitionId !== cameraTransitionIdRef.current) return;
       if (onFrameChange) onFrameChange(index);
@@ -184,9 +215,11 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
     const transitionId = beginCameraTransition();
 
+    const overviewPosition = new THREE.Vector3(0, 2, 14);
+    const overviewTarget = new THREE.Vector3(0, 0, 0);
     const previousSmoothTime = controls.smoothTime;
     try {
-      controls.smoothTime = OVERVIEW_SMOOTH_TIME;
+      controls.smoothTime = smoothTimeForTravel(controls, overviewPosition, overviewTarget);
       await controls.setLookAt(0, 2, 14, 0, 0, 0, true);
     } finally {
       controls.smoothTime = previousSmoothTime;
@@ -373,6 +406,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     <CameraControls
       ref={cameraControlsRef}
       smoothTime={CAMERA_SMOOTH_TIME}
+      maxSpeed={MAX_CAMERA_SPEED}
       mouseButtons={DISABLED_MOUSE_BUTTONS}
       touches={DISABLED_TOUCHES}
     />
