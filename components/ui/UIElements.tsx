@@ -10,6 +10,7 @@ import { useRoom } from '../../contexts/RoomContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import { estimateRoomSeconds, formatEstimate } from '../../utils/tourEstimate';
 import LoadingScreen from './LoadingScreen';
+import LoadingDiagnostics from './LoadingDiagnostics';
 import TitleScreen from './TitleOverlay';
 import TourControls from './TourControls';
 import NowPlayingStrip from './NowPlayingStrip';
@@ -233,6 +234,7 @@ const UIElements: React.FC = () => {
 
   return (
     <>
+      <LoadingDiagnostics />
       {isLoading && (
         <LoadingScreen setIsLoading={setIsLoading} assetsReady={assetsReady} />
       )}

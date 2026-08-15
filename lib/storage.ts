@@ -507,3 +507,46 @@ export async function reserveElevenLabsKeyStart(keyCount: number): Promise<numbe
 export async function saveSettings(settings: GallerySettings): Promise<void> {
   await withLock(SETTINGS_PATH, () => store.writeJson(SETTINGS_PATH, settings));
 }
+
+// ── Diagnostics ───────────────────────────────────────────────────────────────
+// Temporary: a client-side capture for the "3D gallery loading screen gets
+// stuck at 100%" bug (reported 2026-08, intermittent, seen entering from the
+// list view). Remove this whole section — and its two API routes and the
+// LoadingDiagnostics component — once that's tracked down; it's a debugging
+// aid, not a feature.
+
+export interface DiagnosticLogEntry {
+  event: string;
+  progress: number;
+  assetsReady: boolean;
+  currentScreen: string;
+  elapsedMs: number;
+  url: string;
+  referrer: string;
+  navigationType: string;
+  userAgent: string;
+  errors: string[];
+  receivedAt: string;
+}
+
+const DIAGNOSTICS_PATH = 'gallery/data/diagnostics.json';
+const MAX_DIAGNOSTIC_ENTRIES = 50;
+
+export async function appendDiagnosticLog(
+  entry: Omit<DiagnosticLogEntry, 'receivedAt'>,
+): Promise<void> {
+  await withLock(DIAGNOSTICS_PATH, async () => {
+    const current = await store.readJson<DiagnosticLogEntry[]>(DIAGNOSTICS_PATH, []);
+    const next = [...current, { ...entry, receivedAt: new Date().toISOString() }]
+      .slice(-MAX_DIAGNOSTIC_ENTRIES);
+    await store.writeJson(DIAGNOSTICS_PATH, next);
+  });
+}
+
+export async function getDiagnosticLogs(): Promise<DiagnosticLogEntry[]> {
+  return store.readJson<DiagnosticLogEntry[]>(DIAGNOSTICS_PATH, []);
+}
+
+export async function clearDiagnosticLogs(): Promise<void> {
+  await withLock(DIAGNOSTICS_PATH, () => store.writeJson(DIAGNOSTICS_PATH, []));
+}

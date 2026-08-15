@@ -1,13 +1,27 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Loader2, RefreshCw, Save } from 'lucide-react';
+import { Loader2, RefreshCw, Save, Trash2 } from 'lucide-react';
 import type { AudioSettings } from '../../../lib/storage';
 
 type DisplayAudioSettings = AudioSettings & {
   local: AudioSettings['local'] & { apiKeySet?: boolean };
   openai: AudioSettings['openai'] & { apiKeySet?: boolean };
   elevenlabs: AudioSettings['elevenlabs'];
+};
+
+type DiagnosticLogEntry = {
+  event: string;
+  progress: number;
+  assetsReady: boolean;
+  currentScreen: string;
+  elapsedMs: number;
+  url: string;
+  referrer: string;
+  navigationType: string;
+  userAgent: string;
+  errors: string[];
+  receivedAt: string;
 };
 
 export default function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
@@ -20,6 +34,8 @@ export default function DeveloperTab({ onReset }: { onReset: () => Promise<void>
   const [audioMessage, setAudioMessage] = useState('');
   const [localApiKeyDraft, setLocalApiKeyDraft] = useState('');
   const [openAiApiKeyDraft, setOpenAiApiKeyDraft] = useState('');
+  const [diagnostics, setDiagnostics] = useState<DiagnosticLogEntry[] | null>(null);
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/admin/developer/audio-settings')
@@ -31,6 +47,29 @@ export default function DeveloperTab({ onReset }: { onReset: () => Promise<void>
       .catch(() => setAudioMessage('Failed to load audio settings.'))
       .finally(() => setAudioLoading(false));
   }, []);
+
+  const loadDiagnostics = async () => {
+    setDiagnosticsLoading(true);
+    try {
+      const res = await fetch('/api/admin/developer/diagnostics');
+      const data = await res.json().catch(() => null) as { entries?: DiagnosticLogEntry[] } | null;
+      setDiagnostics(data?.entries ?? []);
+    } catch {
+      setDiagnostics([]);
+    } finally {
+      setDiagnosticsLoading(false);
+    }
+  };
+
+  const clearDiagnostics = async () => {
+    setDiagnosticsLoading(true);
+    try {
+      await fetch('/api/admin/developer/diagnostics', { method: 'DELETE' });
+      setDiagnostics([]);
+    } finally {
+      setDiagnosticsLoading(false);
+    }
+  };
 
   const resetRoomOne = async () => {
     setBusy(true);
@@ -236,6 +275,58 @@ export default function DeveloperTab({ onReset }: { onReset: () => Promise<void>
             <p className={result === 'ok' ? 'text-emerald-400 text-xs' : 'text-red-400 text-xs'} data-testid="developer-result">
               {message}
             </p>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest">Client diagnostics</h3>
+        <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 space-y-3">
+          <p className="text-white/40 text-xs">
+            Temporary — reports of the 3D gallery&rsquo;s loading screen getting stuck, captured
+            automatically from visitors&rsquo; browsers. Safe to remove once that bug is found.
+          </p>
+          <div className="flex items-center gap-3">
+            <button onClick={loadDiagnostics} disabled={diagnosticsLoading}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/80 text-sm transition-colors">
+              {diagnosticsLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Load reports
+            </button>
+            {diagnostics && diagnostics.length > 0 && (
+              <button onClick={clearDiagnostics} disabled={diagnosticsLoading}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 border border-white/10 rounded-lg text-white/50 hover:text-red-400 text-xs transition-colors">
+                <Trash2 size={13} /> Clear
+              </button>
+            )}
+          </div>
+
+          {diagnostics && diagnostics.length === 0 && (
+            <p className="text-white/30 text-xs">No reports yet.</p>
+          )}
+
+          {diagnostics && diagnostics.length > 0 && (
+            <div className="space-y-3 max-h-[32rem] overflow-y-auto">
+              {diagnostics.map((entry, index) => (
+                <div key={index} className="bg-zinc-950 border border-white/10 rounded-lg p-3 text-xs space-y-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-white/70">
+                    <span className="font-medium text-amber-400">{entry.event}</span>
+                    <span>{new Date(entry.receivedAt).toLocaleString()}</span>
+                    <span>+{entry.elapsedMs}ms</span>
+                  </div>
+                  <p className="text-white/40">
+                    progress={entry.progress}% assetsReady={String(entry.assetsReady)} screen={entry.currentScreen} nav={entry.navigationType}
+                  </p>
+                  <p className="text-white/40 break-all">url: {entry.url}</p>
+                  {entry.referrer && <p className="text-white/40 break-all">referrer: {entry.referrer}</p>}
+                  <p className="text-white/30 break-all">{entry.userAgent}</p>
+                  {entry.errors.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 text-red-300/80">
+                      {entry.errors.map((err, i) => <li key={i} className="break-all">{err}</li>)}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </section>
