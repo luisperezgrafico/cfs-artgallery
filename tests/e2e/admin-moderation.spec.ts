@@ -324,6 +324,7 @@ test.describe('managing an approved artwork', () => {
     await row(page, 'x').click();
     await page.getByLabel('Artwork title').fill('Edited title');
     await page.getByLabel('Short description').fill('Edited short description.');
+    await page.getByLabel('Alt text').fill('A blue figure sits beside a sunlit window.');
     await page.getByLabel('Room').selectOption('room-2');
     await page.getByLabel('Slot').selectOption('3');
 
@@ -339,6 +340,11 @@ test.describe('managing an approved artwork', () => {
     await expect(moved).toBeVisible();
     await expect(moved).toContainText('Edited title');
     await expect(moved).toContainText('slot 4');
+
+    const publicArtworks = await request.get('/api/artworks');
+    const byRoom = await publicArtworks.json() as Record<string, Array<{ id?: string; altText?: string }>>;
+    expect(byRoom['room-2']?.find(item => item.id === 'x')?.altText)
+      .toBe('A blue figure sits beside a sunlit window.');
   });
 
   test('uploads artist audio from the manage modal', async ({ page, request }) => {

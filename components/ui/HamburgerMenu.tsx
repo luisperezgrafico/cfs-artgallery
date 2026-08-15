@@ -7,6 +7,7 @@ import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
 import { useShelf } from '../../contexts/ShelfContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
+import { useAmbientMusic } from '../../contexts/AmbientMusicContext';
 import { clampMenuTabY, readMenuTabY, saveMenuTabY, saveVisitPosition } from '../../utils/userPreferences';
 import { DWELL_SECONDS_OPTIONS } from '../../utils/tourEstimate';
 import ThemeToggle from './ThemeToggle';
@@ -58,7 +59,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'main' | 'shelf'>('main');
   const [tabY, setTabY] = useState(() => readMenuTabY());
-  const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [guidedTourOpen, setGuidedTourOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -67,6 +68,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const { quitTour, startTour, currentFrameIndex } = useTour();
   const { items: shelfItems, remove: removeFromShelf } = useShelf();
   const { narrationEnabled, setNarrationEnabled, dwellSeconds, setDwellSeconds } = useGuidedTourPreferences();
+  const { isPlaying: ambientMusicPlaying, toggle: toggleAmbientMusic } = useAmbientMusic();
   const dragState = useRef<{
     pointerId: number | null;
     startY: number;
@@ -320,10 +322,26 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
           {view === 'main' && (
             <>
-              <CollapsibleSection title="Appearance" open={appearanceOpen} onToggle={() => setAppearanceOpen(o => !o)}>
+              <CollapsibleSection title="Preferences" open={preferencesOpen} onToggle={() => setPreferencesOpen(o => !o)}>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[var(--panel-text)]">Theme</span>
                   <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--panel-text)]">Ambient music</span>
+                  <button
+                    type="button"
+                    onClick={() => void toggleAmbientMusic()}
+                    role="switch"
+                    aria-checked={ambientMusicPlaying}
+                    aria-label="Ambient music"
+                    className="relative w-11 h-6 rounded-full transition-colors bg-[var(--panel-btn-bg)]"
+                  >
+                    <span
+                      className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform bg-[var(--panel-btn-text)]"
+                      style={{ transform: ambientMusicPlaying ? 'translateX(20px)' : 'translateX(0)' }}
+                    />
+                  </button>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[var(--panel-text)]">List view</span>

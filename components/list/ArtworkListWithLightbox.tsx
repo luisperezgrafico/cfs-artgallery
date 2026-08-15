@@ -55,7 +55,7 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={artwork.url}
-                  alt=""
+                  alt={artwork.altText?.trim() || artwork.title}
                   loading="lazy"
                   decoding="async"
                   className="list-view-thumb"

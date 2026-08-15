@@ -42,6 +42,11 @@ export interface ImageMetadata {
   shortDescription?: string;
   /** Full artist statement — shown behind a "Read more" toggle */
   longDescription?: string;
+  /**
+   * A concise description of what is visibly present in the artwork. This is
+   * kept separate from the artist's written description and narration.
+   */
+  altText?: string;
   /** Curated content notes shown as gentle distress/context tags */
   contentNotes?: string[];
   /** Pre-generated narration for the artwork description */

@@ -11,6 +11,7 @@ import { ImageMetadata } from '../types/museum';
 import { getInitialFrameIndex, saveVisitPosition } from '../utils/userPreferences';
 import { ShelfProvider, useShelf } from '../contexts/ShelfContext';
 import { GuidedTourPreferenceProvider, GuidedTourEngineProvider } from '../contexts/GuidedTourContext';
+import { AmbientMusicProvider } from '../contexts/AmbientMusicContext';
 
 function VisitPositionPersistence({ roomId }: { roomId: string }) {
   const { currentFrameIndex, totalFrames } = useTour();
@@ -89,7 +90,9 @@ export default function Gallery() {
     <div className="relative w-full h-full overflow-hidden bg-black">
       <RoomProvider liveArtworks={liveArtworks}>
         <ShelfProvider>
-          <GalleryContent catalogReady={catalogReady} />
+          <AmbientMusicProvider>
+            <GalleryContent catalogReady={catalogReady} />
+          </AmbientMusicProvider>
         </ShelfProvider>
       </RoomProvider>
     </div>

@@ -300,7 +300,7 @@ export async function removeArtworkFromRoom(roomId: string, id: string): Promise
 
 export type EditableArtworkFields = Pick<
   ImageMetadata,
-  'title' | 'artist' | 'date' | 'medium' | 'shortDescription' | 'longDescription' | 'contentNotes' | 'link'
+  'title' | 'artist' | 'date' | 'medium' | 'shortDescription' | 'longDescription' | 'altText' | 'contentNotes' | 'link'
 >;
 
 export interface ManagedArtworkUpdate {

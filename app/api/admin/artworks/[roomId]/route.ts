@@ -22,6 +22,7 @@ function editableFields(input: unknown): Partial<EditableArtworkFields> {
   const medium = optionalString(body.medium);
   const shortDescription = optionalString(body.shortDescription);
   const longDescription = optionalString(body.longDescription);
+  const altText = optionalString(body.altText);
   const contentNotes = normalizeContentNotes(body.contentNotes);
   const link = optionalString(body.link);
 
@@ -31,6 +32,7 @@ function editableFields(input: unknown): Partial<EditableArtworkFields> {
   if (medium !== undefined) fields.medium = medium;
   if (shortDescription !== undefined) fields.shortDescription = shortDescription;
   if (longDescription !== undefined) fields.longDescription = longDescription;
+  if (altText !== undefined) fields.altText = altText;
   if (Array.isArray(body.contentNotes)) fields.contentNotes = contentNotes;
   if (link !== undefined) fields.link = link;
 

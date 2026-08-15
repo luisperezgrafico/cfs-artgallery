@@ -56,6 +56,7 @@ export default function ArtworkManageModal({
     medium: artwork.medium ?? '',
     shortDescription: artwork.shortDescription ?? '',
     longDescription: artwork.longDescription ?? '',
+    altText: artwork.altText ?? '',
     contentNotes: artwork.contentNotes ?? [],
     link: artwork.link,
   });
@@ -114,6 +115,7 @@ export default function ArtworkManageModal({
           medium: fields.medium.trim(),
           shortDescription: fields.shortDescription.trim(),
           longDescription: fields.longDescription.trim(),
+          altText: fields.altText.trim(),
           contentNotes: fields.contentNotes,
           link: fields.link.trim(),
         },
@@ -206,7 +208,7 @@ export default function ArtworkManageModal({
           <div className="space-y-3">
             <div className="aspect-square rounded-lg overflow-hidden bg-zinc-900 border border-white/10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={current.url} alt={current.title} className="w-full h-full object-cover" />
+              <img src={current.url} alt={current.altText?.trim() || current.title} className="w-full h-full object-cover" />
             </div>
             <a href={current.url} target="_blank" rel="noopener noreferrer"
               className="block text-center text-xs text-white/45 hover:text-white/70 underline">
@@ -286,6 +288,13 @@ export default function ArtworkManageModal({
                 onChange={e => setFields(f => ({ ...f, longDescription: e.target.value }))}
                 placeholder="Long description"
                 className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y" />
+              <div>
+                <p className="text-white/35 text-xs mb-1">Alt text</p>
+                <textarea aria-label="Alt text" value={fields.altText} rows={3}
+                  onChange={e => setFields(f => ({ ...f, altText: e.target.value }))}
+                  placeholder="Describe what is visibly present in the artwork. This is read by screen readers, separately from the artist's narration."
+                  className="w-full bg-zinc-900 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y" />
+              </div>
               <div>
                 <p className="text-white/35 text-xs mb-2">Content notes</p>
                 <ContentNotesDropdown

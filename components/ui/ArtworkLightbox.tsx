@@ -173,7 +173,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={artwork.url}
-          alt={artwork.title}
+          alt={artwork.altText?.trim() || artwork.title}
           draggable={false}
           style={{
             maxWidth: '92vw',
