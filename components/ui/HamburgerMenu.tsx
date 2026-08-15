@@ -264,7 +264,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
             <div className="px-4 pt-5 pb-3 shrink-0">
               <button
                 onClick={() => setView('main')}
-                className="mb-4 inline-flex items-center gap-1.5 px-1 text-xs transition-colors text-[var(--panel-subtitle)] hover:text-[var(--panel-title)]"
+                className="mb-4 w-full flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors text-[var(--panel-text)] hover:bg-[var(--panel-btn-bg-hover)] hover:text-[var(--panel-title)]"
               >
                 <ChevronLeft size={14} /> Back
               </button>
