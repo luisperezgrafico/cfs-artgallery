@@ -40,6 +40,15 @@ export interface GallerySettings {
   /** Index of the API key that should start the next ElevenLabs request. */
   elevenLabsKeyCursor: number;
   ambientMusic: AmbientMusicSettings;
+  /**
+   * When on, notifyModerators sends only to testModeRecipient instead of the
+   * real moderator list — so testing a submission doesn't page every real
+   * moderator. Dev-only to change (app/api/admin/developer/test-mode), but
+   * readable by any admin so they can see who submission notifications
+   * currently go to before they test.
+   */
+  testModeEnabled: boolean;
+  testModeRecipient: string;
 }
 
 export type AudioProvider = 'local' | 'openai' | 'elevenlabs' | 'disabled';
@@ -109,6 +118,8 @@ export const DEFAULT_SETTINGS: GallerySettings = {
   },
   elevenLabsKeyCursor: 0,
   ambientMusic: DEFAULT_AMBIENT_MUSIC,
+  testModeEnabled: true,
+  testModeRecipient: '',
 };
 
 // ── Data paths ────────────────────────────────────────────────────────────────

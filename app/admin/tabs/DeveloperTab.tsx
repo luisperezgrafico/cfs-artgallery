@@ -9,6 +9,7 @@ type DisplayAudioSettings = AudioSettings & {
   openai: AudioSettings['openai'] & { apiKeySet?: boolean };
   elevenlabs: AudioSettings['elevenlabs'];
 };
+type TestMode = { enabled: boolean; recipient: string; moderatorEmails: string[] };
 
 export default function DeveloperTab({ onReset }: { onReset: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
@@ -20,6 +21,9 @@ export default function DeveloperTab({ onReset }: { onReset: () => Promise<void>
   const [audioMessage, setAudioMessage] = useState('');
   const [localApiKeyDraft, setLocalApiKeyDraft] = useState('');
   const [openAiApiKeyDraft, setOpenAiApiKeyDraft] = useState('');
+  const [testMode, setTestMode] = useState<TestMode | null>(null);
+  const [testModeSaving, setTestModeSaving] = useState(false);
+  const [testModeMessage, setTestModeMessage] = useState('');
 
   useEffect(() => {
     fetch('/api/admin/developer/audio-settings')
@@ -31,6 +35,36 @@ export default function DeveloperTab({ onReset }: { onReset: () => Promise<void>
       .catch(() => setAudioMessage('Failed to load audio settings.'))
       .finally(() => setAudioLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetch('/api/admin/developer/test-mode')
+      .then(async res => {
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        return res.json() as Promise<TestMode>;
+      })
+      .then(setTestMode)
+      .catch(() => setTestModeMessage('Failed to load test mode.'));
+  }, []);
+
+  const saveTestMode = async () => {
+    if (!testMode) return;
+    setTestModeSaving(true);
+    setTestModeMessage('');
+    try {
+      const res = await fetch('/api/admin/developer/test-mode', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testMode),
+      });
+      const data = await res.json() as { testMode?: TestMode; error?: string };
+      if (!res.ok || !data.testMode) throw new Error(data.error ?? 'Failed to save test mode.');
+      setTestMode(data.testMode);
+      setTestModeMessage('Test mode saved.');
+    } catch (error) {
+      setTestModeMessage(error instanceof Error ? error.message : 'Failed to save test mode.');
+    } finally {
+      setTestModeSaving(false);
+    }
+  };
 
   const resetRoomOne = async () => {
     setBusy(true);
@@ -86,6 +120,29 @@ export default function DeveloperTab({ onReset }: { onReset: () => Promise<void>
 
   return (
     <div className="max-w-2xl space-y-8">
+      <section className="space-y-3">
+        <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest">Submission email safety</h3>
+        <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 space-y-3">
+          {!testMode ? <p className="text-white/40 text-sm">Loading test mode…</p> : <>
+            <label className="flex items-center justify-between gap-4 text-sm text-white">
+              <span><span className="block font-medium">Test mode</span><span className="block mt-1 text-xs text-white/40">Routes new-submission notifications only to the selected recipient.</span></span>
+              <input type="checkbox" checked={testMode.enabled} onChange={e => setTestMode(mode => mode ? { ...mode, enabled: e.target.checked } : mode)} className="h-4 w-4 accent-white" />
+            </label>
+            <div>
+              <label className="block text-xs text-white/40 mb-1">Test recipient</label>
+              <select value={testMode.recipient} onChange={e => setTestMode(mode => mode ? { ...mode, recipient: e.target.value } : mode)} disabled={testMode.moderatorEmails.length === 0} className="w-full bg-zinc-950 text-white border border-white/10 rounded-lg px-3 py-2 text-sm disabled:opacity-50">
+                <option value="">No recipient selected (notifications paused)</option>
+                {testMode.moderatorEmails.map(email => <option key={email} value={email}>{email}</option>)}
+              </select>
+            </div>
+            <button onClick={saveTestMode} disabled={testModeSaving} className="inline-flex items-center gap-2 px-4 py-2 bg-white text-zinc-950 rounded-lg text-sm font-medium disabled:opacity-50">
+              {testModeSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              {testModeSaving ? 'Saving…' : 'Save test mode'}
+            </button>
+          </>}
+          {testModeMessage && <p className={testModeMessage.includes('Failed') ? 'text-red-400 text-xs' : 'text-emerald-400 text-xs'}>{testModeMessage}</p>}
+        </div>
+      </section>
       <section className="space-y-3">
         <h3 className="text-white/50 text-xs font-semibold uppercase tracking-widest">Audio model</h3>
         <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 space-y-4">

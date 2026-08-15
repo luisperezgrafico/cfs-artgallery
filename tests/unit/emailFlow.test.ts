@@ -28,6 +28,8 @@ async function configureEmail(): Promise<void> {
     ...DEFAULT_SETTINGS,
     resendApiKey: 're_test_key',
     moderatorEmails: [TEST_EMAIL],
+    testModeEnabled: true,
+    testModeRecipient: TEST_EMAIL,
     audioSettings: {
       ...DEFAULT_SETTINGS.audioSettings,
       provider: 'disabled',
@@ -154,6 +156,22 @@ describe('submission email flow', () => {
 
     expect(response.ok).toBe(true);
     expect(await getPendingSubmissions()).toHaveLength(1);
+  });
+
+  it('routes submission notifications to the test recipient instead of all moderators', async () => {
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      resendApiKey: 're_test_key',
+      moderatorEmails: [TEST_EMAIL, 'partner@example.test'],
+      testModeEnabled: true,
+      testModeRecipient: 'partner@example.test',
+    });
+
+    await submitArtwork();
+
+    expect(resendMocks.send).toHaveBeenCalledWith(expect.objectContaining({
+      to: ['partner@example.test'],
+    }));
   });
 
   it('keeps an approved artwork published when the artist email fails', async () => {

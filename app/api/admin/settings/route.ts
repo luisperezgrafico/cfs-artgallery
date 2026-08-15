@@ -9,6 +9,8 @@ function publicSettings(settings: GallerySettings) {
     approvalTemplate: settings.approvalTemplate,
     rejectionTemplate: settings.rejectionTemplate,
     ambientMusic: settings.ambientMusic,
+    testModeEnabled: settings.testModeEnabled,
+    testModeRecipient: settings.testModeRecipient,
     resendApiKey: settings.resendApiKey
       ? `${settings.resendApiKey.slice(0, 6)}${'•'.repeat(20)}`
       : '',
@@ -47,6 +49,8 @@ export async function PUT(request: NextRequest) {
       // Ambient music is changed only by its dedicated upload route. Keeping it
       // out of the general settings save avoids accidental overwrites.
       ambientMusic: current.ambientMusic,
+      testModeEnabled: current.testModeEnabled,
+      testModeRecipient: current.testModeRecipient,
     };
 
     await saveSettings(updated);

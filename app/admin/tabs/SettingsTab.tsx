@@ -309,6 +309,11 @@ export default function SettingsTab() {
         open={openSections.includes('email')}
         onToggle={toggleSection}
       >
+        <div className={`rounded-lg border px-3 py-2 text-xs ${settings.testModeEnabled ? 'border-amber-300/20 bg-amber-300/5 text-amber-100/80' : 'border-emerald-300/20 bg-emerald-300/5 text-emerald-100/80'}`}>
+          {settings.testModeEnabled
+            ? <>Test mode is on — new-submission notifications go only to {settings.testModeRecipient || 'no recipient (notifications are paused)'}, not the full moderator list.</>
+            : <>Test mode is off — new-submission notifications go to the full moderator list.</>}
+        </div>
         <div>
           <label className="block text-xs text-white/40 mb-1">API key</label>
           <div className="flex flex-wrap gap-2">

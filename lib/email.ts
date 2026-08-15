@@ -70,7 +70,10 @@ export async function notifyModerators(
   opts: { artist: string; title: string; adminUrl: string },
 ): Promise<void> {
   const apiKey = settings.resendApiKey || process.env.RESEND_API_KEY;
-  if (!apiKey || settings.moderatorEmails.length === 0) {
+  const recipients = settings.testModeEnabled
+    ? (settings.testModeRecipient ? [settings.testModeRecipient] : [])
+    : settings.moderatorEmails;
+  if (!apiKey || recipients.length === 0) {
     console.log('[email skipped] new submission by', opts.artist);
     return;
   }
@@ -78,7 +81,7 @@ export async function notifyModerators(
   const resend = new Resend(apiKey);
   const result = await resend.emails.send({
     from: 'ME/CFS Gallery <gallery@notifications.cfs-gallery.art>',
-    to: settings.moderatorEmails,
+    to: recipients,
     subject: `New artwork submission: "${opts.title}" by ${opts.artist}`,
     text: `A new artwork has been submitted to the gallery.\n\nTitle: ${opts.title}\nArtist: ${opts.artist}\n\nReview it at: ${opts.adminUrl}`,
   });
