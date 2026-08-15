@@ -156,6 +156,7 @@ export default function TourEntryModal({
             checked={wantsAmbientMusic}
             onChange={e => setWantsAmbientMusic(e.target.checked)}
             className="shrink-0"
+            style={{ accentColor: '#b56d45' }}
           />
           Play soft ambient music
         </label>
