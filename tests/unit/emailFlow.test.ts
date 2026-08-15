@@ -57,7 +57,7 @@ function submission(overrides: Partial<Submission> = {}): Submission {
   };
 }
 
-async function submitArtwork(): Promise<Response> {
+async function submitArtwork(options: { artistAudio?: File; artistAudioDuration?: number } = {}): Promise<Response> {
   const form = new FormData();
   form.set('title', 'Quiet Window');
   form.set('artist', 'Ada Rivers');
@@ -70,6 +70,8 @@ async function submitArtwork(): Promise<Response> {
   form.set('preferredSlot', '0');
   form.set('aspectRatio', '1');
   form.set('file', new File(['image'], 'quiet-window.png', { type: 'image/png' }));
+  if (options.artistAudio) form.set('artistAudio', options.artistAudio);
+  if (options.artistAudioDuration) form.set('artistAudioDuration', String(options.artistAudioDuration));
 
   return SUBMIT(new NextRequest('https://gallery.test/api/submit', {
     method: 'POST',
@@ -123,6 +125,36 @@ describe('submission email flow', () => {
       subject: 'Your artwork "Quiet Window" has been accepted',
       text: expect.stringMatching(/Ada Rivers[\s\S]*Quiet Window[\s\S]*https:\/\/gallery\.test/),
     }));
+  });
+
+  it('keeps an artist audio attachment when approving a submission', async () => {
+    const submitResponse = await submitArtwork({
+      artistAudio: new File(['audio'], 'quiet-window.mp3', { type: 'audio/mpeg' }),
+      artistAudioDuration: 18.5,
+    });
+    const [pending] = await getPendingSubmissions();
+
+    expect(submitResponse.ok).toBe(true);
+    expect(pending.artistAudioUrl).toMatch(/submissions\/.*-audio\.mp3$/);
+    expect(pending.artistAudioDurationSec).toBe(18.5);
+
+    const approveResponse = await APPROVE(
+      new NextRequest(`https://gallery.test/api/admin/submissions/${pending.id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', origin: 'https://gallery.test' },
+        body: JSON.stringify({ roomId: 'room-1', slot: 0 }),
+      }),
+      { params: Promise.resolve({ id: pending.id }) },
+    );
+
+    expect(approveResponse.ok).toBe(true);
+    expect(await getRoomArtworks('room-1')).toEqual([
+      expect.objectContaining({
+        audioUrl: pending.artistAudioUrl,
+        audioSource: 'uploaded',
+        audioDurationSec: 18.5,
+      }),
+    ]);
   });
 
   it('sends the rejection template and the curator reason to the artist', async () => {

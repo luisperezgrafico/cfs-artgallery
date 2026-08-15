@@ -26,6 +26,7 @@ export function hasNarrationText(artwork: ImageMetadata): boolean {
 
 export function isAudioOutdated(artwork: ImageMetadata): boolean {
   if (!artwork.audioUrl) return false;
+  if (artwork.audioSource === 'uploaded') return false;
   if (!artwork.audioTextSignature) return true;
   return audioTextSignature(artwork) !== artwork.audioTextSignature;
 }

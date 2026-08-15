@@ -60,6 +60,12 @@ export default function ApproveModal({
           </p>
         )}
 
+        {submission.artistAudioUrl && (
+          <p className="flex items-center gap-2 rounded-lg border border-white/10 bg-zinc-950/50 px-3 py-2 text-xs text-white/55">
+            Artist audio is attached and will accompany this artwork.
+          </p>
+        )}
+
         <div>
           <label className="block text-xs text-white/50 mb-1 uppercase tracking-wider">
             Assign to room

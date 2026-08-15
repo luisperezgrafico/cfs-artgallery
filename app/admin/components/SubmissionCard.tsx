@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle, ChevronDown, ChevronUp, Eye, XCircle } from 'lucide-react';
+import { CheckCircle, ChevronDown, ChevronUp, Eye, Volume2, XCircle } from 'lucide-react';
 import type { Submission } from '../../../lib/storage';
 import { timeAgo } from '../helpers';
 import Lightbox from './Lightbox';
@@ -64,6 +64,17 @@ export default function SubmissionCard({
                 {submission.statement}
               </p>
             )}
+          </div>
+        )}
+
+        {submission.artistAudioUrl && (
+          <div className="border-t border-white/10 px-4 py-3">
+            <p className="mb-2 flex items-center gap-1.5 text-xs text-white/55">
+              <Volume2 size={13} /> Artist audio attached
+            </p>
+            <audio controls src={submission.artistAudioUrl} className="h-8 w-full" data-testid="submission-artist-audio">
+              Your browser does not support audio playback.
+            </audio>
           </div>
         )}
 

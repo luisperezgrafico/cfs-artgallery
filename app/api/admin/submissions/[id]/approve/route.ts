@@ -14,6 +14,16 @@ import { ImageMetadata } from '../../../../../../types/museum';
 export const dynamic = 'force-dynamic';
 
 function toArtwork(submission: Submission, slot: number | undefined): ImageMetadata {
+  const artistAudio = submission.artistAudioUrl
+    ? {
+      audioUrl: submission.artistAudioUrl,
+      audioGeneratedAt: submission.submittedAt,
+      audioVoice: 'artist-upload',
+      audioSource: 'uploaded' as const,
+      audioDurationSec: submission.artistAudioDurationSec,
+    }
+    : {};
+
   return {
     id: submission.id,
     url: submission.imageUrl,
@@ -27,6 +37,7 @@ function toArtwork(submission: Submission, slot: number | undefined): ImageMetad
     link: '',
     aspectRatio: submission.aspectRatio,
     slot,
+    ...artistAudio,
   };
 }
 
@@ -63,17 +74,19 @@ export async function POST(
     }
 
     const artwork = toArtwork(submission, slot);
-    try {
-      const audio = await generateArtworkAudio(submission);
-      if (audio) {
-        artwork.audioUrl = audio.url;
-        artwork.audioGeneratedAt = audio.generatedAt;
-        artwork.audioVoice = audio.voice;
-        artwork.audioSource = 'generated';
-        artwork.audioTextSignature = audio.textSignature;
+    if (!submission.artistAudioUrl) {
+      try {
+        const audio = await generateArtworkAudio(submission);
+        if (audio) {
+          artwork.audioUrl = audio.url;
+          artwork.audioGeneratedAt = audio.generatedAt;
+          artwork.audioVoice = audio.voice;
+          artwork.audioSource = 'generated';
+          artwork.audioTextSignature = audio.textSignature;
+        }
+      } catch (err) {
+        console.error('[admin/approve] audio narration failed, approving without audio:', err);
       }
-    } catch (err) {
-      console.error('[admin/approve] audio narration failed, approving without audio:', err);
     }
 
     try {

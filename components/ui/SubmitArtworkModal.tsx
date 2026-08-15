@@ -3,10 +3,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import ContentNotesDropdown from './ContentNotesDropdown';
+import { measureFileDurationSec } from '../../utils/measureAudioDuration';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const ACCEPTED_LABEL = 'JPG, PNG or WEBP · max 5 MB';
+const MAX_AUDIO_FILE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_AUDIO_MIME = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/aac', 'audio/ogg'];
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -20,6 +23,8 @@ interface FormValues {
   statement: string;
   contentNotes: string[];
   file: File | null;
+  artistAudio: File | null;
+  artistAudioDurationSec?: number;
   aspectRatio: number | null;
 }
 
@@ -29,6 +34,7 @@ interface FieldErrors {
   email?: string;
   shortDescription?: string;
   file?: string;
+  artistAudio?: string;
 }
 
 // ── Shared style tokens ────────────────────────────────────────────────────
@@ -76,7 +82,7 @@ const errorText: React.CSSProperties = {
 const SubmitArtworkModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [values, setValues] = useState<FormValues>({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', contentNotes: [], file: null, aspectRatio: null });
+  const [values, setValues] = useState<FormValues>({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', contentNotes: [], file: null, artistAudio: null, aspectRatio: null });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -84,14 +90,16 @@ const SubmitArtworkModal: React.FC = () => {
   // The empty canvas the artist tapped — the piece should be hung right there.
   const [preferredSlot, setPreferredSlot] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const artistAudioRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
 
   const reset = useCallback(() => {
     setSubmitState('idle');
-    setValues({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', contentNotes: [], file: null, aspectRatio: null });
+    setValues({ title: '', name: '', email: '', medium: '', year: '', shortDescription: '', statement: '', contentNotes: [], file: null, artistAudio: null, aspectRatio: null });
     setFieldErrors({});
     setSubmitError('');
     if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null; }
+    if (artistAudioRef.current) artistAudioRef.current.value = '';
     setPreview(null);
   }, []);
 
@@ -145,6 +153,25 @@ const SubmitArtworkModal: React.FC = () => {
     setValues(p => ({ ...p, file, aspectRatio: null }));
   };
 
+  const handleArtistAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const artistAudio = e.target.files?.[0];
+    if (!artistAudio) return;
+    if (!ACCEPTED_AUDIO_MIME.includes(artistAudio.type)) {
+      setFieldErrors(p => ({ ...p, artistAudio: 'Audio must be MP3, WAV, M4A, AAC or OGG.' }));
+      return;
+    }
+    if (artistAudio.size > MAX_AUDIO_FILE_BYTES) {
+      setFieldErrors(p => ({ ...p, artistAudio: 'Audio must be under 10 MB.' }));
+      return;
+    }
+    setFieldErrors(p => ({ ...p, artistAudio: undefined }));
+    setValues(p => ({ ...p, artistAudio, artistAudioDurationSec: undefined }));
+    void measureFileDurationSec(artistAudio).then(artistAudioDurationSec => {
+      if (artistAudioDurationSec === undefined) return;
+      setValues(p => p.artistAudio === artistAudio ? { ...p, artistAudioDurationSec } : p);
+    });
+  };
+
   // Validation
   const validate = (): boolean => {
     const errs: FieldErrors = {};
@@ -182,6 +209,8 @@ const SubmitArtworkModal: React.FC = () => {
       if (preferredRoom) body.append('preferredRoom', preferredRoom);
       if (preferredSlot !== null) body.append('preferredSlot', String(preferredSlot));
       body.append('file', values.file);
+      if (values.artistAudio) body.append('artistAudio', values.artistAudio);
+      if (values.artistAudioDurationSec) body.append('artistAudioDuration', String(values.artistAudioDurationSec));
 
       const res = await fetch('/api/submit', { method: 'POST', body });
       const data = await res.json() as { ok?: boolean; error?: string };
@@ -356,7 +385,7 @@ const SubmitArtworkModal: React.FC = () => {
 
               {/* Statement */}
               <div>
-                <label style={labelStyle}>
+                <label htmlFor="artist-audio" style={labelStyle}>
                   Full statement{' '}
                   <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
                 </label>
@@ -424,6 +453,53 @@ const SubmitArtworkModal: React.FC = () => {
                   )}
                 </button>
                 {fieldErrors.file && <p style={errorText}>{fieldErrors.file}</p>}
+              </div>
+
+              <div>
+                <label style={labelStyle}>
+                  Would you like to add an audio narration?{' '}
+                  <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+                </label>
+                <input
+                  ref={artistAudioRef}
+                  id="artist-audio"
+                  type="file"
+                  accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/mp4,audio/aac,audio/ogg"
+                  onChange={handleArtistAudioChange}
+                  className="sr-only"
+                  disabled={busy}
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => artistAudioRef.current?.click()}
+                    disabled={busy}
+                    className="px-3 py-2 text-sm transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                    style={{ fontFamily: serif, color: 'var(--panel-btn-text)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
+                  >
+                    {values.artistAudio ? 'Change audio file' : 'Choose audio file'}
+                  </button>
+                  {values.artistAudio && (
+                    <>
+                      <span className="min-w-0 truncate text-xs" style={{ color: 'var(--panel-subtitle)' }}>
+                        {values.artistAudio.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setValues(p => ({ ...p, artistAudio: null, artistAudioDurationSec: undefined }));
+                          if (artistAudioRef.current) artistAudioRef.current.value = '';
+                        }}
+                        disabled={busy}
+                        className="shrink-0 text-xs underline"
+                        style={{ color: 'var(--panel-subtitle)' }}
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+                {fieldErrors.artistAudio && <p style={errorText}>{fieldErrors.artistAudio}</p>}
               </div>
 
               {/* Generic submit error */}

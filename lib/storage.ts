@@ -19,6 +19,9 @@ export interface Submission {
   contentNotes?: string[];
   imageUrl: string;
   aspectRatio: number;
+  /** Optional audio supplied by the artist alongside their submission. */
+  artistAudioUrl?: string;
+  artistAudioDurationSec?: number;
   submittedAt: string;
   status: 'pending' | 'approved' | 'rejected';
   /** Room the artist was viewing when they clicked "Submit your work" */
