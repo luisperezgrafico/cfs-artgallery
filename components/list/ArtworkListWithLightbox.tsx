@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ZoomIn } from 'lucide-react';
 import { TourProvider, useTour } from '../../contexts/TourContext';
 import ArtworkLightbox from '../ui/ArtworkLightbox';
+import SubmitArtworkModal from '../ui/SubmitArtworkModal';
 import { ImageMetadata } from '../../types/museum';
 import ListNavControls from './ListNavControls';
 
@@ -79,7 +80,19 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
         ))}
       </ul>
 
+      <div className="list-view-submit-cta-wrap">
+        <p className="list-view-submit-cta-tagline">Made something you'd like to share?</p>
+        <button
+          type="button"
+          className="list-view-submit-cta"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-submit-artwork', { detail: {} }))}
+        >
+          Submit your artwork
+        </button>
+      </div>
+
       <ArtworkLightbox />
+      <SubmitArtworkModal />
       <ListNavControls itemCount={items.length} />
     </TourProvider>
   );

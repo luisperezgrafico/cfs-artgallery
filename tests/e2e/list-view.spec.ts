@@ -49,6 +49,19 @@ test.describe('list view', () => {
     await expect(page.getByRole('img', { name: 'Piece A' })).toHaveCount(0);
   });
 
+  test('"Submit your artwork" opens the same submission modal as the 3D gallery', async ({ page, request }) => {
+    await seed(request, {
+      artworks: { 'room-1': [artwork('a', { title: 'Piece A' })] },
+    });
+    await page.goto('/list');
+
+    await page.getByRole('button', { name: 'Submit your artwork' }).click();
+    await expect(page.getByRole('heading', { name: 'Submit your artwork' })).toBeVisible();
+
+    await page.getByLabel('Close').click();
+    await expect(page.getByRole('heading', { name: 'Submit your artwork' })).toHaveCount(0);
+  });
+
   test('the door links to the list view', async ({ page, request }) => {
     await seed(request);
     await page.goto('/');

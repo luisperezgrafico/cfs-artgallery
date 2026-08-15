@@ -59,30 +59,32 @@
   }
 
   :root[data-theme='light'] {
+    /* Text tones are warmed toward the same beige as --door-tagline / --field-*
+       below, instead of a neutral slate gray, so they read as one palette. */
     --door-bg: linear-gradient(160deg, #f0ebe0 0%, #e6ddd0 55%, #d8cfc2 100%);
-    --door-title: #2b3644;
+    --door-title: #332a1f;
     --door-tagline: #6a5e52;
     --door-btn-bg: rgba(238, 230, 214, 0.85);
     --door-btn-bg-hover: rgba(238, 230, 214, 1);
     --door-btn-border: rgba(160, 138, 108, 0.5);
-    --door-btn-text: #2b3644;
+    --door-btn-text: #332a1f;
     --door-btn-shadow: 0 2px 14px rgba(60, 48, 32, 0.14);
 
     --panel-bg: rgba(238, 230, 214, 0.97);
     --panel-border: rgba(160, 138, 108, 0.45);
     --panel-shadow: 0 12px 40px rgba(60, 48, 32, 0.35), 0 2px 8px rgba(60, 48, 32, 0.2);
-    --panel-title: #2b3644;
-    --panel-subtitle: #5a6878;
-    --panel-text: #4a5563;
+    --panel-title: #332a1f;
+    --panel-subtitle: #6a5d4c;
+    --panel-text: #4a3f2f;
     --panel-separator: rgba(160, 138, 108, 0.35);
     --panel-btn-bg: rgba(160, 138, 108, 0.18);
     --panel-btn-bg-hover: rgba(160, 138, 108, 0.32);
-    --panel-btn-text: #2b3644;
+    --panel-btn-text: #332a1f;
 
     --field-bg: rgba(255, 255, 255, 0.55);
     --field-bg-soft: rgba(255, 255, 255, 0.22);
     --field-border: rgba(160, 138, 108, 0.4);
-    --field-text: #2b3644;
+    --field-text: #332a1f;
     /* darkened from #8a7a68 / #b0a898 — those failed WCAG AA (3.7:1 / 2.1:1) against --field-bg */
     --field-label: #6a5d4c;
     --field-hint: #786c5a;
@@ -370,9 +372,42 @@
   }
 }
 
-.list-view-items,
 .list-view-empty {
   padding-bottom: 4.5rem;
+}
+
+.list-view-submit-cta-wrap {
+  max-width: 42rem;
+  margin: 2.5rem auto 0;
+  padding-top: 2rem;
+  padding-bottom: 4.5rem;
+  border-top: 1px solid var(--panel-separator);
+  text-align: center;
+}
+
+.list-view-submit-cta-tagline {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--panel-subtitle);
+  margin-bottom: 1rem;
+}
+
+.list-view-submit-cta {
+  padding: 0.75rem 2rem;
+  border: 1px solid var(--door-btn-border);
+  border-radius: 2px;
+  background: var(--door-btn-bg);
+  color: var(--door-btn-text);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.list-view-submit-cta:hover {
+  background: var(--door-btn-bg-hover);
+  transform: translateY(-1px);
 }
 
 .list-nav-controls {
