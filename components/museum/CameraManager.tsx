@@ -31,7 +31,6 @@ const REST_SWITCH_DURATION_MS = 5800;
 const REST_LOOK_SENSITIVITY = 0.003;
 const REST_LOOK_MIN_PITCH = -0.45;
 const REST_LOOK_MAX_PITCH = 0.45;
-const CAMERA_FORWARD = new THREE.Vector3(0, 0, -1);
 const DISABLED_MOUSE_BUTTONS = {
   left: CameraControlsImpl.ACTION.NONE,
   middle: CameraControlsImpl.ACTION.NONE,
@@ -62,12 +61,6 @@ const quadraticBezier = (
     inverseT * inverseT * start.y + 2 * inverseT * t * control.y + t * t * end.y,
     inverseT * inverseT * start.z + 2 * inverseT * t * control.z + t * t * end.z,
   );
-};
-
-const getDirection = (position: THREE.Vector3, target: THREE.Vector3) => {
-  const direction = target.clone().sub(position);
-  if (direction.lengthSq() < 0.0001) return CAMERA_FORWARD.clone();
-  return direction.normalize();
 };
 
 function smoothTimeForTravel(
@@ -384,14 +377,17 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       Math.max(startPosition.y, endPosition.y, 1.45),
       (startPosition.z + endPosition.z) / 2,
     );
-    const startDirection = getDirection(startPosition, startTarget);
-    const endDirection = getDirection(endPosition, endTarget);
-    const startLookDistance = startPosition.distanceTo(startTarget);
-    const endLookDistance = endPosition.distanceTo(endTarget);
-    const startQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, startDirection);
-    const endQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, endDirection);
-    const quaternion = new THREE.Quaternion();
-    const direction = new THREE.Vector3();
+    // The look target gets its own Bezier arc rather than being rebuilt each
+    // frame from a slerped direction and a separately lerped distance —
+    // reconstructing it that way let the target point swing far off the
+    // straight path (most visibly arriving from the wide overview, where the
+    // look distance shrinks from ~14 units to a bench's ~3.4), reading as the
+    // camera lurching forward and snapping back mid-transition.
+    const targetControl = new THREE.Vector3(
+      clamp((startTarget.x + endTarget.x) * 0.2, -0.7, 0.7),
+      (startTarget.y + endTarget.y) / 2,
+      (startTarget.z + endTarget.z) / 2,
+    );
     const position = new THREE.Vector3();
     const target = new THREE.Vector3();
     const startedAt = window.performance.now();
@@ -403,14 +399,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       const eased = easeInOutCubic(progress);
 
       quadraticBezier(position, startPosition, positionControl, endPosition, eased);
-      quaternion.slerpQuaternions(startQuaternion, endQuaternion, eased);
-      direction.copy(CAMERA_FORWARD).applyQuaternion(quaternion).normalize();
-      const lookDistance = THREE.MathUtils.lerp(
-        startLookDistance,
-        endLookDistance,
-        eased,
-      );
-      target.copy(position).addScaledVector(direction, lookDistance);
+      quadraticBezier(target, startTarget, targetControl, endTarget, eased);
       controls.setLookAt(
         position.x,
         position.y,
@@ -432,7 +421,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     };
 
     restAnimationFrameRef.current = window.requestAnimationFrame(step);
-  }, [applyRestLook, beginCameraTransition, onRestArrival, setZoomedFrameId, syncRestLook]);
+  }, [beginCameraTransition, onRestArrival, setZoomedFrameId, syncRestLook]);
 
   useEffect(() => {
     if (!restView) return;
