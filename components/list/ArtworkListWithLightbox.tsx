@@ -50,19 +50,6 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
       <ul className="list-view-items">
         {items.map(({ artwork, roomId, frameIndex }, index) => (
           <li key={artwork.id ?? `${roomId}-${frameIndex}`} className="list-view-item list-view-stop">
-            {artwork.url && (
-              <div className="list-view-thumb-wrap">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={artwork.url}
-                  alt={artwork.altText?.trim() || artwork.title}
-                  loading="lazy"
-                  decoding="async"
-                  className="list-view-thumb"
-                />
-                <ZoomButton index={index} title={artwork.title} />
-              </div>
-            )}
             <div className="list-view-item-body">
               <h2 className="list-view-item-title">{artwork.title}</h2>
               <p className="list-view-item-meta">
@@ -91,6 +78,19 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
                 View in the 3D gallery
               </Link>
             </div>
+            {artwork.url && (
+              <div className="list-view-thumb-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={artwork.url}
+                  alt={artwork.altText?.trim() || artwork.title}
+                  loading="lazy"
+                  decoding="async"
+                  className="list-view-thumb"
+                />
+                <ZoomButton index={index} title={artwork.title} />
+              </div>
+            )}
           </li>
         ))}
       </ul>

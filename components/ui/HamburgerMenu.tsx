@@ -258,6 +258,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                   <li key={item.id}>
                     <button
                       onClick={() => handleShelfNavigate(item)}
+                      aria-label={`View ${item.title} by ${item.artist} in the gallery`}
                       className="w-full text-left px-2.5 py-2 rounded-lg transition-colors hover:bg-[var(--panel-btn-bg-hover)] group flex items-center gap-3"
                     >
                       <span className="shrink-0 w-10 h-10 rounded overflow-hidden bg-[var(--panel-btn-bg)]">

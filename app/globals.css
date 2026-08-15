@@ -283,6 +283,7 @@
 .list-view-thumb-wrap {
   position: relative;
   flex-shrink: 0;
+  order: 1;
 }
 
 .list-view-thumb {
@@ -316,6 +317,7 @@
 
 .list-view-item-body {
   min-width: 0;
+  order: 2;
 }
 
 .list-view-item-title {
@@ -363,7 +365,7 @@
 .list-view-back-to-top {
   display: block;
   width: fit-content;
-  margin: 1rem auto 3rem;
+  margin: 0 auto 6rem;
   padding: 0.75rem 1rem;
   border-radius: 999px;
   color: var(--field-icon);
@@ -400,8 +402,8 @@
 .list-view-submit-cta-wrap {
   max-width: 42rem;
   margin: 2.5rem auto 0;
-  padding-top: 2rem;
-  padding-bottom: 4.5rem;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
   border-top: 1px solid var(--panel-separator);
   text-align: center;
   scroll-margin-top: max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem));
