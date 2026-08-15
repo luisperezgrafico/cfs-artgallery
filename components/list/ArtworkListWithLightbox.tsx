@@ -40,7 +40,7 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
     <TourProvider totalFrames={items.length} images={items.map(item => item.artwork)}>
       <ul className="list-view-items">
         {items.map(({ artwork, roomId, frameIndex }, index) => (
-          <li key={artwork.id ?? `${roomId}-${frameIndex}`} className="list-view-item">
+          <li key={artwork.id ?? `${roomId}-${frameIndex}`} className="list-view-item list-view-stop">
             {artwork.url && (
               <div className="list-view-thumb-wrap">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -80,7 +80,7 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
         ))}
       </ul>
 
-      <div className="list-view-submit-cta-wrap">
+      <div className="list-view-submit-cta-wrap list-view-stop">
         <p className="list-view-submit-cta-tagline">Made something you'd like to share?</p>
         <button
           type="button"

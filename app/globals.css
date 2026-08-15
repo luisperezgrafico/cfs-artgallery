@@ -364,6 +364,11 @@
   .list-view-item {
     flex-direction: column;
     gap: 0.75rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .list-view-items {
+    gap: 2.5rem;
   }
 
   .list-view-thumb {
@@ -383,6 +388,7 @@
   padding-bottom: 4.5rem;
   border-top: 1px solid var(--panel-separator);
   text-align: center;
+  scroll-margin-top: max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem));
 }
 
 .list-view-submit-cta-tagline {

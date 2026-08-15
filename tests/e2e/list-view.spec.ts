@@ -62,6 +62,19 @@ test.describe('list view', () => {
     await expect(page.getByRole('heading', { name: 'Submit your artwork' })).toHaveCount(0);
   });
 
+  test('"Next artwork" eventually lands on the submit CTA as the final stop', async ({ page, request }) => {
+    await seed(request, {
+      artworks: { 'room-1': [artwork('a', { title: 'Piece A' })] },
+    });
+    await page.goto('/list');
+
+    const next = page.getByRole('button', { name: 'Next artwork' });
+    await next.click();
+    await next.click();
+
+    await expect(page.getByRole('button', { name: 'Submit your artwork' })).toBeInViewport();
+  });
+
   test('the door links to the list view', async ({ page, request }) => {
     await seed(request);
     await page.goto('/');

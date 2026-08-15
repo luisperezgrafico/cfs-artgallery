@@ -21,10 +21,14 @@ function closestItemIndex(items: HTMLElement[]): number {
  * neighbour, so it can never drift out of sync with manual scrolling.
  */
 export default function ListNavControls({ itemCount }: { itemCount: number }) {
-  if (itemCount < 2) return null;
+  // The "submit your artwork" CTA is always an extra stop after the artworks,
+  // so navigation is useful even with a single piece on show.
+  if (itemCount < 1) return null;
 
   const go = (direction: 1 | -1) => {
-    const items = Array.from(document.querySelectorAll<HTMLElement>('.list-view-item'));
+    // Includes the "submit your artwork" CTA as the final stop, so someone
+    // navigating by button — not scroll — still lands on it at the end.
+    const items = Array.from(document.querySelectorAll<HTMLElement>('.list-view-stop'));
     if (items.length === 0) return;
 
     const current = closestItemIndex(items);
