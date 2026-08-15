@@ -36,6 +36,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
     startTour,
     sitAtRestView,
     quitTour,
+    markSeated,
   } = useTour();
   const frameRefs = useRef<(THREE.Mesh | null)[]>([]);
   const [targetRevision, setTargetRevision] = React.useState(0);
@@ -64,6 +65,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
     <ZoomProvider>
       <CameraManager
         onFrameChange={setCurrentFrameIndex}
+        onRestArrival={markSeated}
         currentFrameIndex={currentFrameIndex}
         restView={restView}
         frameRefs={frameRefs as React.MutableRefObject<THREE.Mesh[]>}

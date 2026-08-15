@@ -172,7 +172,10 @@ function RestControls({ style }: { style?: React.CSSProperties }) {
 }
 
 const UIElements: React.FC = () => {
-  const { isResting } = useTour();
+  // Rest-view controls wait for isSeated (the camera has actually arrived),
+  // not just isResting (the visitor tapped a bench) — otherwise "Next room" /
+  // "Exit rest" flash in while the camera is still gliding toward the bench.
+  const { isResting, isSeated } = useTour();
   const { currentScreen, assetsReady, handleLoadingComplete, handleTitleFading, handleTitleComplete } = useAnimation();
   const [isLoading, setIsLoading] = useState(true);
   const [isInterfaceHidden, setIsInterfaceHidden] = useState(false);
@@ -257,7 +260,7 @@ const UIElements: React.FC = () => {
               }}
             >
               {isResting ? (
-                <RestControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+                isSeated && <RestControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
               ) : (
                 <>
                   <TourControls

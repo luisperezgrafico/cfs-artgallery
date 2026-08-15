@@ -9,6 +9,8 @@ import { RestViewpoint } from '../../types/museum';
 
 interface CameraManagerProps {
   onFrameChange?: (index: number) => void;
+  /** Called once the camera has actually finished arriving at a bench, not when it was merely told to. */
+  onRestArrival?: () => void;
   currentFrameIndex: number;
   restView?: RestViewpoint | null;
   frameRefs: React.MutableRefObject<(THREE.Mesh | null)[]>;
@@ -86,6 +88,7 @@ function smoothTimeForTravel(
 
 const CameraManager: React.FC<CameraManagerProps> = ({
   onFrameChange,
+  onRestArrival,
   currentFrameIndex,
   restView = null,
   frameRefs,
@@ -96,6 +99,12 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   const cameraControlsRef = useRef<CameraControls>(null);
   const restAnimationFrameRef = useRef<number | null>(null);
   const cameraTransitionIdRef = useRef(0);
+  // While the camera is still animating toward a bench, pointer drags must
+  // not drive free look too — the two would fight over the same
+  // controls.setLookAt call every frame, producing the jittery "still moving
+  // in on its own while I'm dragging" conflict. Gate input until the arrival
+  // animation actually finishes.
+  const restLookEnabledRef = useRef(false);
   const restLookRef = useRef({
     active: false,
     pointerId: null as number | null,
@@ -356,6 +365,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const transitionId = beginCameraTransition(true);
     setZoomedFrameId(null);
     syncRestLook(viewpoint);
+    restLookEnabledRef.current = false;
 
     const startPosition = controls.getPosition(new THREE.Vector3(), false);
     const startTarget = controls.getTarget(new THREE.Vector3(), false);
@@ -408,11 +418,13 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       }
 
       restAnimationFrameRef.current = null;
+      restLookEnabledRef.current = true;
+      onRestArrival?.();
       applyRestLook();
     };
 
     restAnimationFrameRef.current = window.requestAnimationFrame(step);
-  }, [applyRestLook, beginCameraTransition, setZoomedFrameId, syncRestLook]);
+  }, [applyRestLook, beginCameraTransition, onRestArrival, setZoomedFrameId, syncRestLook]);
 
   useEffect(() => {
     if (!restView) return;
@@ -423,6 +435,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
     const handlePointerDown = (e: PointerEvent) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (!restLookEnabledRef.current) return;
       restLookRef.current.active = true;
       restLookRef.current.pointerId = e.pointerId;
       restLookRef.current.lastX = e.clientX;
