@@ -62,6 +62,9 @@ export default function SettingsTab() {
   const [apiKeyDraft, setApiKeyDraft] = useState('');
   const [elevenLabsApiKeyDrafts, setElevenLabsApiKeyDrafts] = useState<string[]>(['', '', '', '']);
   const [testEmail, setTestEmail] = useState('');
+  const [ambientFile, setAmbientFile] = useState<File | null>(null);
+  const [ambientUploading, setAmbientUploading] = useState(false);
+  const [ambientMessage, setAmbientMessage] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const previewAudioRef = React.useRef<HTMLAudioElement | null>(null);
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
@@ -102,7 +105,6 @@ export default function SettingsTab() {
       moderatorEmails: settings.moderatorEmails,
       approvalTemplate: settings.approvalTemplate,
       rejectionTemplate: settings.rejectionTemplate,
-      ambientMusic: settings.ambientMusic,
     };
     if (apiKeyDraft.trim()) body.resendApiKey = apiKeyDraft.trim();
     try {
@@ -123,6 +125,26 @@ export default function SettingsTab() {
       setSaveError(err instanceof Error ? err.message : 'Failed to save settings.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const uploadAmbientMusic = async () => {
+    if (!ambientFile) return;
+    setAmbientUploading(true);
+    setAmbientMessage('');
+    try {
+      const form = new FormData();
+      form.set('file', ambientFile);
+      const response = await fetch('/api/admin/settings/ambient-music', { method: 'POST', body: form });
+      const data = await response.json() as { ambientMusic?: DisplaySettings['ambientMusic']; error?: string };
+      if (!response.ok || !data.ambientMusic) throw new Error(data.error ?? 'Upload failed.');
+      setSettings(current => current ? { ...current, ambientMusic: data.ambientMusic! } : current);
+      setAmbientFile(null);
+      setAmbientMessage('Ambient music updated.');
+    } catch (error) {
+      setAmbientMessage(error instanceof Error ? error.message : 'Upload failed.');
+    } finally {
+      setAmbientUploading(false);
     }
   };
 
@@ -259,39 +281,18 @@ export default function SettingsTab() {
         open={openSections.includes('ambient')}
         onToggle={toggleSection}
       >
-        <p className="text-white/35 text-xs">This track only loads after a visitor turns Ambient music on in the gallery menu.</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="block text-xs text-white/40 mb-1">Title</label>
-            <input value={settings.ambientMusic.title}
-              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, title: e.target.value } } : s)}
-              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-white/40 mb-1">Artist</label>
-            <input value={settings.ambientMusic.artist}
-              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, artist: e.target.value } } : s)}
-              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-white/40 mb-1">Direct audio URL</label>
-            <input type="url" value={settings.ambientMusic.sourceUrl}
-              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, sourceUrl: e.target.value } } : s)}
-              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-white/40 mb-1">License</label>
-            <input value={settings.ambientMusic.license}
-              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, license: e.target.value } } : s)}
-              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-white/40 mb-1">Source page</label>
-            <input type="url" value={settings.ambientMusic.sourcePage}
-              onChange={e => setSettings(s => s ? { ...s, ambientMusic: { ...s.ambientMusic, sourcePage: e.target.value } } : s)}
-              className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm" />
-          </div>
+        <p className="text-white/35 text-xs">Only loads after a visitor turns music on. MP3, OGG, or WAV, up to 2 MB.</p>
+        <p className="text-sm text-white/80">Current: {settings.ambientMusic.title}</p>
+        <audio controls src={settings.ambientMusic.sourceUrl} className="w-full" />
+        <div className="flex flex-wrap items-center gap-2">
+          <input type="file" accept="audio/mpeg,audio/ogg,audio/wav" onChange={e => setAmbientFile(e.target.files?.[0] ?? null)} className="min-w-0 text-xs text-white/60" />
+          <button type="button" onClick={uploadAmbientMusic} disabled={!ambientFile || ambientUploading}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-zinc-900 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50">
+            {ambientUploading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {ambientUploading ? 'Uploading…' : 'Upload replacement'}
+          </button>
         </div>
+        {ambientMessage && <p className={`text-xs ${ambientMessage.includes('updated') ? 'text-emerald-400' : 'text-red-400'}`}>{ambientMessage}</p>}
       </SettingsAccordionSection>
 
       <SettingsAccordionSection
