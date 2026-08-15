@@ -51,7 +51,11 @@ export function AmbientMusicProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = 0.15;
+    // Narration plays at the browser default (1.0), so this needs to sit
+    // clearly under it without being inaudible at a normal device volume —
+    // loud enough to read as "in the room," quiet enough that narration
+    // starting doesn't feel like a jump.
+    if (audioRef.current) audioRef.current.volume = 0.35;
   }, []);
 
   return (

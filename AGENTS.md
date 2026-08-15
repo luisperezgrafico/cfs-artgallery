@@ -36,6 +36,8 @@ npm run test:all  # both
 Tests never touch real storage: they run the app with `GALLERY_STORAGE=memory` (see below).
 `npm run test:e2e` starts its own dev server on port 3100; `npm run test:e2e:ui` opens the Playwright inspector.
 
+**Agents: only run `npm run test:e2e` (or `test:all`) with Luis's explicit go-ahead for that change**, and say so before running it. It's a real Next dev server plus headless Chromium for ~35 tests, a couple of minutes and a real token cost — worth it for changes to admin/storage/auth logic, not for routine UI tweaks. `npx tsc --noEmit` and `npm test` (Vitest) stay the default checks; run those freely.
+
 ## Architecture / data flow
 
 ```

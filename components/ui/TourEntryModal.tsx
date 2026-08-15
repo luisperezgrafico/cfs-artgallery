@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useTour } from '../../contexts/TourContext';
 import { useRoom } from '../../contexts/RoomContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
+import { useAmbientMusic } from '../../contexts/AmbientMusicContext';
 import { TourPreset, getInitialFrameIndex } from '../../utils/userPreferences';
 import { estimateRoomSeconds, formatEstimate } from '../../utils/tourEstimate';
 
@@ -23,6 +24,7 @@ export default function TourEntryModal({
   const { images, totalFrames } = useTour();
   const { rooms, activeRoomIndex } = useRoom();
   const { applyPreset, dwellSeconds, lastPreset } = useGuidedTourPreferences();
+  const { isPlaying: ambientMusicPlaying, toggle: toggleAmbientMusic } = useAmbientMusic();
 
   const roomId = rooms[activeRoomIndex]?.id ?? '';
   // > 0, not >= 0: being saved on the very first artwork isn't worth a
@@ -30,6 +32,14 @@ export default function TourEntryModal({
   const resumeIndex = getInitialFrameIndex(roomId, totalFrames);
   const canResume = resumeIndex > 0;
   const [view, setView] = useState<'resume' | 'doors'>(canResume ? 'resume' : 'doors');
+  // Off by default, every visit — a remembered preference must never turn
+  // into autoplay. Checking this is the visitor's own gesture, in the same
+  // click that starts the tour, so playing music here is not autoplay.
+  const [wantsAmbientMusic, setWantsAmbientMusic] = useState(false);
+
+  const applyAmbientMusicChoice = () => {
+    if (wantsAmbientMusic && !ambientMusicPlaying) void toggleAmbientMusic();
+  };
 
   const estimateFor = (preset: TourPreset): string | null => {
     if (preset === 'own-pace') return null;
@@ -39,12 +49,14 @@ export default function TourEntryModal({
 
   const pick = (preset: TourPreset) => {
     applyPreset(preset);
+    applyAmbientMusicChoice();
     onStart();
     onClose();
   };
 
   const resume = () => {
     if (lastPreset) applyPreset(lastPreset);
+    applyAmbientMusicChoice();
     onStart(resumeIndex);
     onClose();
   };
@@ -137,6 +149,16 @@ export default function TourEntryModal({
             </div>
           </>
         )}
+
+        <label className="flex items-center gap-2 text-xs cursor-pointer select-none" style={{ color: 'var(--panel-subtitle)' }}>
+          <input
+            type="checkbox"
+            checked={wantsAmbientMusic}
+            onChange={e => setWantsAmbientMusic(e.target.checked)}
+            className="shrink-0"
+          />
+          Play soft ambient music
+        </label>
 
         <button
           onClick={onClose}
