@@ -6,12 +6,21 @@ const SESSION_COOKIE = 'gallery_admin_auth';
 /**
  * The cookie holds the exact same "Basic <base64>" value a browser would send
  * as an Authorization header — set once at login, so verifying it can reuse
- * parseBasicAuth/roleForCredentials unchanged. Real callers (fetch() from the
- * admin panel) get authenticated via this cookie; Playwright's httpCredentials
- * keeps working unmodified via the Authorization header path below.
+ * parseBasicAuth/roleForCredentials unchanged.
+ *
+ * The `Authorization` header is only trusted for `/api/admin/*` calls (tools
+ * like curl or Playwright's `request` fixture that never hold a page/cookie).
+ * Page navigation under `/admin/*` trusts the cookie alone: browsers cache a
+ * successful native Basic Auth handshake for the whole session and keep
+ * resending that header on every request to the origin, so honouring it for
+ * page loads too meant logout could never actually log a browser out — it
+ * cleared the cookie, but the very next navigation to /admin/login was bounced
+ * straight back to /admin by the browser's still-cached credentials.
  */
-function roleFromRequest(request: NextRequest) {
-  const header = request.headers.get('authorization') ?? request.cookies.get(SESSION_COOKIE)?.value ?? null;
+function roleFromRequest(request: NextRequest, { allowHeader }: { allowHeader: boolean }) {
+  const header = (allowHeader ? request.headers.get('authorization') : null)
+    ?? request.cookies.get(SESSION_COOKIE)?.value
+    ?? null;
   const credentials = parseBasicAuth(header);
   return credentials ? roleForCredentials(credentials) : null;
 }
@@ -20,10 +29,11 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === '/admin/login';
   const isLoginApi = pathname === '/api/admin/login';
+  const isApiRoute = pathname.startsWith('/api/');
 
   if (isLoginApi) return NextResponse.next();
 
-  const role = roleFromRequest(request);
+  const role = roleFromRequest(request, { allowHeader: isApiRoute });
 
   if (isLoginPage) {
     // Already signed in — no reason to show the login form again.
