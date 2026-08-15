@@ -360,6 +360,22 @@
   color: var(--panel-title);
 }
 
+.list-view-back-to-top {
+  display: block;
+  width: fit-content;
+  margin: 1rem auto 3rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  color: var(--field-icon);
+  background: var(--panel-btn-bg);
+  text-decoration: none;
+}
+
+.list-view-back-to-top:hover {
+  color: var(--panel-title);
+  background: var(--panel-btn-bg-hover);
+}
+
 @media (max-width: 480px) {
   .list-view-item {
     flex-direction: column;

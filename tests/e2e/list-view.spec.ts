@@ -46,10 +46,11 @@ test.describe('list view', () => {
     await page.goto('/list');
 
     await page.getByRole('button', { name: 'View full image of Piece A' }).click();
-    await expect(page.getByRole('img', { name: 'Piece A' })).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog').getByRole('img', { name: 'Piece A' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Close' }).click();
-    await expect(page.getByRole('img', { name: 'Piece A' })).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('"Submit your artwork" opens the same submission modal as the 3D gallery', async ({ page, request }) => {

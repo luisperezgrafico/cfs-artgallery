@@ -10,6 +10,7 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Digital illustration',
     link: '#',
+    altText: 'A pale abstract landscape with a soft circular glow above a muted horizon.',
     shortDescription: 'A quiet study of soft light, muted edges, and a calm horizon.',
     longDescription:
       `This piece uses a narrow range of pale color to create a steady, quiet atmosphere. The central glow is intentionally soft rather than dramatic, giving the image a slow and open feeling.\n\nThe surrounding marks add texture without pulling attention away from the light.`,
@@ -23,6 +24,7 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Watercolour on paper',
     link: '#',
+    altText: 'A warm abstract watercolour with overlapping amber, rust, and pale shapes.',
     shortDescription: 'A warm abstract composition about uncertain time and gentle repetition.',
     contentNotes: ['sensory-intensity'],
     longDescription:
@@ -37,6 +39,7 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Pencil on paper',
     link: '#',
+    altText: 'A dense pencil drawing of tangled, plant-like forms built from repeated marks.',
     shortDescription: 'A detailed pencil study of dense forms, quiet rhythm, and layered marks.',
     longDescription:
       `Silva Quieta means quiet wood. The drawing is made from repeated pencil marks that build up into a dense but restrained image.\n\nThe overall effect is still and textured, with small variations becoming more visible over time.`,
@@ -50,6 +53,7 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Oil pastel',
     link: '#',
+    altText: 'Soft blue and green oil-pastel forms suggesting slow waves or water.',
     shortDescription: 'A soft pastel image of water, rounded movement, and muted color.',
     longDescription:
       `This work imagines water as a slow visual rhythm. The surface is calm, but the rounded shapes suggest a gentle movement beneath it.\n\nThe muted colors keep the image open and light, with soft edges that return the eye to the center.`,
@@ -63,6 +67,7 @@ export const drawingImages: ImageMetadata[] = [
     date: '2024',
     medium: 'Ink on card',
     link: '#',
+    altText: 'A dark ink field with a partial figure emerging through subtle tonal shifts.',
     shortDescription: 'A dark ink composition with a quiet figure emerging from the background.',
     contentNotes: ['dark-imagery'],
     longDescription:
@@ -77,6 +82,7 @@ export const drawingImages: ImageMetadata[] = [
     date: '2023',
     medium: 'Digital',
     link: '#',
+    altText: 'An abstract arrangement of simple colour blocks and loose shapes on a pale background.',
     shortDescription: 'An untitled abstract image made from simple color blocks and loose structure.',
     longDescription:
       `This untitled piece keeps the composition deliberately open. Blocks of color and loose shapes sit beside each other without resolving into a single subject.\n\nThe image leaves room for different readings, balancing simple structure with a loose, unfinished quality.`,

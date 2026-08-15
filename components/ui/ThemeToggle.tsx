@@ -13,9 +13,10 @@ function readTheme(): Theme {
   return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 }
 
-const ThemeToggle: React.FC<{ className?: string; style?: React.CSSProperties }> = ({
+const ThemeToggle: React.FC<{ className?: string; style?: React.CSSProperties; iconSize?: number }> = ({
   className,
   style,
+  iconSize = 18,
 }) => {
   const [theme, setTheme] = useState<Theme>('dark');
 
@@ -43,7 +44,7 @@ const ThemeToggle: React.FC<{ className?: string; style?: React.CSSProperties }>
       style={style}
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+      {theme === 'dark' ? <Moon size={iconSize} /> : <Sun size={iconSize} />}
     </button>
   );
 };

@@ -17,7 +17,7 @@ export default async function ListPage() {
   );
 
   return (
-    <main className="list-view">
+    <main id="list-view-top" className="list-view">
       <div className="list-view-header">
         <Link href="/" className="list-view-back">
           ← Back to gallery

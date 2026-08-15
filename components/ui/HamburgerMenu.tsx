@@ -325,7 +325,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
               <CollapsibleSection title="Preferences" open={preferencesOpen} onToggle={() => setPreferencesOpen(o => !o)}>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[var(--panel-text)]">Theme</span>
-                  <ThemeToggle className="w-11 h-11 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]" />
+                  <ThemeToggle iconSize={17} className="w-10 h-10 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]" />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-[var(--panel-text)]">Ambient music</span>
@@ -334,13 +334,13 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                     onClick={() => void toggleAmbientMusic()}
                     aria-pressed={ambientMusicPlaying}
                     aria-label={ambientMusicPlaying ? 'Turn ambient music off' : 'Turn ambient music on'}
-                    className={`w-11 h-11 flex items-center justify-center rounded-full transition-colors text-[var(--panel-btn-text)] ${
+                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors text-[var(--panel-btn-text)] ${
                       ambientMusicPlaying
                         ? 'bg-[var(--panel-btn-bg-hover)]'
                         : 'bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]'
                     }`}
                   >
-                    <Music size={18} strokeWidth={ambientMusicPlaying ? 2.5 : 1.75} />
+                    <Music size={17} strokeWidth={ambientMusicPlaying ? 2.5 : 1.75} />
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
@@ -349,9 +349,9 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                     type="button"
                     onClick={handleSwitchToList}
                     aria-label="Switch to list view"
-                    className="w-11 h-11 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]"
+                    className="w-10 h-10 flex items-center justify-center rounded-full transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]"
                   >
-                    <List size={18} />
+                    <List size={17} />
                   </button>
                 </div>
               </CollapsibleSection>

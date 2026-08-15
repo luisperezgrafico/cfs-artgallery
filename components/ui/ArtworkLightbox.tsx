@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X } from 'lucide-react';
+import { X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 
 interface Transform {
@@ -24,6 +24,9 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
   const lastPinchDist = useRef<number | null>(null);
   const lastPanPos = useRef<{ x: number; y: number } | null>(null);
   const lastTapAt = useRef(0);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   const artwork =
     isTourStarted && currentFrameIndex >= 0 ? images[currentFrameIndex] : null;
@@ -62,6 +65,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
 
   useEffect(() => {
     const handler = () => {
+      openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       resetTransform();
       setIsOpen(true);
     };
@@ -73,6 +77,38 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
     setIsOpen(false);
     window.dispatchEvent(new CustomEvent('close-artwork-lightbox'));
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+      }
+      if (event.key === 'Tab') {
+        const controls = Array.from(
+          dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not([disabled])') ?? [],
+        );
+        const currentIndex = controls.indexOf(document.activeElement as HTMLButtonElement);
+        const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
+
+        if (currentIndex === -1 || nextIndex < 0 || nextIndex >= controls.length) {
+          event.preventDefault();
+          controls[event.shiftKey ? controls.length - 1 : 0]?.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [close, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) return;
+    openerRef.current?.focus();
+    openerRef.current = null;
+  }, [isOpen]);
 
   // ── Pointer gesture handlers ──────────────────────────────────────────────
 
@@ -154,10 +190,37 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="artwork-lightbox-title"
+      aria-describedby="artwork-lightbox-instructions"
       className="fixed inset-0 flex items-center justify-center bg-black"
       style={{ ...style, zIndex: 60, animation: 'fadeIn 0.32s ease-out' }}
     >
-      {/* Gesture / image area */}
+      {/* This comes first so it is the first focus stop when the dialog opens. */}
+      <div
+        className="absolute top-0 right-0 flex gap-2 px-4"
+        style={{
+          paddingTop: 'max(1rem, env(safe-area-inset-top))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right))',
+        }}
+      >
+        <button
+          ref={closeButtonRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            close();
+          }}
+          aria-label="Close"
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Kept after Close in the DOM: swiping forward with a screen reader now
+          reaches the artwork and its alternative text before the extra controls. */}
       <div
         className="w-full h-full flex items-center justify-center overflow-hidden"
         style={{ touchAction: 'none', cursor: scale > 1 ? 'grab' : 'default' }}
@@ -187,26 +250,6 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         />
       </div>
 
-      {/* Top-right controls */}
-      <div
-        className="absolute top-0 right-0 flex gap-2 px-4"
-        style={{
-          paddingTop: 'max(1rem, env(safe-area-inset-top))',
-          paddingRight: 'max(1rem, env(safe-area-inset-right))',
-        }}
-      >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            close();
-          }}
-          aria-label="Close"
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
-        >
-          <X size={18} />
-        </button>
-      </div>
-
       {/* Bottom bar — title + zoom hint */}
       <div
         className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-5"
@@ -217,7 +260,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         }}
       >
         <div>
-          <p className="text-white/90 text-sm font-medium leading-snug">{artwork.title}</p>
+          <p id="artwork-lightbox-title" className="text-white/90 text-sm font-medium leading-snug">{artwork.title}</p>
           {(artwork.artist || artwork.date) && (
             <p className="text-white/40 text-xs mt-0.5 italic">
               {artwork.artist}
@@ -225,9 +268,26 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
             </p>
           )}
         </div>
-        <p className="text-white/25 text-xs">
-          {scale > 1 ? 'Double-tap to reset' : 'Double-tap to zoom'}
-        </p>
+        <div className="flex items-center gap-3">
+          <p id="artwork-lightbox-instructions" className="text-white/25 text-xs">
+            {scale > 1 ? 'Use zoom out or double-tap to reset' : 'Use zoom in or double-tap to zoom'}
+          </p>
+          <button
+            type="button"
+            aria-label={scale > 1 ? 'Zoom out' : 'Zoom in'}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (transformRef.current.scale > 1) {
+                resetTransform();
+              } else {
+                applyTransform({ scale: 2, x: 0, y: 0 });
+              }
+            }}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
+          >
+            {scale > 1 ? <ZoomOut size={18} /> : <ZoomIn size={18} />}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -77,7 +77,13 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
                 <p className="list-view-item-desc">{artwork.longDescription}</p>
               )}
               {artwork.audioUrl && (
-                <audio controls src={artwork.audioUrl} className="list-view-item-audio" onPlay={pauseOtherAudio}>
+                <audio
+                  controls
+                  src={artwork.audioUrl}
+                  aria-label={`Listen to narration for ${artwork.title}${artwork.artist ? `, by ${artwork.artist}` : ''}`}
+                  className="list-view-item-audio"
+                  onPlay={pauseOtherAudio}
+                >
                   Your browser does not support audio playback.
                 </audio>
               )}
@@ -99,6 +105,10 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
           Submit your artwork
         </button>
       </div>
+
+      <a href="#list-view-top" className="list-view-back-to-top">
+        Back to top
+      </a>
 
       <ArtworkLightbox />
       <SubmitArtworkModal />
