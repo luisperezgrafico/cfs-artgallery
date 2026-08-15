@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ExternalLink, ChevronDown, ChevronUp, Heart, Volume2, Pause, RotateCcw } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 import { useRoom } from '../../contexts/RoomContext';
@@ -20,6 +20,8 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const [isOpen, setIsOpen] = useState(false);
   const [origin, setOrigin] = useState<Origin | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [shelfFeedback, setShelfFeedback] = useState('');
+  const shelfFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { audioState, toggle: toggleAudioPlayback, reset: resetAudio, audioProps } = useAudioPlayer();
 
   const artwork = isTourStarted && currentFrameIndex >= 0
@@ -32,6 +34,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
 
   const handleToggleShelf = () => {
     if (!artwork?.id) return;
+    const addedToShelf = !shelved;
     toggle({
       id: artwork.id,
       title: artwork.title,
@@ -41,6 +44,13 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
       roomId: activeRoom.id,
       frameIndex: currentFrameIndex,
     });
+
+    if (shelfFeedbackTimerRef.current) clearTimeout(shelfFeedbackTimerRef.current);
+    setShelfFeedback(addedToShelf ? 'Added to My Shelf.' : 'Removed from My Shelf.');
+    shelfFeedbackTimerRef.current = setTimeout(() => {
+      setShelfFeedback('');
+      shelfFeedbackTimerRef.current = null;
+    }, 3000);
   };
 
   useEffect(() => {
@@ -49,6 +59,10 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
     setExpanded(false);
   }, [currentFrameIndex]);
   useEffect(() => { if (!isTourStarted) setIsOpen(false); }, [isTourStarted]);
+
+  useEffect(() => () => {
+    if (shelfFeedbackTimerRef.current) clearTimeout(shelfFeedbackTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -133,7 +147,25 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
               </p>
             </div>
 
-            <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
+            <div className="relative shrink-0 flex items-center gap-1.5 mt-0.5">
+              <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {shelfFeedback}
+              </div>
+              {shelfFeedback && (
+                <div
+                  className="pointer-events-none absolute right-0 bottom-full mb-2 whitespace-nowrap px-3 py-2 text-xs shadow-lg"
+                  style={{
+                    color: 'var(--panel-btn-text)',
+                    background: 'var(--panel-btn-bg)',
+                    border: '1px solid var(--panel-border)',
+                    borderRadius: '2px',
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                  }}
+                  aria-hidden="true"
+                >
+                  {shelfFeedback}
+                </div>
+              )}
               {canShelf && (
                 <button
                   onClick={handleToggleShelf}
