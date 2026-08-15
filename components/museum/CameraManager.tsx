@@ -100,6 +100,14 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
   useEffect(() => cancelRestAnimation, [cancelRestAnimation]);
 
+  // CameraControls animations survive longer than a React render. When a room
+  // changes, prevent an unfinished transition from the old room (especially a
+  // reset to overview) from completing over the new room's destination.
+  useEffect(() => () => {
+    cameraTransitionIdRef.current += 1;
+    cameraControlsRef.current?.stop();
+  }, []);
+
   useEffect(() => {
     if (currentFrameIndex >= 0) {
       setZoomedFrameId(currentFrameIndex);

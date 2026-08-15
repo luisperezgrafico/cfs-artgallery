@@ -128,7 +128,10 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
       startTour(target.frameIndex);
     } else {
       saveVisitPosition(target.room.id, target.frameIndex);
-      quitTour();
+      // Changing the room remounts TourProvider with the saved target index.
+      // Calling quitTour here would also start the old room's asynchronous
+      // overview camera transition, which can finish after the new room has
+      // begun zooming to this shelf item and leave controls over an overview.
       setActiveRoomIndex(target.roomIndex);
     }
     setView('main');
