@@ -61,7 +61,6 @@ export default function SettingsTab() {
   const [saveError, setSaveError] = useState('');
   const [apiKeyDraft, setApiKeyDraft] = useState('');
   const [elevenLabsApiKeyDrafts, setElevenLabsApiKeyDrafts] = useState<string[]>(['', '', '', '']);
-  const [testEmail, setTestEmail] = useState('');
   const [ambientFile, setAmbientFile] = useState<File | null>(null);
   const [ambientUploading, setAmbientUploading] = useState(false);
   const [ambientMessage, setAmbientMessage] = useState('');
@@ -78,10 +77,11 @@ export default function SettingsTab() {
       .then(([settingsData, audioData]) => {
         setSettings(settingsData);
         setElevenLabsSettings(audioData);
-        setTestEmail(settingsData.moderatorEmails[0] ?? '');
+        if (audioData.apiKeySet) void loadVoices();
       })
       .catch(() => undefined)
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => () => {
@@ -106,6 +106,8 @@ export default function SettingsTab() {
       moderatorEmails: settings.moderatorEmails,
       approvalTemplate: settings.approvalTemplate,
       rejectionTemplate: settings.rejectionTemplate,
+      testModeEnabled: settings.testModeEnabled,
+      testModeRecipient: settings.testModeRecipient,
     };
     if (apiKeyDraft.trim()) body.resendApiKey = apiKeyDraft.trim();
     try {
@@ -234,25 +236,24 @@ export default function SettingsTab() {
     }
   };
 
-  const sendTestEmail = async () => {
+  const sendTestEmail = async (kind: 'approval' | 'rejection', template: string) => {
     setTesting(true);
     setTestResult(null);
     setTestMessage('');
     try {
-      const to = testEmail.trim();
-      if (!to) throw new Error('Enter a test recipient email address.');
       const res = await fetch('/api/admin/settings/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to,
+          kind,
+          template,
           resendApiKey: apiKeyDraft.trim() || undefined,
         }),
       });
       const data = await res.json().catch(() => null) as { ok?: boolean; error?: string } | null;
       if (!res.ok || !data?.ok) throw new Error(data?.error ?? 'Failed to send test email.');
       setTestResult('ok');
-      setTestMessage(`Test email sent to ${to}.`);
+      setTestMessage(`Test email sent to ${settings?.testModeRecipient ?? 'the test recipient'}.`);
     } catch (err) {
       setTestResult('fail');
       setTestMessage(err instanceof Error ? err.message : 'Failed to send test email.');
@@ -309,11 +310,6 @@ export default function SettingsTab() {
         open={openSections.includes('email')}
         onToggle={toggleSection}
       >
-        <div className={`rounded-lg border px-3 py-2 text-xs ${settings.testModeEnabled ? 'border-amber-300/20 bg-amber-300/5 text-amber-100/80' : 'border-emerald-300/20 bg-emerald-300/5 text-emerald-100/80'}`}>
-          {settings.testModeEnabled
-            ? <>Test mode is on — new-submission notifications go only to {settings.testModeRecipient || 'no recipient (notifications are paused)'}, not the full moderator list.</>
-            : <>Test mode is off — new-submission notifications go to the full moderator list.</>}
-        </div>
         <div>
           <label className="block text-xs text-white/40 mb-1">API key</label>
           <div className="flex flex-wrap gap-2">
@@ -327,29 +323,21 @@ export default function SettingsTab() {
           </div>
           <p className="text-white/25 text-xs mt-1">
             {settings.resendApiKeySet ? <span className="mr-2 text-emerald-400/70">API key saved.</span> : null}
-            Saved keys cannot be revealed. Paste a new key here to replace the current one.{' '}
+            Keys stay hidden after saving. Paste a new key to replace it.{' '}
             <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">resend.com</a>
           </p>
         </div>
-        <div>
-          <label className="block text-xs text-white/40 mb-1">Test recipient</label>
-          <div className="flex flex-wrap gap-2">
-            <input
-              type="email"
-              value={testEmail}
-              onChange={e => setTestEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="min-w-0 flex-1 bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
-            />
-            <button onClick={sendTestEmail} disabled={testing || !testEmail.trim() || (!settings.resendApiKeySet && !apiKeyDraft.trim())}
-              className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white/70 hover:text-white border border-white/10 rounded-lg text-xs transition-colors disabled:opacity-40">
-              {testing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-              {testResult === 'ok' ? 'Sent!' : testResult === 'fail' ? 'Failed' : 'Test'}
-            </button>
-          </div>
-          <p className={`mt-1 text-xs ${testResult === 'fail' ? 'text-red-300/80' : testResult === 'ok' ? 'text-emerald-400/70' : 'text-white/25'}`}>
-            {testMessage || 'Before domain verification, Resend only delivers tests to the email address on its account.'}
-          </p>
+        <div className="rounded-lg border border-white/10 bg-zinc-950/40 p-3 space-y-3">
+          <label className="flex items-center justify-between gap-3 text-sm text-white"><span>Testing mode</span><input type="checkbox" checked={settings.testModeEnabled} onChange={e => setSettings(s => s ? { ...s, testModeEnabled: e.target.checked } : s)} className="h-4 w-4 accent-white" /></label>
+          <div><label className="block text-xs text-white/40 mb-1">Test recipient</label><select value={settings.testModeRecipient} onChange={e => setSettings(s => s ? { ...s, testModeRecipient: e.target.value } : s)} className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"><option value="">No recipient selected</option>{settings.moderatorEmails.map(email => <option key={email} value={email}>{email}</option>)}</select></div>
+          <p className="text-white/30 text-xs">Save settings to apply. Before domain verification, Resend may restrict test emails to its account owner.</p>
+        </div>
+        <div className={`rounded-lg border px-3 py-2 text-xs ${settings.testModeEnabled ? 'border-amber-300/20 bg-amber-300/5 text-amber-100/80' : 'border-emerald-300/20 bg-emerald-300/5 text-emerald-100/80'}`}>
+          {settings.testModeEnabled
+            ? settings.testModeRecipient
+              ? <>Test mode is on — notifications go only to the test recipient: {settings.testModeRecipient}.</>
+              : <>Test mode is on — no test recipient is selected, so submission notifications are paused.</>
+            : <>Test mode is off — notifications go to the full moderator list.</>}
         </div>
       </SettingsAccordionSection>
 
@@ -393,17 +381,18 @@ export default function SettingsTab() {
           <p className="text-white/25 text-xs">{'{{artist}}'} {'{{title}}'} {'{{gallery_url}}'}</p>
         </div>
         <div>
-          <label className="block text-xs text-white/40 mb-1">Approval</label>
+          <div className="mb-1 flex items-center justify-between"><label className="block text-xs text-white/40">Approval</label><button onClick={() => sendTestEmail('approval', settings.approvalTemplate)} disabled={testing || !settings.testModeRecipient || (!settings.resendApiKeySet && !apiKeyDraft.trim())} className="text-xs text-white/60 hover:text-white disabled:opacity-40">{testing ? 'Sending…' : 'Send test'}</button></div>
           <textarea value={settings.approvalTemplate} rows={6}
             onChange={e => setSettings(s => s ? { ...s, approvalTemplate: e.target.value } : s)}
             className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y font-mono" />
         </div>
         <div>
-          <label className="block text-xs text-white/40 mb-1">Rejection</label>
+          <div className="mb-1 flex items-center justify-between"><label className="block text-xs text-white/40">Rejection</label><button onClick={() => sendTestEmail('rejection', settings.rejectionTemplate)} disabled={testing || !settings.testModeRecipient || (!settings.resendApiKeySet && !apiKeyDraft.trim())} className="text-xs text-white/60 hover:text-white disabled:opacity-40">{testing ? 'Sending…' : 'Send test'}</button></div>
           <textarea value={settings.rejectionTemplate} rows={6}
             onChange={e => setSettings(s => s ? { ...s, rejectionTemplate: e.target.value } : s)}
             className="w-full bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm resize-y font-mono" />
         </div>
+        {testMessage && <p className={`text-xs ${testResult === 'fail' ? 'text-red-300/80' : 'text-emerald-400/70'}`}>{testMessage}</p>}
       </SettingsAccordionSection>
 
       <SettingsAccordionSection
@@ -454,19 +443,26 @@ export default function SettingsTab() {
               </button>
             </div>
             <div className="flex gap-2">
-              <select
-                value={elevenLabsSettings.voiceId}
-                onChange={e => {
-                  stopVoicePreview();
-                  setElevenLabsSettings(s => s ? { ...s, voiceId: e.target.value } : s);
-                }}
-                className="min-w-0 flex-1 bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
-              >
-                <option value={elevenLabsSettings.voiceId}>{selectedVoice?.name ?? 'Current saved voice'}</option>
-                {voices
-                  .filter(voice => voice.id !== elevenLabsSettings.voiceId)
-                  .map(voice => <option key={voice.id} value={voice.id}>{voice.name}</option>)}
-              </select>
+              {/* A bare <select> ignores a flex sibling's min-w-0 in some mobile
+                  browsers and sizes itself to its longest option instead,
+                  pushing the page into horizontal scroll. Giving the wrapper
+                  the flex constraint and the select a plain w-full inside it
+                  keeps the select's own intrinsic width out of the equation. */}
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <select
+                  value={elevenLabsSettings.voiceId}
+                  onChange={e => {
+                    stopVoicePreview();
+                    setElevenLabsSettings(s => s ? { ...s, voiceId: e.target.value } : s);
+                  }}
+                  className="w-full max-w-full truncate bg-zinc-800 text-white border border-white/10 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value={elevenLabsSettings.voiceId}>{selectedVoice?.name ?? 'Current saved voice'}</option>
+                  {voices
+                    .filter(voice => voice.id !== elevenLabsSettings.voiceId)
+                    .map(voice => <option key={voice.id} value={voice.id}>{voice.name}</option>)}
+                </select>
+              </div>
               <button
                 type="button"
                 onClick={() => playVoicePreview(selectedVoice)}

@@ -63,10 +63,10 @@ describe('admin Resend settings routes', () => {
       ...DEFAULT_SETTINGS,
       resendApiKey: '',
       moderatorEmails: ['moderator@example.test'],
+      testModeRecipient: 'moderator@example.test',
     });
 
     const res = await postTestEmail({
-      to: 'moderator@example.test',
       resendApiKey: 're_draft_key',
     });
 
@@ -81,13 +81,17 @@ describe('admin Resend settings routes', () => {
   });
 
   it('returns the Resend error when the provider rejects a test email', async () => {
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      moderatorEmails: ['someone@example.test'],
+      testModeRecipient: 'someone@example.test',
+    });
     resendMocks.send.mockResolvedValue({
       data: null,
       error: { message: 'You can only send testing emails to your own email address.' },
     });
 
     const res = await postTestEmail({
-      to: 'someone@example.test',
       resendApiKey: 're_draft_key',
     });
     const body = await res.json() as { error?: string };

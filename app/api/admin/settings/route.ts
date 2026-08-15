@@ -33,6 +33,12 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json() as Partial<GallerySettings> & { resendApiKeyClear?: boolean };
     const current = await getSettings();
+    const testModeRecipient = typeof body.testModeRecipient === 'string'
+      ? body.testModeRecipient.trim()
+      : current.testModeRecipient;
+    if (testModeRecipient && !current.moderatorEmails.includes(testModeRecipient)) {
+      return NextResponse.json({ error: 'Choose a test recipient from the moderator list.' }, { status: 400 });
+    }
 
     const updated: GallerySettings = {
       resendApiKey:
@@ -49,8 +55,8 @@ export async function PUT(request: NextRequest) {
       // Ambient music is changed only by its dedicated upload route. Keeping it
       // out of the general settings save avoids accidental overwrites.
       ambientMusic: current.ambientMusic,
-      testModeEnabled: current.testModeEnabled,
-      testModeRecipient: current.testModeRecipient,
+      testModeEnabled: typeof body.testModeEnabled === 'boolean' ? body.testModeEnabled : current.testModeEnabled,
+      testModeRecipient,
     };
 
     await saveSettings(updated);
