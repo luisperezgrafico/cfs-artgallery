@@ -14,6 +14,15 @@ export interface ListArtworkEntry {
   frameIndex: number;
 }
 
+// Native <audio> elements don't know about each other, so starting one
+// leaves any other already-playing track running underneath it.
+function pauseOtherAudio(e: React.SyntheticEvent<HTMLAudioElement>) {
+  const current = e.currentTarget;
+  document.querySelectorAll<HTMLAudioElement>('.list-view-item-audio').forEach(audio => {
+    if (audio !== current && !audio.paused) audio.pause();
+  });
+}
+
 function ZoomButton({ index, title }: { index: number; title: string }) {
   const { startTour } = useTour();
 
@@ -68,7 +77,7 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
                 <p className="list-view-item-desc">{artwork.longDescription}</p>
               )}
               {artwork.audioUrl && (
-                <audio controls src={artwork.audioUrl} className="list-view-item-audio">
+                <audio controls src={artwork.audioUrl} className="list-view-item-audio" onPlay={pauseOtherAudio}>
                   Your browser does not support audio playback.
                 </audio>
               )}

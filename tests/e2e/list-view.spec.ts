@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { seed, artwork } from './fixtures';
+import { seed, artwork, tinyWav } from './fixtures';
+
+const audioDataUri = tinyWav(1).toString('base64');
+const AUDIO_A = `data:audio/wav;base64,${audioDataUri}`;
 
 /**
  * The list view (/list) is the low-cost alternative to the 3D gallery: a
@@ -73,6 +76,28 @@ test.describe('list view', () => {
     await next.click();
 
     await expect(page.getByRole('button', { name: 'Submit your artwork' })).toBeInViewport();
+  });
+
+  test('playing one artwork\'s audio pauses another that was already playing', async ({ page, request }) => {
+    await seed(request, {
+      artworks: {
+        'room-1': [
+          artwork('a', { title: 'Piece A', audioUrl: AUDIO_A }),
+          artwork('b', { title: 'Piece B', audioUrl: AUDIO_A }),
+        ],
+      },
+    });
+    await page.goto('/list');
+
+    const players = page.locator('.list-view-item-audio');
+    await expect(players).toHaveCount(2);
+
+    await players.nth(0).evaluate((el: HTMLAudioElement) => el.play());
+    await expect.poll(() => players.nth(0).evaluate((el: HTMLAudioElement) => !el.paused)).toBe(true);
+
+    await players.nth(1).evaluate((el: HTMLAudioElement) => el.play());
+    await expect.poll(() => players.nth(1).evaluate((el: HTMLAudioElement) => !el.paused)).toBe(true);
+    await expect.poll(() => players.nth(0).evaluate((el: HTMLAudioElement) => el.paused)).toBe(true);
   });
 
   test('the door links to the list view', async ({ page, request }) => {
