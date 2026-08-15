@@ -194,7 +194,6 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
       role="dialog"
       aria-modal="true"
       aria-labelledby="artwork-lightbox-title"
-      aria-describedby="artwork-lightbox-instructions"
       className="fixed inset-0 flex items-center justify-center bg-black"
       style={{ ...style, zIndex: 60, animation: 'fadeIn 0.32s ease-out' }}
     >
@@ -263,11 +262,10 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         />
       </div>
 
-      {/* This shared, full-width bar keeps its two visual halves from ever
-          overlapping. On narrow screens they stack instead of competing for
-          the same bottom edge. */}
+      {/* A single shared bar keeps the title and zoom control aligned without
+          allowing either to overlap the other. */}
       <div
-        className="absolute bottom-0 left-0 right-0 flex flex-col gap-2 bg-black/75 px-5 py-3 backdrop-blur-sm sm:flex-row sm:items-end sm:justify-between"
+        className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-4 bg-black/75 px-5 py-3 backdrop-blur-sm"
         style={{
           paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
           paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
@@ -283,10 +281,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
             </p>
           )}
         </div>
-        <div className="flex shrink-0 items-center justify-end gap-3">
-          <p id="artwork-lightbox-instructions" className="max-w-52 text-right text-xs text-white/90">
-            {scale > 1 ? 'Use the zoom out button or double-tap to reset' : 'Use the zoom in button or double-tap to zoom'}
-          </p>
+        <div className="flex shrink-0 items-center justify-end">
           <button
             type="button"
             aria-label={scale > 1 ? 'Zoom out' : 'Zoom in'}
