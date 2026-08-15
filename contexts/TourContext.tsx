@@ -3,7 +3,7 @@
 // src/contexts/TourContext.tsx
 import React, { createContext, useCallback, useContext, useState, ReactNode } from "react";
 import { ImageMetadata, RestViewpoint } from "../types/museum";
-import { findNextRealIndex, findPreviousRealIndex } from "../utils/roomLayout";
+import { nextNavigableIndex, previousNavigableIndex } from "../utils/roomLayout";
 import { DEFAULT_REST_VIEW } from '../utils/restView';
 
 interface TourContextType {
@@ -60,9 +60,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   const nextFrame = useCallback((includeEmpty = false) => {
     setRestView(null);
     setCurrentFrameIndexState(prev => {
-      const next = includeEmpty
-        ? (prev + 1 < images.length ? prev + 1 : -1)
-        : findNextRealIndex(images, prev);
+      const next = nextNavigableIndex(images, prev, includeEmpty);
       if (next !== -1) return next;
       setIsTourStarted(false);
       setRestView(DEFAULT_REST_VIEW);
@@ -73,9 +71,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   const previousFrame = useCallback((includeEmpty = false) => {
     setRestView(null);
     setCurrentFrameIndexState(prev => {
-      const previous = includeEmpty
-        ? (prev > 0 ? prev - 1 : -1)
-        : findPreviousRealIndex(images, prev);
+      const previous = previousNavigableIndex(images, prev, includeEmpty);
       return previous === -1 ? prev : previous;
     });
   }, [images]);

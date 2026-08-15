@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { layoutRoom, findNextRealIndex, findPreviousRealIndex } from '../../utils/roomLayout';
+import {
+  layoutRoom,
+  findNextRealIndex,
+  findPreviousRealIndex,
+  nextNavigableIndex,
+  previousNavigableIndex,
+} from '../../utils/roomLayout';
 import type { ImageMetadata } from '../../types/museum';
 
 function art(id: string, slot?: number): ImageMetadata {
@@ -75,5 +81,19 @@ describe('findPreviousRealIndex', () => {
   it('returns -1 when no earlier artwork exists', () => {
     const laid = layoutRoom([art('first', 2)]);
     expect(findPreviousRealIndex(laid, 2)).toBe(-1);
+  });
+});
+
+describe('manual and auto slot navigation', () => {
+  const laid = layoutRoom([art('first', 0), art('second', 5)]);
+
+  it('skips empty submit canvases in Auto', () => {
+    expect(nextNavigableIndex(laid, 0, false)).toBe(5);
+    expect(previousNavigableIndex(laid, 5, false)).toBe(0);
+  });
+
+  it('visits empty submit canvases in Manual so they remain actionable', () => {
+    expect(nextNavigableIndex(laid, 0, true)).toBe(1);
+    expect(previousNavigableIndex(laid, 5, true)).toBe(4);
   });
 });

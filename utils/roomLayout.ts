@@ -59,3 +59,27 @@ export function findPreviousRealIndex(images: ImageMetadata[], fromIndex: number
   }
   return -1;
 }
+
+/**
+ * Resolves one navigation step. Guided/Auto mode skips empty submit canvases;
+ * Manual mode visits every slot so those canvases remain actionable.
+ */
+export function nextNavigableIndex(
+  images: ImageMetadata[],
+  fromIndex: number,
+  includeEmpty: boolean,
+): number {
+  return includeEmpty
+    ? (fromIndex + 1 < images.length ? fromIndex + 1 : -1)
+    : findNextRealIndex(images, fromIndex);
+}
+
+export function previousNavigableIndex(
+  images: ImageMetadata[],
+  fromIndex: number,
+  includeEmpty: boolean,
+): number {
+  return includeEmpty
+    ? (fromIndex > 0 ? fromIndex - 1 : -1)
+    : findPreviousRealIndex(images, fromIndex);
+}
