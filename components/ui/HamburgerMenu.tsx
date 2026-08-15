@@ -64,7 +64,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [controlsOpen, setControlsOpen] = useState(false);
   const isMobile = useIsMobile();
   const router = useRouter();
-  const { rooms, activeRoomIndex, setActiveRoomIndex, getRoomImages } = useRoom();
+  const { rooms, activeRoomIndex, setActiveRoomIndex, openArtworkInRoom, getRoomImages } = useRoom();
   const { quitTour, startTour, currentFrameIndex } = useTour();
   const { items: shelfItems, remove: removeFromShelf } = useShelf();
   const { narrationEnabled, setNarrationEnabled, dwellSeconds, setDwellSeconds } = useGuidedTourPreferences();
@@ -128,11 +128,11 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
       startTour(target.frameIndex);
     } else {
       saveVisitPosition(target.room.id, target.frameIndex);
-      // Changing the room remounts TourProvider with the saved target index.
-      // Calling quitTour here would also start the old room's asynchronous
-      // overview camera transition, which can finish after the new room has
-      // begun zooming to this shelf item and leave controls over an overview.
-      setActiveRoomIndex(target.roomIndex);
+      // This is deliberately state, rather than a localStorage hand-off: the
+      // new TourProvider receives the selected frame in the same render that
+      // changes rooms. Calling quitTour here would start the old room's
+      // asynchronous overview transition over the new target.
+      openArtworkInRoom(target.roomIndex, target.frameIndex);
     }
     setView('main');
     setIsOpen(false);

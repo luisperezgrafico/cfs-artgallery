@@ -36,6 +36,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
     quitTour,
   } = useTour();
   const frameRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const [targetRevision, setTargetRevision] = React.useState(0);
 
   React.useEffect(() => {
     frameRefs.current = frameRefs.current.slice(0, images.length);
@@ -43,6 +44,14 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
       frameRefs.current.push(null);
     }
   }, []);
+
+  // A shelf jump creates the TourProvider for the new room already focused on
+  // its artwork. In that first render the camera effect can run before R3F has
+  // attached the frame mesh, so there is nothing to focus and it stays on the
+  // overview. Run the target effect once again after this room's frames mount.
+  React.useEffect(() => {
+    setTargetRevision(revision => revision + 1);
+  }, [roomId]);
 
   const { framePositions, frameRotations } = calculateFramePositions(
     defaultRoomDimensions,
@@ -57,6 +66,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
         restView={restView}
         frameRefs={frameRefs as React.MutableRefObject<THREE.Mesh[]>}
         imagesCount={images.length}
+        targetRevision={targetRevision}
       />
       <group>
         <Room

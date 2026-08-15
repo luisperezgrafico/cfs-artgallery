@@ -38,11 +38,23 @@ function ShelfCatalogSync({ enabled }: { enabled: boolean }) {
   return null;
 }
 
+function ConsumePendingTourTarget({ roomId }: { roomId: string }) {
+  const { pendingTourTarget, consumePendingTourTarget } = useRoom();
+
+  useEffect(() => {
+    if (pendingTourTarget?.roomId === roomId) consumePendingTourTarget(roomId);
+  }, [roomId, pendingTourTarget, consumePendingTourTarget]);
+
+  return null;
+}
+
 function GalleryContent({ catalogReady }: { catalogReady: boolean }) {
-  const { rooms, activeRoomIndex, getRoomImages } = useRoom();
+  const { rooms, activeRoomIndex, getRoomImages, pendingTourTarget } = useRoom();
   const activeRoom = rooms[activeRoomIndex];
   const images = getRoomImages(activeRoom.id);
-  const initialFrameIndex = getInitialFrameIndex(activeRoom.id, images.length);
+  const initialFrameIndex = pendingTourTarget?.roomId === activeRoom.id
+    ? pendingTourTarget.frameIndex
+    : getInitialFrameIndex(activeRoom.id, images.length);
 
   return (
     // Preferences live above the per-room remount boundary so "Next room" carries
@@ -56,6 +68,7 @@ function GalleryContent({ catalogReady }: { catalogReady: boolean }) {
           images={images}
         >
           <GuidedTourEngineProvider>
+            <ConsumePendingTourTarget roomId={activeRoom.id} />
             <ShelfCatalogSync enabled={catalogReady} />
             <VisitPositionPersistence roomId={activeRoom.id} />
             <SwipeableContainer>

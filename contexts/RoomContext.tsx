@@ -10,6 +10,10 @@ interface RoomContextValue {
   rooms: RoomConfig[];
   activeRoomIndex: number;
   setActiveRoomIndex: (i: number) => void;
+  /** A one-shot tour destination used when navigating to a shelf item in another room. */
+  pendingTourTarget: { roomId: string; frameIndex: number } | null;
+  openArtworkInRoom: (roomIndex: number, frameIndex: number) => void;
+  consumePendingTourTarget: (roomId: string) => void;
   /** The eight-slot, submission-merged image list for any room — used to estimate another room's visit time before jumping to it. */
   getRoomImages: (roomId: string) => ImageMetadata[];
 }
@@ -24,6 +28,10 @@ export function RoomProvider({
   liveArtworks?: Record<string, ImageMetadata[]>;
 }) {
   const [activeRoomIndex, setActiveRoomIndex] = useState(() => getInitialRoomIndex(allRooms));
+  const [pendingTourTarget, setPendingTourTarget] = useState<{
+    roomId: string;
+    frameIndex: number;
+  } | null>(null);
 
   const roomImages = useMemo(
     () => mergeRoomArtworks(allRooms, liveArtworks),
@@ -35,8 +43,27 @@ export function RoomProvider({
     [roomImages],
   );
 
+  const openArtworkInRoom = useCallback((roomIndex: number, frameIndex: number) => {
+    const room = allRooms[roomIndex];
+    if (!room || frameIndex < 0) return;
+    setPendingTourTarget({ roomId: room.id, frameIndex });
+    setActiveRoomIndex(roomIndex);
+  }, []);
+
+  const consumePendingTourTarget = useCallback((roomId: string) => {
+    setPendingTourTarget(target => target?.roomId === roomId ? null : target);
+  }, []);
+
   return (
-    <RoomContext.Provider value={{ rooms: allRooms, activeRoomIndex, setActiveRoomIndex, getRoomImages }}>
+    <RoomContext.Provider value={{
+      rooms: allRooms,
+      activeRoomIndex,
+      setActiveRoomIndex,
+      pendingTourTarget,
+      openArtworkInRoom,
+      consumePendingTourTarget,
+      getRoomImages,
+    }}>
       {children}
     </RoomContext.Provider>
   );

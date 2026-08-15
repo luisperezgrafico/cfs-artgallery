@@ -13,6 +13,8 @@ interface CameraManagerProps {
   restView?: RestViewpoint | null;
   frameRefs: React.MutableRefObject<(THREE.Mesh | null)[]>;
   imagesCount: number;
+  /** Bumped after a room's frames have mounted, so an initial tour target is not missed. */
+  targetRevision?: number;
 }
 
 const CAMERA_SMOOTH_TIME = 0.85;
@@ -68,6 +70,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   restView = null,
   frameRefs,
   imagesCount,
+  targetRevision = 0,
 }) => {
   const { isMobile } = useDetectGPU();
   const cameraControlsRef = useRef<CameraControls>(null);
@@ -364,7 +367,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     } else if (currentFrameIndex === -1) {
       resetCamera();
     }
-  }, [currentFrameIndex, imagesCount, restView, zoomToFrame, resetCamera, moveToRestView]);
+  }, [currentFrameIndex, imagesCount, restView, targetRevision, zoomToFrame, resetCamera, moveToRestView]);
 
   return (
     <CameraControls
