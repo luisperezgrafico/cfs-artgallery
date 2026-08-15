@@ -3,6 +3,7 @@
 // src/contexts/TourContext.tsx
 import React, { createContext, useCallback, useContext, useState, ReactNode } from "react";
 import { ImageMetadata, RestViewpoint } from "../types/museum";
+import { findNextRealIndex, findPreviousRealIndex } from "../utils/roomLayout";
 
 interface TourContextType {
   isTourStarted: boolean;
@@ -55,18 +56,20 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   }, [totalFrames]);
 
   const nextFrame = useCallback(() => {
-    if (currentFrameIndexState < totalFrames - 1) {
-      setRestView(null);
-      setCurrentFrameIndexState((prev) => prev + 1);
-    }
-  }, [currentFrameIndexState, totalFrames]);
+    setRestView(null);
+    setCurrentFrameIndexState(prev => {
+      const next = findNextRealIndex(images, prev);
+      return next === -1 ? prev : next;
+    });
+  }, [images]);
 
   const previousFrame = useCallback(() => {
-    if (currentFrameIndexState > 0) {
-      setRestView(null);
-      setCurrentFrameIndexState((prev) => prev - 1);
-    }
-  }, [currentFrameIndexState]);
+    setRestView(null);
+    setCurrentFrameIndexState(prev => {
+      const previous = findPreviousRealIndex(images, prev);
+      return previous === -1 ? prev : previous;
+    });
+  }, [images]);
 
   const sitAtRestView = useCallback((viewpoint: RestViewpoint) => {
     const [px, py, pz] = viewpoint.position;

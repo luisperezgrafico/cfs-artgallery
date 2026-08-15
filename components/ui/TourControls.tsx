@@ -6,6 +6,7 @@ import { useDetectGPU } from '@react-three/drei';
 import { useTour } from '../../contexts/TourContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import TourEntryModal from './TourEntryModal';
+import { findNextRealIndex, findPreviousRealIndex } from '../../utils/roomLayout';
 
 const TourControls: React.FC<{
   style?: React.CSSProperties;
@@ -14,7 +15,7 @@ const TourControls: React.FC<{
   const { isMobile } = useDetectGPU();
   const {
     isTourStarted, currentFrameIndex, totalFrames,
-    startTour, nextFrame, previousFrame, quitTour,
+    images, startTour, nextFrame, previousFrame, quitTour,
   } = useTour();
   const { autoAdvance, setAutoAdvance, pendingAutoStart } = useGuidedTourPreferences();
   const [showEntryModal, setShowEntryModal] = useState(false);
@@ -24,6 +25,8 @@ const TourControls: React.FC<{
   // content notes) shouldn't require abandoning the guided tour to do it.
   const goNext = () => nextFrame();
   const goPrevious = () => previousFrame();
+  const hasPreviousArtwork = findPreviousRealIndex(images, currentFrameIndex) !== -1;
+  const hasNextArtwork = findNextRealIndex(images, currentFrameIndex) !== -1;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,9 +34,9 @@ const TourControls: React.FC<{
         if (!pendingAutoStart && (e.key === ' ' || e.key === 'Enter')) setShowEntryModal(true);
       } else {
         if (e.key === 'ArrowRight' || e.key === 'd') {
-          if (currentFrameIndex < totalFrames - 1) goNext();
+          if (hasNextArtwork) goNext();
         } else if (e.key === 'ArrowLeft' || e.key === 'q' || e.key === 'a') {
-          if (currentFrameIndex > 0) goPrevious();
+          if (hasPreviousArtwork) goPrevious();
         } else if (e.key === 'Escape') {
           quitTour();
         }
@@ -41,7 +44,7 @@ const TourControls: React.FC<{
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTourStarted, currentFrameIndex, totalFrames, quitTour, pendingAutoStart]);
+  }, [isTourStarted, hasNextArtwork, hasPreviousArtwork, quitTour, pendingAutoStart]);
 
   const bottomStyle: React.CSSProperties = {
     paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))',
@@ -85,10 +88,10 @@ const TourControls: React.FC<{
         <div className="flex gap-3 items-center bg-black/40 backdrop-blur-md px-6 py-4 rounded-full shadow-lg">
           <button
             onClick={goPrevious}
-            disabled={currentFrameIndex === 0}
+            disabled={!hasPreviousArtwork}
             aria-label="Previous artwork"
             className={`bg-white/20 p-2 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors
-              ${currentFrameIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
+              ${!hasPreviousArtwork ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
           >
             <ChevronLeft size={20} />
           </button>
@@ -105,10 +108,10 @@ const TourControls: React.FC<{
 
           <button
             onClick={goNext}
-            disabled={currentFrameIndex === totalFrames - 1}
+            disabled={!hasNextArtwork}
             aria-label="Next artwork"
             className={`bg-white/20 p-2 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors
-              ${currentFrameIndex === totalFrames - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
+              ${!hasNextArtwork ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
           >
             <ChevronRight size={20} />
           </button>

@@ -51,3 +51,11 @@ export function findNextRealIndex(images: ImageMetadata[], fromIndex: number): n
   }
   return -1;
 }
+
+/** The previous non-empty slot before `fromIndex`, or -1 when already first. */
+export function findPreviousRealIndex(images: ImageMetadata[], fromIndex: number): number {
+  for (let i = fromIndex - 1; i >= 0; i--) {
+    if (!images[i]?.isEmpty) return i;
+  }
+  return -1;
+}
