@@ -15,8 +15,9 @@ interface TourContextType {
   totalFrames: number;
   images: ImageMetadata[];
   startTour: (atIndex?: number) => void;
-  nextFrame: () => void;
-  previousFrame: () => void;
+  /** Auto navigation skips empty submit canvases; manual navigation includes them. */
+  nextFrame: (includeEmpty?: boolean) => void;
+  previousFrame: (includeEmpty?: boolean) => void;
   sitAtRestView: (viewpoint: RestViewpoint) => void;
   quitTour: () => void;
 }
@@ -56,10 +57,12 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     setCurrentFrameIndexState(start);
   }, [totalFrames]);
 
-  const nextFrame = useCallback(() => {
+  const nextFrame = useCallback((includeEmpty = false) => {
     setRestView(null);
     setCurrentFrameIndexState(prev => {
-      const next = findNextRealIndex(images, prev);
+      const next = includeEmpty
+        ? (prev + 1 < images.length ? prev + 1 : -1)
+        : findNextRealIndex(images, prev);
       if (next !== -1) return next;
       setIsTourStarted(false);
       setRestView(DEFAULT_REST_VIEW);
@@ -67,10 +70,12 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     });
   }, [images]);
 
-  const previousFrame = useCallback(() => {
+  const previousFrame = useCallback((includeEmpty = false) => {
     setRestView(null);
     setCurrentFrameIndexState(prev => {
-      const previous = findPreviousRealIndex(images, prev);
+      const previous = includeEmpty
+        ? (prev > 0 ? prev - 1 : -1)
+        : findPreviousRealIndex(images, prev);
       return previous === -1 ? prev : previous;
     });
   }, [images]);

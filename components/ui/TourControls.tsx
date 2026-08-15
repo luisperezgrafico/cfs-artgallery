@@ -20,13 +20,16 @@ const TourControls: React.FC<{
   const { autoAdvance, setAutoAdvance, pendingAutoStart } = useGuidedTourPreferences();
   const [showEntryModal, setShowEntryModal] = useState(false);
 
-  // Arrows navigate without leaving Auto — that's the whole point of keeping
-  // them visible there: skipping past one artwork (e.g. one flagged with
-  // content notes) shouldn't require abandoning the guided tour to do it.
-  const goNext = () => nextFrame();
-  const goPrevious = () => previousFrame();
-  const hasPreviousArtwork = findPreviousRealIndex(images, currentFrameIndex) !== -1;
-  const hasNextArtwork = findNextRealIndex(images, currentFrameIndex) !== -1;
+  // Auto skips submit canvases; Manual deliberately visits every wall slot so
+  // a visitor can reach its "Submit your work" action.
+  const goNext = () => nextFrame(!autoAdvance);
+  const goPrevious = () => previousFrame(!autoAdvance);
+  const hasPreviousArtwork = autoAdvance
+    ? findPreviousRealIndex(images, currentFrameIndex) !== -1
+    : currentFrameIndex > 0;
+  const hasNextArtwork = autoAdvance
+    ? findNextRealIndex(images, currentFrameIndex) !== -1
+    : currentFrameIndex < totalFrames - 1;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,7 +47,7 @@ const TourControls: React.FC<{
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTourStarted, hasNextArtwork, hasPreviousArtwork, quitTour, pendingAutoStart]);
+  }, [isTourStarted, hasNextArtwork, hasPreviousArtwork, quitTour, pendingAutoStart, goNext, goPrevious]);
 
   const bottomStyle: React.CSSProperties = {
     paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))',
