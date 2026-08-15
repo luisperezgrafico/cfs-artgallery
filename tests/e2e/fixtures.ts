@@ -2,6 +2,7 @@ import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import type { Submission } from '../../lib/storage';
 import type { ImageMetadata } from '../../types/museum';
+import { TEST_ADMIN } from '../../playwright.config';
 
 /** A 1×1 transparent PNG — enough for an upload without shipping a binary fixture. */
 export const TINY_PNG = Buffer.from(
@@ -74,8 +75,22 @@ export async function seed(
   expect(res.ok(), 'test reset endpoint should be available (GALLERY_STORAGE=memory)').toBe(true);
 }
 
-/** Opens the admin panel and waits for the first load to settle. */
-export async function openAdmin(page: Page): Promise<void> {
+/**
+ * Signs in and opens the admin panel, waiting for the first load to settle.
+ *
+ * Goes through the real login API (not the form) — Playwright's
+ * `httpCredentials` only answers a 401 + WWW-Authenticate challenge, which
+ * page navigation to /admin no longer sends (that header is what triggers the
+ * browser's native Basic Auth popup, which the login page replaces) — so
+ * tests need a real session cookie instead.
+ */
+export async function openAdmin(
+  page: Page,
+  credentials: { username: string; password: string } = TEST_ADMIN,
+): Promise<void> {
+  const res = await page.request.post('/api/admin/login', { data: credentials });
+  expect(res.ok(), 'admin login should succeed with the given test credentials').toBe(true);
+
   await page.goto('/admin');
   await expect(page.getByTestId('admin-main')).toHaveAttribute('data-loading', 'false');
 }

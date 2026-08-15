@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Loader2, LogOut, RefreshCw } from 'lucide-react';
 import type { Submission } from '../../lib/storage';
 import { useAdminData, type AdminData } from './useAdminData';
 import SubmissionsTab from './tabs/SubmissionsTab';
@@ -50,6 +51,7 @@ function TabBar({
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>('submissions');
   const [role, setRole] = useState<AdminRole>('admin');
 
@@ -83,15 +85,27 @@ export default function AdminDashboard() {
 
   const approvedCount = Object.values(state.artworks).reduce((n, list) => n + list.length, 0);
 
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {});
+    router.push('/admin/login');
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <span className="font-semibold text-sm tracking-wide">ME/CFS Gallery — Admin</span>
-        <button onClick={() => refresh()} disabled={state.loading} data-testid="refresh"
-          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
-          title="Reload from the server">
-          <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
-        </button>
+        <div className="flex items-center gap-4">
+          <button onClick={() => refresh()} disabled={state.loading} data-testid="refresh"
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
+            title="Reload from the server">
+            <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
+          </button>
+          <button onClick={handleLogout} data-testid="logout"
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+            title="Sign out">
+            <LogOut size={13} /> Log out
+          </button>
+        </div>
       </header>
 
       <TabBar tab={tab} onSelect={setTab} counts={{ submissions: state.submissions.length, approved: approvedCount }} role={role} />

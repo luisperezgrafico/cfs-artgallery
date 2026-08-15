@@ -399,13 +399,10 @@ test.describe('developer tools', () => {
     await seed(request, {
       artworks: { 'room-1': [artwork('custom', { title: 'Custom artwork' })] },
     });
-    const context = await browser.newContext({
-      baseURL: BASE_URL,
-      httpCredentials: { username: 'dev', password: TEST_ADMIN.password },
-    });
+    const context = await browser.newContext({ baseURL: BASE_URL });
     const page = await context.newPage();
 
-    await openAdmin(page);
+    await openAdmin(page, { username: 'dev', password: TEST_ADMIN.password });
     await page.getByTestId('tab-approved').click();
     await expect(row(page, 'custom')).toBeVisible();
 

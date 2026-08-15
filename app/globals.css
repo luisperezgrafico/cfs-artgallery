@@ -657,3 +657,109 @@
     display: none;
   }
 }
+
+/* ---------- admin login ---------- */
+
+.admin-login {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--door-bg);
+}
+
+.admin-login-card {
+  width: 100%;
+  max-width: 22rem;
+  padding: 2.25rem 2rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  border-radius: 2px;
+}
+
+.admin-login-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: var(--panel-title);
+  margin-bottom: 0.4rem;
+}
+
+.admin-login-tagline {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--panel-subtitle);
+  margin-bottom: 1.75rem;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-login-label {
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.7rem;
+  color: var(--field-label);
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-login-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 1.1rem;
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 2px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.9rem;
+  color: var(--field-text);
+  outline: none;
+}
+
+.admin-login-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--panel-text);
+  margin-bottom: 1.25rem;
+  cursor: pointer;
+}
+
+.admin-login-error {
+  font-family: system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: #b55a3a;
+  margin-bottom: 1rem;
+}
+
+.admin-login-submit {
+  padding: 0.7rem 1.5rem;
+  border: 1px solid var(--door-btn-border);
+  border-radius: 2px;
+  background: var(--door-btn-bg);
+  color: var(--door-btn-text);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.admin-login-submit:hover:not(:disabled) {
+  background: var(--door-btn-bg-hover);
+  transform: translateY(-1px);
+}
+
+.admin-login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
