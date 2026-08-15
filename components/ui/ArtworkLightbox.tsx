@@ -219,17 +219,13 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         </button>
       </div>
 
-      {/* Placed before the image in the DOM for a meaningful reading order. */}
-      <div
-        className="absolute bottom-0 left-0 rounded-tr-md bg-black/75 px-5 py-3 backdrop-blur-sm"
-        style={{
-          paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
-          paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
-        }}
-      >
-        <h2 id="artwork-lightbox-title" className="text-sm font-medium leading-snug text-white/95">{artwork.title}</h2>
+      {/* Kept before the image in the DOM so screen readers get the work's
+          context before its alternative text. The visible copy lives in the
+          shared bottom bar below, where it can reflow with the zoom controls. */}
+      <div className="sr-only">
+        <h2 id="artwork-lightbox-title">{artwork.title}</h2>
         {(artwork.artist || artwork.date) && (
-          <p className="mt-0.5 text-xs italic text-white/90">
+          <p>
             {artwork.artist}
             {artwork.date ? ` · ${artwork.date}` : ''}
           </p>
@@ -267,32 +263,46 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         />
       </div>
 
-      {/* Zoom controls remain after the image in reading order. */}
+      {/* This shared, full-width bar keeps its two visual halves from ever
+          overlapping. On narrow screens they stack instead of competing for
+          the same bottom edge. */}
       <div
-        className="absolute bottom-0 right-0 flex items-center gap-3 rounded-tl-md bg-black/75 px-5 py-3 backdrop-blur-sm"
+        className="absolute bottom-0 left-0 right-0 flex flex-col gap-2 bg-black/75 px-5 py-3 backdrop-blur-sm sm:flex-row sm:items-end sm:justify-between"
         style={{
           paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
+          paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
           paddingRight: 'max(1.25rem, env(safe-area-inset-right))',
         }}
       >
-        <p id="artwork-lightbox-instructions" className="text-xs text-white/90">
-          {scale > 1 ? 'Use the zoom out button or double-tap to reset' : 'Use the zoom in button or double-tap to zoom'}
-        </p>
-        <button
-          type="button"
-          aria-label={scale > 1 ? 'Zoom out' : 'Zoom in'}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (transformRef.current.scale > 1) {
-              resetTransform();
-            } else {
-              applyTransform({ scale: 2, x: 0, y: 0 });
-            }
-          }}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
-        >
-          {scale > 1 ? <ZoomOut size={18} /> : <ZoomIn size={18} />}
-        </button>
+        <div aria-hidden="true" className="min-w-0">
+          <p className="text-sm font-medium leading-snug text-white/95">{artwork.title}</p>
+          {(artwork.artist || artwork.date) && (
+            <p className="mt-0.5 text-xs italic text-white/90">
+              {artwork.artist}
+              {artwork.date ? ` · ${artwork.date}` : ''}
+            </p>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center justify-end gap-3">
+          <p id="artwork-lightbox-instructions" className="max-w-52 text-right text-xs text-white/90">
+            {scale > 1 ? 'Use the zoom out button or double-tap to reset' : 'Use the zoom in button or double-tap to zoom'}
+          </p>
+          <button
+            type="button"
+            aria-label={scale > 1 ? 'Zoom out' : 'Zoom in'}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (transformRef.current.scale > 1) {
+                resetTransform();
+              } else {
+                applyTransform({ scale: 2, x: 0, y: 0 });
+              }
+            }}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
+          >
+            {scale > 1 ? <ZoomOut size={18} /> : <ZoomIn size={18} />}
+          </button>
+        </div>
       </div>
     </div>
   );
