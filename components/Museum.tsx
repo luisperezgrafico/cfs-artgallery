@@ -13,11 +13,13 @@ import SpotlightGroup from './museum/SpotlightGroup';
 import { useTour } from '../contexts/TourContext';
 import CeilingLight from './museum/CeilingLight';
 import Bench from './museum/Bench';
+import EntranceWall, { PORTAL_OUTER_WIDTH } from './museum/EntranceWall';
 import { BENCH_LAYOUT } from '../utils/restView';
 
 const DEFAULT_THEME: RoomTheme = {
   wallColor: '#1A1637', ceilingColor: '#1a1538', floorColor: '#050505',
   hemisphereTop: '#3d2b6b', hemisphereBottom: '#0a0816', ambientIntensity: 0.2,
+  trimColor: '#2c2550', doorColor: '#171331', glowColor: '#d8ccf0',
 };
 
 interface MuseumProps {
@@ -77,6 +79,16 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
           wallColor={theme.wallColor}
           ceilingColor={theme.ceilingColor}
           floorColor={theme.floorColor}
+          trimColor={theme.trimColor}
+          portalGap={PORTAL_OUTER_WIDTH}
+        />
+
+        {/* The wall behind the visitor — only ever seen from a bench */}
+        <EntranceWall
+          length={defaultRoomDimensions.length}
+          trimColor={theme.trimColor}
+          doorColor={theme.doorColor}
+          glowColor={theme.glowColor}
         />
 
         {images.map((image, index) => {

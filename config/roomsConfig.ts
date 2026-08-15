@@ -18,6 +18,9 @@ const THEME_INDIGO: RoomTheme = {
   hemisphereTop:    '#2a1f50',
   hemisphereBottom: '#08060f',
   ambientIntensity: 0.2,
+  trimColor:        '#2c2550',
+  doorColor:        '#171331',
+  glowColor:        '#d8ccf0',
 };
 
 const THEME_ARDOISE: RoomTheme = {
@@ -28,6 +31,9 @@ const THEME_ARDOISE: RoomTheme = {
   hemisphereTop:    '#252e40',
   hemisphereBottom: '#07080c',
   ambientIntensity: 0.2,
+  trimColor:        '#2d3646',
+  doorColor:        '#161b26',
+  glowColor:        '#cfe0f0',
 };
 
 const THEME_FORET: RoomTheme = {
@@ -38,6 +44,9 @@ const THEME_FORET: RoomTheme = {
   hemisphereTop:    '#364838',
   hemisphereBottom: '#080e0a',
   ambientIntensity: 0.2,
+  trimColor:        '#3a4a3c',
+  doorColor:        '#1c2620',
+  glowColor:        '#e8dfb8',
 };
 
 const THEME_OCRE: RoomTheme = {
@@ -48,6 +57,9 @@ const THEME_OCRE: RoomTheme = {
   hemisphereTop:    '#422a18',
   hemisphereBottom: '#0a0806',
   ambientIntensity: 0.2,
+  trimColor:        '#3b2a1e',
+  doorColor:        '#241610',
+  glowColor:        '#f0d9a0',
 };
 
 // ── Rooms ─────────────────────────────────────────────────────────────────────
