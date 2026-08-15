@@ -43,14 +43,14 @@ const WallTrim: React.FC<WallTrimProps> = ({
     <group position={position} rotation={rotation}>
       {/* Skirting */}
       {offsets.map((x) => (
-        <mesh key={x} position={[x, 0.075, 0.05]} receiveShadow>
-          <boxGeometry args={[segmentWidth, 0.15, 0.08]} />
+        <mesh key={x} position={[x, 0.075, 0.035]} receiveShadow>
+          <boxGeometry args={[segmentWidth, 0.15, 0.05]} />
           <meshStandardMaterial color={color} metalness={0.05} roughness={0.85} />
         </mesh>
       ))}
-      {/* Cornice */}
-      <mesh position={[0, height - 0.18, 0.05]} receiveShadow>
-        <boxGeometry args={[span, 0.1, 0.08]} />
+      {/* Cornice — flush against the ceiling, same 0.05 clearance convention as the ceiling fixtures */}
+      <mesh position={[0, height - 0.05, 0.035]} receiveShadow>
+        <boxGeometry args={[span, 0.1, 0.05]} />
         <meshStandardMaterial color={color} metalness={0.05} roughness={0.85} />
       </mesh>
     </group>

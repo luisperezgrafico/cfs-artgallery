@@ -65,7 +65,6 @@ function LoginForm() {
     <main className="admin-login">
       <div className="admin-login-card">
         <h1 className="admin-login-title">Gallery — Admin</h1>
-        <p className="admin-login-tagline">Sign in to review submissions.</p>
 
         <form onSubmit={handleSubmit} className="admin-login-form">
           <label className="admin-login-label" htmlFor="admin-login-username">Username</label>

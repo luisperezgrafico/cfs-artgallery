@@ -108,6 +108,12 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   const { setZoomedFrameId } = useContext(ZoomContext);
   const { gl, viewport } = useThree();
 
+  // Remembers the rest viewpoint we were just sitting at, across the render
+  // where restView clears — so the very next transition (to a frame or the
+  // overview) knows it is leaving a bench and needs the same wall-avoiding
+  // arc used to arrive at one, instead of CameraControls' own interpolation.
+  const previousRestViewRef = useRef<RestViewpoint | null>(null);
+
   const cancelRestAnimation = useCallback(() => {
     if (restAnimationFrameRef.current === null) return;
     window.cancelAnimationFrame(restAnimationFrameRef.current);
@@ -139,6 +145,67 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     }
   }, [currentFrameIndex, setZoomedFrameId]);
 
+  // A bench sits close to a side wall, looking sideways at it. Leaving one
+  // for a distant frame or the overview means a large simultaneous move +
+  // rotation — left entirely to CameraControls' own interpolation, that path
+  // can swing wide enough in x to cross the frame wall before curving back
+  // in. Bowing the path toward room-center x and lifting it in y (the same
+  // control-point trick moveToRestView uses to arrive at a bench) keeps the
+  // camera clear of the wall on the way out too.
+  const runArcTransition = useCallback((
+    transitionId: number,
+    startPosition: THREE.Vector3,
+    startTarget: THREE.Vector3,
+    endPosition: THREE.Vector3,
+    endTarget: THREE.Vector3,
+    duration: number,
+  ) => new Promise<void>((resolve) => {
+    const controls = cameraControlsRef.current;
+    if (!controls) {
+      resolve();
+      return;
+    }
+
+    const positionControl = new THREE.Vector3(
+      clamp((startPosition.x + endPosition.x) * 0.2, -0.7, 0.7),
+      Math.max(startPosition.y, endPosition.y, 1.45),
+      (startPosition.z + endPosition.z) / 2,
+    );
+    const targetControl = new THREE.Vector3(
+      clamp((startTarget.x + endTarget.x) * 0.2, -0.7, 0.7),
+      (startTarget.y + endTarget.y) / 2,
+      (startTarget.z + endTarget.z) / 2,
+    );
+
+    const position = new THREE.Vector3();
+    const target = new THREE.Vector3();
+    const startedAt = window.performance.now();
+
+    const step = (now: number) => {
+      if (transitionId !== cameraTransitionIdRef.current) {
+        resolve();
+        return;
+      }
+
+      const progress = clamp((now - startedAt) / duration, 0, 1);
+      const eased = easeInOutCubic(progress);
+
+      quadraticBezier(position, startPosition, positionControl, endPosition, eased);
+      quadraticBezier(target, startTarget, targetControl, endTarget, eased);
+      controls.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, false);
+
+      if (progress < 1) {
+        restAnimationFrameRef.current = window.requestAnimationFrame(step);
+        return;
+      }
+
+      restAnimationFrameRef.current = null;
+      resolve();
+    };
+
+    restAnimationFrameRef.current = window.requestAnimationFrame(step);
+  }), []);
+
   const getScaleFactor = useCallback(() => {
     const baseScale = 2.5;
     const isLandscape = viewport.width > viewport.height;
@@ -163,13 +230,13 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   }, [isMobile, viewport.width]);
 
   const zoomToFrame = useCallback(
-    async (index: number) => {
+    async (index: number, arcFromRest = false) => {
       const controls = cameraControlsRef.current;
       if (!controls) return;
       const mesh = frameRefs.current[index];
       if (!mesh) return;
 
-      const transitionId = beginCameraTransition();
+      const transitionId = beginCameraTransition(arcFromRest);
 
       const frameWorldPosition = new THREE.Vector3();
       mesh.getWorldPosition(frameWorldPosition);
@@ -187,47 +254,63 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       endPosition.y -= getYOffset();
       const endTarget = frameWorldPosition.clone();
       endTarget.y -= getYOffset();
-      const previousSmoothTime = controls.smoothTime;
-      try {
-        controls.smoothTime = smoothTimeForTravel(controls, endPosition, endTarget);
-        await controls.setLookAt(
-          endPosition.x,
-          endPosition.y,
-          endPosition.z,
-          endTarget.x,
-          endTarget.y,
-          endTarget.z,
-          true,
-        );
-      } finally {
-        controls.smoothTime = previousSmoothTime;
+
+      if (arcFromRest) {
+        const startPosition = controls.getPosition(new THREE.Vector3(), false);
+        const startTarget = controls.getTarget(new THREE.Vector3(), false);
+        const duration = smoothTimeForTravel(controls, endPosition, endTarget) * 1000;
+        await runArcTransition(transitionId, startPosition, startTarget, endPosition, endTarget, duration);
+      } else {
+        const previousSmoothTime = controls.smoothTime;
+        try {
+          controls.smoothTime = smoothTimeForTravel(controls, endPosition, endTarget);
+          await controls.setLookAt(
+            endPosition.x,
+            endPosition.y,
+            endPosition.z,
+            endTarget.x,
+            endTarget.y,
+            endTarget.z,
+            true,
+          );
+        } finally {
+          controls.smoothTime = previousSmoothTime;
+        }
       }
 
       if (transitionId !== cameraTransitionIdRef.current) return;
       if (onFrameChange) onFrameChange(index);
     },
-    [beginCameraTransition, frameRefs, onFrameChange, getScaleFactor, getYOffset],
+    [beginCameraTransition, frameRefs, onFrameChange, getScaleFactor, getYOffset, runArcTransition],
   );
 
-  const resetCamera = useCallback(async () => {
+  const resetCamera = useCallback(async (arcFromRest = false) => {
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
-    const transitionId = beginCameraTransition();
+    const transitionId = beginCameraTransition(arcFromRest);
 
     const overviewPosition = new THREE.Vector3(0, 2, 14);
     const overviewTarget = new THREE.Vector3(0, 0, 0);
-    const previousSmoothTime = controls.smoothTime;
-    try {
-      controls.smoothTime = smoothTimeForTravel(controls, overviewPosition, overviewTarget);
-      await controls.setLookAt(0, 2, 14, 0, 0, 0, true);
-    } finally {
-      controls.smoothTime = previousSmoothTime;
+
+    if (arcFromRest) {
+      const startPosition = controls.getPosition(new THREE.Vector3(), false);
+      const startTarget = controls.getTarget(new THREE.Vector3(), false);
+      const duration = smoothTimeForTravel(controls, overviewPosition, overviewTarget) * 1000;
+      await runArcTransition(transitionId, startPosition, startTarget, overviewPosition, overviewTarget, duration);
+    } else {
+      const previousSmoothTime = controls.smoothTime;
+      try {
+        controls.smoothTime = smoothTimeForTravel(controls, overviewPosition, overviewTarget);
+        await controls.setLookAt(0, 2, 14, 0, 0, 0, true);
+      } finally {
+        controls.smoothTime = previousSmoothTime;
+      }
     }
 
     if (transitionId !== cameraTransitionIdRef.current) return;
     if (onFrameChange) onFrameChange(-1);
-  }, [beginCameraTransition, onFrameChange]);
+  }, [beginCameraTransition, onFrameChange, runArcTransition]);
 
   const applyRestLook = useCallback(() => {
     const controls = cameraControlsRef.current;
@@ -393,12 +476,15 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   }, [applyRestLook, gl.domElement, restView]);
 
   useEffect(() => {
+    const leavingRestView = previousRestViewRef.current !== null && !restView;
+    previousRestViewRef.current = restView ?? null;
+
     if (restView) {
       moveToRestView(restView);
     } else if (currentFrameIndex >= 0 && currentFrameIndex < imagesCount) {
-      zoomToFrame(currentFrameIndex);
+      zoomToFrame(currentFrameIndex, leavingRestView);
     } else if (currentFrameIndex === -1) {
-      resetCamera();
+      resetCamera(leavingRestView);
     }
   }, [currentFrameIndex, imagesCount, restView, targetRevision, zoomToFrame, resetCamera, moveToRestView]);
 
