@@ -8,18 +8,27 @@ const SESSION_COOKIE = 'gallery_admin_auth';
  * as an Authorization header — set once at login, so verifying it can reuse
  * parseBasicAuth/roleForCredentials unchanged.
  *
- * The `Authorization` header is only trusted for `/api/admin/*` calls (tools
- * like curl or Playwright's `request` fixture that never hold a page/cookie).
- * Page navigation under `/admin/*` trusts the cookie alone: browsers cache a
- * successful native Basic Auth handshake for the whole session and keep
- * resending that header on every request to the origin, so honouring it for
- * page loads too meant logout could never actually log a browser out — it
- * cleared the cookie, but the very next navigation to /admin/login was bounced
- * straight back to /admin by the browser's still-cached credentials.
+ * The cookie always wins when present, and the `Authorization` header is only
+ * consulted for `/api/admin/*` calls that have no cookie at all (tools like
+ * curl or Playwright's `request` fixture, which never hold a page/cookie).
+ * Two browser-caching behaviours make both parts necessary:
+ *  - Page navigation under `/admin/*` ignores the header outright: browsers
+ *    cache a successful native Basic Auth handshake for the whole session and
+ *    keep resending that header on every request to the origin, so honouring
+ *    it for page loads meant logout could never actually sign a browser out —
+ *    clearing the cookie didn't stop the next /admin/login load from being
+ *    bounced straight back to /admin by the still-cached header.
+ *  - Even for `/api/admin/*`, the cookie must be checked *before* the header,
+ *    not after: the same stale cached header rides along on every same-origin
+ *    fetch() the admin panel makes, so trusting it whenever present quietly
+ *    overrode a real, freshly logged-in session (e.g. showing "admin" for a
+ *    user who had just signed in as "dev", because an old cached admin
+ *    credential from a previous session out-prioritised their current
+ *    cookie).
  */
 function roleFromRequest(request: NextRequest, { allowHeader }: { allowHeader: boolean }) {
-  const header = (allowHeader ? request.headers.get('authorization') : null)
-    ?? request.cookies.get(SESSION_COOKIE)?.value
+  const header = request.cookies.get(SESSION_COOKIE)?.value
+    ?? (allowHeader ? request.headers.get('authorization') : null)
     ?? null;
   const credentials = parseBasicAuth(header);
   return credentials ? roleForCredentials(credentials) : null;
