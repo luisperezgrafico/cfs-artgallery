@@ -214,6 +214,14 @@ const UIElements: React.FC = () => {
 
   useEffect(() => clearHideTimer, [clearHideTimer]);
 
+  // Rest view asks the visitor to choose what happens next, so its controls
+  // must not remain hidden just because the previous tour UI was concealed.
+  // Waiting for isSeated avoids bringing the whole interface back during the
+  // glide toward the bench.
+  useEffect(() => {
+    if (isResting && isSeated) showInterface();
+  }, [isResting, isSeated, showInterface]);
+
   useEffect(() => {
     if (!isInterfaceHidden && !isInterfaceFadingOut) return;
 
