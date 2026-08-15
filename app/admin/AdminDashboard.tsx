@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Loader2, LogOut, RefreshCw } from 'lucide-react';
 import type { Submission } from '../../lib/storage';
 import { useAdminData, type AdminData } from './useAdminData';
@@ -51,9 +50,9 @@ function TabBar({
 }
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>('submissions');
   const [role, setRole] = useState<AdminRole>('admin');
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // One store for the whole panel, mounted here so tab switches never remount
   // it: the tabs below are pure views over this state.
@@ -86,8 +85,15 @@ export default function AdminDashboard() {
   const approvedCount = Object.values(state.artworks).reduce((n, list) => n + list.length, 0);
 
   const handleLogout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {});
-    router.push('/admin/login');
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch('/api/admin/logout', { method: 'POST', cache: 'no-store' });
+    } finally {
+      // A document navigation avoids Next's client router reusing a cached
+      // redirect that was produced while the session cookie still existed.
+      window.location.assign('/admin/login');
+    }
   };
 
   return (
@@ -100,10 +106,10 @@ export default function AdminDashboard() {
             title="Reload from the server">
             <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
           </button>
-          <button onClick={handleLogout} data-testid="logout"
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors"
+          <button onClick={handleLogout} disabled={loggingOut} data-testid="logout"
+            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
             title="Sign out">
-            <LogOut size={13} /> Log out
+            {loggingOut ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />} Log out
           </button>
         </div>
       </header>
