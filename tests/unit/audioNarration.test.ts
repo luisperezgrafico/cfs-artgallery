@@ -119,6 +119,36 @@ describe('buildNarrationText', () => {
     expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'xi-api-key': 'limit-key' });
     expect(fetchMock.mock.calls[1][1].headers).toMatchObject({ 'xi-api-key': 'working-key' });
   });
+
+  it('alternates the first ElevenLabs API key between audio generations', async () => {
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      audioSettings: {
+        ...DEFAULT_SETTINGS.audioSettings,
+        provider: 'elevenlabs',
+        elevenlabs: {
+          ...DEFAULT_SETTINGS.audioSettings.elevenlabs,
+          apiKey: 'first-key',
+          apiKeys: ['second-key'],
+          voiceId: 'voice-123',
+        },
+      },
+    });
+
+    const fetchMock = vi.fn(async () => new Response(
+      new Blob([new Uint8Array([4, 5, 6])], { type: 'audio/mpeg' }),
+      { status: 200, headers: { 'content-type': 'audio/mpeg' } },
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await generateArtworkAudio(submission({ id: 'piece-a' }));
+    await generateArtworkAudio(submission({ id: 'piece-b' }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const calls = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    expect(calls[0][1].headers).toMatchObject({ 'xi-api-key': 'first-key' });
+    expect(calls[1][1].headers).toMatchObject({ 'xi-api-key': 'second-key' });
+  });
 });
 
 describe('generateArtworkAudio', () => {

@@ -1,5 +1,5 @@
 import { store } from './blobStore';
-import { getSettings, type AudioSettings, type Submission } from './storage';
+import { getSettings, reserveElevenLabsKeyStart, type AudioSettings, type Submission } from './storage';
 import type { ImageMetadata } from '../types/museum';
 import {
   audioTextSignature,
@@ -195,8 +195,16 @@ async function generateAudioForSource(source: NarrationSource): Promise<ArtworkA
   const text = buildNarrationTextFromSource(source);
   if (!text) return null;
 
-  const config = await readTtsConfig();
+  let config = await readTtsConfig();
   if (!config) return null;
+
+  if (config.provider === 'elevenlabs' && config.apiKeys.length > 1) {
+    const start = await reserveElevenLabsKeyStart(config.apiKeys.length);
+    config = {
+      ...config,
+      apiKeys: [...config.apiKeys.slice(start), ...config.apiKeys.slice(0, start)],
+    };
+  }
 
   let response: Response;
   if (config.provider === 'elevenlabs') {

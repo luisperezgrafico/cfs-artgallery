@@ -37,6 +37,8 @@ export interface GallerySettings {
   approvalTemplate: string;
   rejectionTemplate: string;
   audioSettings: AudioSettings;
+  /** Index of the API key that should start the next ElevenLabs request. */
+  elevenLabsKeyCursor: number;
   ambientMusic: AmbientMusicSettings;
 }
 
@@ -105,6 +107,7 @@ export const DEFAULT_SETTINGS: GallerySettings = {
       timeoutMs: 120_000,
     },
   },
+  elevenLabsKeyCursor: 0,
   ambientMusic: DEFAULT_AMBIENT_MUSIC,
 };
 
@@ -442,6 +445,9 @@ export async function getSettings(): Promise<GallerySettings> {
   return {
     ...DEFAULT_SETTINGS,
     ...stored,
+    elevenLabsKeyCursor: Number.isInteger(stored.elevenLabsKeyCursor) && stored.elevenLabsKeyCursor! >= 0
+      ? stored.elevenLabsKeyCursor!
+      : 0,
     ambientMusic: {
       ...DEFAULT_SETTINGS.ambientMusic,
       ...(stored.ambientMusic ?? {}),
@@ -466,6 +472,25 @@ export async function getSettings(): Promise<GallerySettings> {
       },
     },
   };
+}
+
+/**
+ * Reserves the first API-key position for one ElevenLabs generation, then
+ * advances it. The same-process settings lock prevents two concurrent
+ * approvals from choosing the same key first.
+ */
+export async function reserveElevenLabsKeyStart(keyCount: number): Promise<number> {
+  if (keyCount < 2) return 0;
+
+  return withLock(SETTINGS_PATH, async () => {
+    const current = await getSettings();
+    const start = current.elevenLabsKeyCursor % keyCount;
+    await store.writeJson(SETTINGS_PATH, {
+      ...current,
+      elevenLabsKeyCursor: (start + 1) % keyCount,
+    });
+    return start;
+  });
 }
 
 export async function saveSettings(settings: GallerySettings): Promise<void> {

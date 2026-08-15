@@ -43,6 +43,7 @@ export async function PUT(request: NextRequest) {
       approvalTemplate: body.approvalTemplate ?? current.approvalTemplate,
       rejectionTemplate: body.rejectionTemplate ?? current.rejectionTemplate,
       audioSettings: current.audioSettings,
+      elevenLabsKeyCursor: current.elevenLabsKeyCursor,
       // Ambient music is changed only by its dedicated upload route. Keeping it
       // out of the general settings save avoids accidental overwrites.
       ambientMusic: current.ambientMusic,
