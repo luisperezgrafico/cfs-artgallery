@@ -29,7 +29,7 @@ function TabBar({
 
   return (
     <nav className="max-w-full overflow-x-auto border-b border-white/10 px-4 sm:px-6">
-      <div className="flex min-w-max">
+      <div className="mx-auto flex w-full min-w-max max-w-[1024px] justify-center">
         {tabs.map(t => (
           <button key={t} onClick={() => onSelect(t)} data-testid={`tab-${t}`}
             className={`shrink-0 px-4 py-3 text-sm capitalize transition-colors border-b-2 -mb-px ${
@@ -98,25 +98,27 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-contrast min-h-screen bg-zinc-950 text-white">
-      <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <span className="font-semibold text-sm tracking-wide">ME/CFS Gallery — Admin</span>
-        <div className="flex items-center gap-4">
-          <button onClick={() => refresh()} disabled={state.loading} data-testid="refresh"
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
-            title="Reload from the server">
-            <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
-          </button>
-          <button onClick={handleLogout} disabled={loggingOut} data-testid="logout"
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
-            title="Sign out">
-            {loggingOut ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />} Log out
-          </button>
+      <header className="border-b border-white/10 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex w-full max-w-[1024px] items-center justify-between">
+          <span className="font-semibold text-sm tracking-wide">ME/CFS Gallery — Admin</span>
+          <div className="flex items-center gap-4">
+            <button onClick={() => refresh()} disabled={state.loading} data-testid="refresh"
+              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
+              title="Reload from the server">
+              <RefreshCw size={13} className={state.loading ? 'animate-spin' : ''} /> Refresh
+            </button>
+            <button onClick={handleLogout} disabled={loggingOut} data-testid="logout"
+              className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 disabled:opacity-40 transition-colors"
+              title="Sign out">
+              {loggingOut ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />} Log out
+            </button>
+          </div>
         </div>
       </header>
 
       <TabBar tab={tab} onSelect={setTab} counts={{ submissions: state.submissions.length, approved: approvedCount }} role={role} />
 
-      <main className="px-6 py-6" data-testid="admin-main" data-loading={state.loading ? 'true' : 'false'}>
+      <main className="mx-auto w-full max-w-[1024px] px-4 py-6 sm:px-6" data-testid="admin-main" data-loading={state.loading ? 'true' : 'false'}>
         {state.loading && (
           <div className="flex items-center justify-center py-20" data-testid="dashboard-loading">
             <Loader2 size={24} className="animate-spin text-white/40" />
