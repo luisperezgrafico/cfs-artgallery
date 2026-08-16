@@ -20,6 +20,7 @@ import SubmitArtworkModal from './SubmitArtworkModal';
 import HamburgerMenu from './HamburgerMenu';
 
 const HIDE_INTERFACE_FADE_MS = 520;
+const TOUR_CONTROLS_EXIT_MS = 350;
 
 function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
   const {
@@ -182,6 +183,35 @@ const UIElements: React.FC = () => {
   const [isInterfaceHidden, setIsInterfaceHidden] = useState(false);
   const [isInterfaceFadingOut, setIsInterfaceFadingOut] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // TourControls used to unmount the instant isResting flipped true — before
+  // the bench arrival animation even started — vanishing abruptly instead of
+  // fading. Keep it mounted (invisible, non-interactive) for one fade-out
+  // before actually removing it.
+  const [showTourGroup, setShowTourGroup] = useState(!isResting);
+  const tourGroupExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isResting) {
+      if (tourGroupExitTimer.current) {
+        clearTimeout(tourGroupExitTimer.current);
+        tourGroupExitTimer.current = null;
+      }
+      setShowTourGroup(true);
+      return;
+    }
+
+    tourGroupExitTimer.current = setTimeout(() => {
+      setShowTourGroup(false);
+      tourGroupExitTimer.current = null;
+    }, TOUR_CONTROLS_EXIT_MS);
+
+    return () => {
+      if (tourGroupExitTimer.current) {
+        clearTimeout(tourGroupExitTimer.current);
+        tourGroupExitTimer.current = null;
+      }
+    };
+  }, [isResting]);
 
   useEffect(() => {
     if (!isLoading) handleLoadingComplete();
@@ -269,10 +299,17 @@ const UIElements: React.FC = () => {
                 transition: `opacity ${HIDE_INTERFACE_FADE_MS}ms ease-out`,
               }}
             >
-              {isResting ? (
-                isSeated && <RestControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-              ) : (
-                <>
+              {isResting && isSeated && (
+                <RestControls style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+              )}
+              {showTourGroup && (
+                <div
+                  style={{
+                    opacity: isResting ? 0 : 1,
+                    pointerEvents: isResting ? 'none' : 'auto',
+                    transition: `opacity ${TOUR_CONTROLS_EXIT_MS}ms ease-out`,
+                  }}
+                >
                   <TourControls
                     style={{ animation: 'fadeIn 1s ease-out forwards' }}
                     onHideInterface={hideInterface}
@@ -281,7 +318,7 @@ const UIElements: React.FC = () => {
                   <ArtworkLightbox />
                   <SubmitArtworkModal />
                   <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
-                </>
+                </div>
               )}
             </div>
           )}
