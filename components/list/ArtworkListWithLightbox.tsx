@@ -1,17 +1,57 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ZoomIn } from 'lucide-react';
 import { TourProvider, useTour } from '../../contexts/TourContext';
 import ArtworkLightbox from '../ui/ArtworkLightbox';
 import SubmitArtworkModal from '../ui/SubmitArtworkModal';
 import { ImageMetadata } from '../../types/museum';
+import { readVisitPosition } from '../../utils/userPreferences';
 import ListNavControls from './ListNavControls';
 
 export interface ListArtworkEntry {
   artwork: ImageMetadata;
   roomId: string;
   frameIndex: number;
+}
+
+const HIGHLIGHT_DURATION_MS = 2600;
+
+function listItemDomId(roomId: string, frameIndex: number): string {
+  return `list-item-${roomId}-${frameIndex}`;
+}
+
+// "Switch to list view" (HamburgerMenu) saves the artwork the visitor was on
+// before navigating here — scroll to it and give it a brief highlight, the
+// same visit-position record /?room=&frame= already reads coming back the
+// other way, so the two links stay in sync without any new state to carry.
+function useHighlightCurrentArtwork(items: ListArtworkEntry[]): string | null {
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = readVisitPosition();
+    if (!saved || saved.frameIndex < 0) return;
+
+    const match = items.find(
+      item => item.roomId === saved.roomId && item.frameIndex === saved.frameIndex,
+    );
+    if (!match) return;
+
+    const element = document.getElementById(listItemDomId(match.roomId, match.frameIndex));
+    if (!element) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    element.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    setHighlightId(listItemDomId(match.roomId, match.frameIndex));
+
+    const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_DURATION_MS);
+    return () => clearTimeout(timer);
+    // Only ever meant to run once, against the position saved just before landing here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return highlightId;
 }
 
 // Native <audio> elements don't know about each other, so starting one
@@ -45,11 +85,19 @@ function ZoomButton({ index, title }: { index: number; title: string }) {
 }
 
 export default function ArtworkListWithLightbox({ items }: { items: ListArtworkEntry[] }) {
+  const highlightId = useHighlightCurrentArtwork(items);
+
   return (
     <TourProvider totalFrames={items.length} images={items.map(item => item.artwork)}>
       <ul className="list-view-items">
-        {items.map(({ artwork, roomId, frameIndex }, index) => (
-          <li key={artwork.id ?? `${roomId}-${frameIndex}`} className="list-view-item list-view-stop">
+        {items.map(({ artwork, roomId, frameIndex }, index) => {
+          const domId = listItemDomId(roomId, frameIndex);
+          return (
+          <li
+            key={artwork.id ?? `${roomId}-${frameIndex}`}
+            id={domId}
+            className={`list-view-item list-view-stop${domId === highlightId ? ' list-view-item-highlight' : ''}`}
+          >
             <div className="list-view-item-body">
               <h2 className="list-view-item-title">{artwork.title}</h2>
               <p className="list-view-item-meta">
@@ -92,7 +140,8 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
               </div>
             )}
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       <div className="list-view-submit-cta-wrap list-view-stop">
