@@ -238,6 +238,13 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       const mesh = frameRefs.current[index];
       if (!mesh) return;
 
+      // Read the camera's actual current pose before beginCameraTransition can
+      // call controls.stop() — stop() snaps "current" straight to whatever
+      // transition was already pending, so reading position/target after it
+      // would silently teleport our new arc's starting point.
+      const startPosition = controls.getPosition(new THREE.Vector3(), false);
+      const startTarget = controls.getTarget(new THREE.Vector3(), false);
+
       const transitionId = beginCameraTransition(arcFromRest);
 
       const frameWorldPosition = new THREE.Vector3();
@@ -258,8 +265,6 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       endTarget.y -= getYOffset();
 
       if (arcFromRest) {
-        const startPosition = controls.getPosition(new THREE.Vector3(), false);
-        const startTarget = controls.getTarget(new THREE.Vector3(), false);
         const duration = smoothTimeForTravel(controls, endPosition, endTarget) * 1000;
         await runArcTransition(transitionId, startPosition, startTarget, endPosition, endTarget, duration);
       } else {
@@ -290,14 +295,17 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
+    // Same ordering requirement as zoomToFrame: read the real current pose
+    // before beginCameraTransition can call controls.stop() and overwrite it.
+    const startPosition = controls.getPosition(new THREE.Vector3(), false);
+    const startTarget = controls.getTarget(new THREE.Vector3(), false);
+
     const transitionId = beginCameraTransition(arcFromRest);
 
     const overviewPosition = new THREE.Vector3(0, 2, 14);
     const overviewTarget = new THREE.Vector3(0, 0, 0);
 
     if (arcFromRest) {
-      const startPosition = controls.getPosition(new THREE.Vector3(), false);
-      const startTarget = controls.getTarget(new THREE.Vector3(), false);
       const duration = smoothTimeForTravel(controls, overviewPosition, overviewTarget) * 1000;
       await runArcTransition(transitionId, startPosition, startTarget, overviewPosition, overviewTarget, duration);
     } else {
@@ -357,13 +365,23 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
+    // Read the camera's real current pose before beginCameraTransition(true)
+    // calls controls.stop(). stop() doesn't freeze the camera where it visibly
+    // is — it snaps "current" straight to whatever transition was already
+    // pending (see camera-controls' stop(): this._target.copy(this._targetEnd)
+    // etc.) — so reading position/target after it, as this used to, silently
+    // teleported the start of the new arc whenever an ordinary (non-rest)
+    // transition was interrupted mid-flight. That teleport-then-glide is what
+    // read as the camera bouncing forward and back, and as an abrupt start
+    // when the previous animation hadn't finished.
+    const startPosition = controls.getPosition(new THREE.Vector3(), false);
+    const startTarget = controls.getTarget(new THREE.Vector3(), false);
+
     const transitionId = beginCameraTransition(true);
     setZoomedFrameId(null);
     syncRestLook(viewpoint);
     restLookEnabledRef.current = false;
 
-    const startPosition = controls.getPosition(new THREE.Vector3(), false);
-    const startTarget = controls.getTarget(new THREE.Vector3(), false);
     const endPosition = new THREE.Vector3(...viewpoint.position);
     const endTarget = new THREE.Vector3(...viewpoint.target);
     const isBenchSwitch = (
