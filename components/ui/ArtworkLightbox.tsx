@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, ZoomIn, ZoomOut } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Info, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useTour } from '../../contexts/TourContext';
 
 interface Transform {
@@ -12,6 +13,7 @@ interface Transform {
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
+const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 
 const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   const { isTourStarted, currentFrameIndex, images } = useTour();
@@ -38,10 +40,14 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
   }, []);
 
   const applyTransform = useCallback((next: Transform) => {
+    const scale = Math.min(Math.max(next.scale, MIN_SCALE), MAX_SCALE);
     const clamped: Transform = {
-      scale: Math.min(Math.max(next.scale, MIN_SCALE), MAX_SCALE),
-      x: next.x,
-      y: next.y,
+      scale,
+      // At the base scale there is no meaningful pan area. Recentering here
+      // prevents a zoom-out from stranding the artwork off-screen, where the
+      // visitor could no longer drag it back.
+      x: scale <= MIN_SCALE ? 0 : next.x,
+      y: scale <= MIN_SCALE ? 0 : next.y,
     };
     transformRef.current = clamped;
     setTransform(clamped);
@@ -78,6 +84,15 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
     window.dispatchEvent(new CustomEvent('close-artwork-lightbox'));
   }, []);
 
+  const openArtworkInfo = useCallback(() => {
+    close();
+    // Let the lightbox unmount before opening the reading modal, rather than
+    // stacking two modal layers and their focus handling on top of each other.
+    window.requestAnimationFrame(() => {
+      window.dispatchEvent(new CustomEvent('open-artwork-info'));
+    });
+  }, [close]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -108,6 +123,48 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
     if (isOpen) return;
     openerRef.current?.focus();
     openerRef.current = null;
+  }, [isOpen]);
+
+  // The list view remains a real, scrollable document underneath this dialog.
+  // Portal the modal to <body>, then make its siblings inert so both pointer
+  // scrolling and screen-reader/keyboard focus stay inside the lightbox.
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+
+    const body = document.body;
+    const root = document.documentElement;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscroll = body.style.overscrollBehavior;
+    const previousBodyPaddingRight = body.style.paddingRight;
+    const previousRootOverflow = root.style.overflow;
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
+    const siblings = Array.from(body.children).filter(child => child !== dialogRef.current);
+    const previousSiblingState = siblings.map(element => ({
+      element,
+      hadInert: element.hasAttribute('inert'),
+      ariaHidden: element.getAttribute('aria-hidden'),
+    }));
+
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+    root.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+    siblings.forEach(element => {
+      element.setAttribute('inert', '');
+      element.setAttribute('aria-hidden', 'true');
+    });
+
+    return () => {
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscroll;
+      body.style.paddingRight = previousBodyPaddingRight;
+      root.style.overflow = previousRootOverflow;
+      previousSiblingState.forEach(({ element, hadInert, ariaHidden }) => {
+        if (!hadInert) element.removeAttribute('inert');
+        if (ariaHidden === null) element.removeAttribute('aria-hidden');
+        else element.setAttribute('aria-hidden', ariaHidden);
+      });
+    };
   }, [isOpen]);
 
   // ── Pointer gesture handlers ──────────────────────────────────────────────
@@ -184,11 +241,28 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
     lastTapAt.current = now;
   }, [resetTransform, applyTransform]);
 
+  const onWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
+    // Preserve the browser's ctrl/cmd-wheel zoom, and reserve artwork-wheel
+    // zoom for desktop-size viewports with a precise pointer.
+    if (event.ctrlKey || event.metaKey || !window.matchMedia('(min-width: 1024px) and (pointer: fine)').matches) return;
+
+    event.preventDefault();
+    const delta = event.deltaY * (
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? window.innerHeight
+          : 1
+    );
+    const current = transformRef.current;
+    applyTransform({ ...current, scale: current.scale * Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY) });
+  }, [applyTransform]);
+
   if (!artwork || !isOpen) return null;
 
   const { scale, x, y } = transform;
 
-  return (
+  const dialog = (
     <div
       ref={dialogRef}
       role="dialog"
@@ -241,6 +315,10 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onClick={onTap}
+        onWheel={onWheel}
+        onDragStart={(event) => event.preventDefault()}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => event.preventDefault()}
         onTouchStart={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
@@ -250,11 +328,14 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
           src={artwork.url}
           alt={artwork.altText?.trim() || artwork.title}
           draggable={false}
+          onDragStart={(event) => event.preventDefault()}
+          className="[-webkit-user-drag:none]"
           style={{
             maxWidth: '92vw',
             maxHeight: '86dvh',
             objectFit: 'contain',
             transform: `translate(${x}px, ${y}px) scale(${scale})`,
+            transition: scale === MIN_SCALE ? 'transform 0.18s ease-out' : 'none',
             transformOrigin: 'center center',
             userSelect: 'none',
             pointerEvents: 'none',
@@ -265,14 +346,14 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
       {/* A single shared bar keeps the title and zoom control aligned without
           allowing either to overlap the other. */}
       <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-4 bg-[var(--floating-surface-strong)] px-5 py-3 backdrop-blur-sm"
+        className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-4 bg-[var(--floating-surface-strong)] px-5 py-3 backdrop-blur-sm md:grid md:grid-cols-[1fr_auto_1fr]"
         style={{
           paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
           paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
           paddingRight: 'max(1.25rem, env(safe-area-inset-right))',
         }}
       >
-        <div aria-hidden="true" className="min-w-0">
+        <div aria-hidden="true" className="min-w-0 md:col-start-2 md:text-center">
           <p className="text-sm font-medium leading-snug text-[var(--floating-text)]">{artwork.title}</p>
           {(artwork.artist || artwork.date) && (
             <p className="mt-0.5 text-xs italic text-[var(--floating-muted)]">
@@ -281,7 +362,15 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
             </p>
           )}
         </div>
-        <div className="flex shrink-0 items-center justify-end">
+        <div className="flex shrink-0 items-center justify-end gap-2 md:col-start-3 md:justify-self-end">
+          <button
+            type="button"
+            onClick={openArtworkInfo}
+            aria-label="Read artwork information"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--floating-text)] backdrop-blur-sm transition-colors bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)]"
+          >
+            <Info size={18} />
+          </button>
           <button
             type="button"
             aria-label={scale > 1 ? 'Zoom out' : 'Zoom in'}
@@ -301,6 +390,8 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
       </div>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 };
 
 export default ArtworkLightbox;

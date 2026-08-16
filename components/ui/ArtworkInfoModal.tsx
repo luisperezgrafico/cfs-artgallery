@@ -5,6 +5,7 @@ import { X, ExternalLink, ChevronDown, ChevronUp, Heart, Volume2, Pause, RotateC
 import { useTour } from '../../contexts/TourContext';
 import { useRoom } from '../../contexts/RoomContext';
 import { useShelf } from '../../contexts/ShelfContext';
+import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import { contentNoteLabel } from '../../config/contentNotes';
 import { useAudioPlayer } from '../../utils/useAudioPlayer';
 
@@ -17,6 +18,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const { isTourStarted, currentFrameIndex, images } = useTour();
   const { rooms, activeRoomIndex } = useRoom();
   const { isShelved, toggle } = useShelf();
+  const { autoAdvance } = useGuidedTourPreferences();
   const [isOpen, setIsOpen] = useState(false);
   const [origin, setOrigin] = useState<Origin | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -88,6 +90,9 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const contentNotes = artwork.contentNotes ?? [];
   const hasContentNotes = contentNotes.length > 0;
   const canPlayAudio = !!(artwork.audioUrl && hasDescription);
+  // Auto mode already owns this artwork's narration. Keeping the plaque
+  // read-only avoids a competing player without interrupting the guide.
+  const showManualAudioControl = canPlayAudio && !autoAdvance;
   const audioLabel = artwork.audioSource === 'uploaded' ? 'Artist audio' : null;
 
   const toggleAudio = async () => {
@@ -215,9 +220,9 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
               {hasContentNotes && (
                 <div className="mb-4">
                   <p
-                    className="mb-2 text-[11px] uppercase tracking-widest"
+                    className="mb-2 text-[0.75rem] uppercase tracking-widest"
                     style={{
-                      color: 'var(--panel-subtitle)',
+                      color: 'var(--panel-text)',
                       fontFamily: "Georgia, 'Times New Roman', serif",
                     }}
                   >
@@ -227,11 +232,11 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                     {contentNotes.map(note => (
                       <span
                         key={note}
-                        className="px-2 py-1 text-xs"
+                        className="px-2.5 py-1 text-sm"
                         style={{
-                          color: 'var(--panel-subtitle)',
-                          border: '1px solid var(--panel-border)',
-                          background: 'var(--panel-btn-bg)',
+                          color: 'var(--panel-chip-text)',
+                          border: '1px solid var(--panel-chip-border)',
+                          background: 'var(--panel-chip-bg)',
                           borderRadius: '2px',
                           fontFamily: "Georgia, 'Times New Roman', serif",
                         }}
@@ -243,7 +248,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                 </div>
               )}
 
-              {canPlayAudio && (
+              {showManualAudioControl && (
                 <div className="mb-4">
                   <button
                     onClick={toggleAudio}

@@ -1,7 +1,7 @@
 'use client';
 
 // src/contexts/TourContext.tsx
-import React, { createContext, useCallback, useContext, useState, ReactNode } from "react";
+import React, { createContext, useCallback, useContext, useRef, useState, ReactNode } from "react";
 import { ImageMetadata, RestViewpoint } from "../types/museum";
 import { nextNavigableIndex, previousNavigableIndex } from "../utils/roomLayout";
 import { DEFAULT_REST_VIEW } from '../utils/restView';
@@ -11,6 +11,8 @@ interface TourContextType {
   isResting: boolean;
   /** True once the camera has actually finished arriving at restView — not just been told to. */
   isSeated: boolean;
+  /** True only for this mounted room after its final stop led to the rest view. */
+  hasCompletedRoom: boolean;
   restView: RestViewpoint | null;
   currentFrameIndex: number;
   setCurrentFrameIndex: (index: number) => void;
@@ -45,7 +47,12 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     initialFrameIndex >= 0 && initialFrameIndex < totalFrames ? initialFrameIndex : -1;
   const [isTourStarted, setIsTourStarted] = useState(initialIndex >= 0);
   const [currentFrameIndexState, setCurrentFrameIndexState] = useState(initialIndex);
+  // Navigation can be requested again before React has committed the previous
+  // frame. Keeping the authoritative in-flight index here lets us calculate
+  // the next destination without nesting state writes inside a state updater.
+  const currentFrameIndexRef = useRef(initialIndex);
   const [restView, setRestView] = useState<RestViewpoint | null>(null);
+  const [hasCompletedRoom, setHasCompletedRoom] = useState(false);
   // Cleared every time restView changes (a fresh sit or a bench switch), so
   // free look and the rest-view controls both wait for the arrival animation
   // rather than appearing the instant a bench is tapped.
@@ -54,6 +61,8 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   const setCurrentFrameIndex = useCallback((index: number) => {
     setRestView(null);
     setIsSeated(false);
+    setHasCompletedRoom(false);
+    currentFrameIndexRef.current = index;
     setCurrentFrameIndexState(index);
   }, []);
 
@@ -63,29 +72,43 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     const start = atIndex !== undefined && atIndex >= 0 && atIndex < totalFrames ? atIndex : 0;
     setRestView(null);
     setIsSeated(false);
+    setHasCompletedRoom(false);
     setIsTourStarted(true);
+    currentFrameIndexRef.current = start;
     setCurrentFrameIndexState(start);
   }, [totalFrames]);
 
   const nextFrame = useCallback((includeEmpty = false) => {
-    setRestView(null);
+    const next = nextNavigableIndex(images, currentFrameIndexRef.current, includeEmpty);
     setIsSeated(false);
-    setCurrentFrameIndexState(prev => {
-      const next = nextNavigableIndex(images, prev, includeEmpty);
-      if (next !== -1) return next;
-      setIsTourStarted(false);
-      setRestView(DEFAULT_REST_VIEW);
-      return -1;
-    });
+
+    if (next !== -1) {
+      setRestView(null);
+      setHasCompletedRoom(false);
+      currentFrameIndexRef.current = next;
+      setCurrentFrameIndexState(next);
+      return;
+    }
+
+    // Keep the end-of-room state in one React update batch. Previously this
+    // was set from inside `setCurrentFrameIndexState`'s updater, which could
+    // expose a one-render gap where neither an artwork nor the rest view was
+    // active — visible as a random overview/lightbox-style blink.
+    setIsTourStarted(false);
+    setHasCompletedRoom(true);
+    currentFrameIndexRef.current = -1;
+    setCurrentFrameIndexState(-1);
+    setRestView(DEFAULT_REST_VIEW);
   }, [images]);
 
   const previousFrame = useCallback((includeEmpty = false) => {
+    const previous = previousNavigableIndex(images, currentFrameIndexRef.current, includeEmpty);
+    if (previous === -1) return;
     setRestView(null);
     setIsSeated(false);
-    setCurrentFrameIndexState(prev => {
-      const previous = previousNavigableIndex(images, prev, includeEmpty);
-      return previous === -1 ? prev : previous;
-    });
+    setHasCompletedRoom(false);
+    currentFrameIndexRef.current = previous;
+    setCurrentFrameIndexState(previous);
   }, [images]);
 
   const sitAtRestView = useCallback((viewpoint: RestViewpoint) => {
@@ -93,6 +116,8 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     const [tx, ty, tz] = viewpoint.target;
 
     setIsTourStarted(false);
+    setHasCompletedRoom(false);
+    currentFrameIndexRef.current = -1;
     setCurrentFrameIndexState(-1);
     setIsSeated(false);
     setRestView({
@@ -105,6 +130,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     setRestView(null);
     setIsSeated(false);
     setIsTourStarted(false);
+    currentFrameIndexRef.current = -1;
     setCurrentFrameIndexState(-1);
   }, []);
 
@@ -114,6 +140,7 @@ export const TourProvider: React.FC<TourProviderProps> = ({
     isTourStarted,
     isResting: restView !== null,
     isSeated: restView !== null && isSeated,
+    hasCompletedRoom,
     restView,
     currentFrameIndex: currentFrameIndexState,
     setCurrentFrameIndex,

@@ -121,7 +121,7 @@ function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
 function RestControls({ style }: { style?: React.CSSProperties }) {
   const { quitTour } = useTour();
   const { rooms, activeRoomIndex, setActiveRoomIndex, getRoomImages } = useRoom();
-  const { narrationEnabled, dwellSeconds, requestAutoStart } = useGuidedTourPreferences();
+  const { narrationEnabled, dwellSeconds } = useGuidedTourPreferences();
 
   const nextRoom = rooms[activeRoomIndex + 1];
   const nextRoomEstimate = nextRoom
@@ -130,10 +130,8 @@ function RestControls({ style }: { style?: React.CSSProperties }) {
 
   const goToNextRoom = () => {
     if (!nextRoom) return;
-    // The new room mounts idle, showing its own overview first (same as any
-    // fresh visit); requestAutoStart tells its engine to pick the tour back
-    // up on its own shortly after, since the mode already carries over.
-    requestAutoStart();
+    // Changing rooms is a natural pause. The next room opens at its overview
+    // and waits for the visitor to choose Start the Tour again.
     setActiveRoomIndex(activeRoomIndex + 1);
   };
 
@@ -169,6 +167,46 @@ function RestControls({ style }: { style?: React.CSSProperties }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function RestingViewNotice() {
+  const [isShown, setIsShown] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const enterTimer = window.setTimeout(() => setIsShown(true), 700);
+    const fadeTimer = window.setTimeout(() => setIsShown(false), 2800);
+    const hideTimer = window.setTimeout(() => setIsVisible(false), 4350);
+    return () => {
+      window.clearTimeout(enterTimer);
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, []);
+
+  return (
+    <>
+      <p className="sr-only" role="status" aria-live="polite">
+        Resting view. You can look around, continue to the next room, or exit rest.
+      </p>
+      {isVisible && (
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none fixed bottom-0 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap text-center transition-opacity duration-[1800ms] ease-out ${
+            isShown ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ bottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
+        >
+          <p
+            className="text-3xl md:text-4xl"
+            style={{ color: 'var(--floating-text)', fontFamily: "Georgia, 'Times New Roman', serif", textShadow: '0 2px 8px rgba(0, 0, 0, 0.45)' }}
+          >
+            Resting view
+          </p>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -288,6 +326,7 @@ const UIElements: React.FC = () => {
             style={{ animation: 'fadeIn 1s ease-out forwards' }}
             showNarrationControl={!isInterfaceHidden && !isInterfaceFadingOut}
           />
+          {isResting && <RestingViewNotice />}
           {isInterfaceHidden ? (
             <HiddenInterfaceLayer onShow={showInterface} />
           ) : (
@@ -316,9 +355,9 @@ const UIElements: React.FC = () => {
                   <ArtworkInfoModal />
                   <ArtworkLightbox />
                   <SubmitArtworkModal />
-                  <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
                 </div>
               )}
+              <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
             </div>
           )}
         </>

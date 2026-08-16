@@ -21,8 +21,8 @@ export default function TourEntryModal({
   onClose: () => void;
   onStart: (atIndex?: number) => void;
 }) {
-  const { images, totalFrames } = useTour();
-  const { rooms, activeRoomIndex } = useRoom();
+  const { images, totalFrames, hasCompletedRoom } = useTour();
+  const { rooms, activeRoomIndex, setActiveRoomIndex } = useRoom();
   const { applyPreset, dwellSeconds, lastPreset } = useGuidedTourPreferences();
   const { isPlaying: ambientMusicPlaying, toggle: toggleAmbientMusic } = useAmbientMusic();
 
@@ -31,7 +31,10 @@ export default function TourEntryModal({
   // separate "resume" choice — it's the same as starting over.
   const resumeIndex = getInitialFrameIndex(roomId, totalFrames);
   const canResume = resumeIndex > 0;
-  const [view, setView] = useState<'resume' | 'doors'>(canResume ? 'resume' : 'doors');
+  const nextRoom = rooms[activeRoomIndex + 1];
+  const [view, setView] = useState<'completed' | 'resume' | 'doors'>(
+    hasCompletedRoom ? 'completed' : canResume ? 'resume' : 'doors',
+  );
   // Off by default, every visit — a remembered preference must never turn
   // into autoplay. Checking this is the visitor's own gesture, in the same
   // click that starts the tour, so playing music here is not autoplay.
@@ -64,6 +67,12 @@ export default function TourEntryModal({
 
   const resumeArtwork = canResume ? images[resumeIndex] : null;
 
+  const continueToNextRoom = () => {
+    if (!nextRoom) return;
+    setActiveRoomIndex(activeRoomIndex + 1);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -82,7 +91,41 @@ export default function TourEntryModal({
           animation: 'scaleInSmooth 0.3s ease-out forwards',
         }}
       >
-        {view === 'resume' && canResume ? (
+        {view === 'completed' ? (
+          <>
+            <div>
+              <h2
+                className="text-lg"
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: 'var(--panel-title)', fontWeight: 600 }}
+              >
+                Room complete
+              </h2>
+              <p className="text-xs mt-1" style={{ color: 'var(--panel-subtitle)' }}>
+                {nextRoom ? 'Continue whenever you are ready, or begin this room again.' : 'You have reached the end of this room.'}
+              </p>
+            </div>
+            <div className="space-y-3">
+              {nextRoom && (
+                <button
+                  onClick={continueToNextRoom}
+                  data-testid="tour-continue-next-room"
+                  className="w-full py-3 text-sm font-medium text-center transition-colors bg-[var(--panel-btn-bg-hover)]"
+                  style={{ color: 'var(--panel-btn-text)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
+                >
+                  Continue to next room
+                </button>
+              )}
+              <button
+                onClick={() => setView('doors')}
+                data-testid="tour-start-over"
+                className="w-full py-2.5 text-sm text-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                style={{ color: 'var(--panel-subtitle)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
+              >
+                Start over
+              </button>
+            </div>
+          </>
+        ) : view === 'resume' && canResume ? (
           <>
             <div>
               <h2

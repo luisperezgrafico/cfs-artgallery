@@ -53,6 +53,9 @@
     --panel-btn-bg: rgba(180, 160, 128, 0.14);
     --panel-btn-bg-hover: rgba(180, 160, 128, 0.26);
     --panel-btn-text: #ece6da;
+    --panel-chip-bg: rgba(180, 160, 128, 0.22);
+    --panel-chip-border: rgba(180, 160, 128, 0.44);
+    --panel-chip-text: #ece6da;
 
     /* form fields inside overlay panels */
     --field-bg: rgba(255, 255, 255, 0.06);
@@ -92,6 +95,9 @@ textarea::placeholder {
     --panel-btn-bg: rgba(160, 138, 108, 0.18);
     --panel-btn-bg-hover: rgba(160, 138, 108, 0.32);
     --panel-btn-text: #332a1f;
+    --panel-chip-bg: rgba(160, 138, 108, 0.24);
+    --panel-chip-border: rgba(160, 138, 108, 0.56);
+    --panel-chip-text: #332a1f;
 
     --field-bg: rgba(255, 255, 255, 0.55);
     --field-bg-soft: rgba(255, 255, 255, 0.22);

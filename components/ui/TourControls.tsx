@@ -12,10 +12,10 @@ const TourControls: React.FC<{
   onHideInterface?: () => void;
 }> = ({ style, onHideInterface }) => {
   const {
-    isTourStarted, currentFrameIndex, totalFrames,
+    isTourStarted, isResting, currentFrameIndex, totalFrames,
     images, startTour, nextFrame, previousFrame, quitTour,
   } = useTour();
-  const { autoAdvance, setAutoAdvance, pendingAutoStart } = useGuidedTourPreferences();
+  const { autoAdvance, setAutoAdvance } = useGuidedTourPreferences();
   const [showEntryModal, setShowEntryModal] = useState(false);
 
   // Auto skips submit canvases; Manual deliberately visits every wall slot so
@@ -32,7 +32,7 @@ const TourControls: React.FC<{
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isTourStarted) {
-        if (!pendingAutoStart && (e.key === ' ' || e.key === 'Enter')) setShowEntryModal(true);
+        if (e.key === ' ' || e.key === 'Enter') setShowEntryModal(true);
       } else {
         if (e.key === 'ArrowRight' || e.key === 'd') {
           goNext();
@@ -45,16 +45,18 @@ const TourControls: React.FC<{
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTourStarted, hasNextArtwork, hasPreviousArtwork, quitTour, pendingAutoStart, goNext, goPrevious]);
+  }, [isTourStarted, hasNextArtwork, hasPreviousArtwork, quitTour, goNext, goPrevious]);
 
   const bottomStyle: React.CSSProperties = {
     paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))',
   };
 
   if (!isTourStarted) {
-    // Arriving via "Next room": let the overview show quietly, with no
-    // "Start the Tour" button to press — the tour resumes on its own shortly.
-    if (pendingAutoStart) return <div style={style} />;
+    // `nextFrame` deliberately ends the tour before the camera begins its
+    // slow move to the bench. That short state is not an invitation to start
+    // a new tour: it is the resting transition, whose own controls appear
+    // only after the camera arrives.
+    if (isResting) return <div style={style} />;
 
     return (
       <div style={style}>

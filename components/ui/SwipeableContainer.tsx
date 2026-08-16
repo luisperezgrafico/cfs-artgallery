@@ -7,6 +7,7 @@ import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import { nextNavigableIndex, previousNavigableIndex } from '../../utils/roomLayout';
 
 const WHEEL_NAVIGATION_THRESHOLD = 80;
+const WHEEL_NAVIGATION_COOLDOWN_MS = 900;
 const WHEEL_NAVIGATION_SAFETY_TIMEOUT_MS = 8000;
 
 interface SwipeableContainerProps {
@@ -28,12 +29,17 @@ const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => 
   const wheelDelta = useRef(0);
   const wheelNavigationLocked = useRef(false);
   const wheelTargetIndex = useRef<number | null>(null);
+  const wheelCooldownTimeout = useRef<number | null>(null);
   const wheelSafetyTimeout = useRef<number | null>(null);
 
   const releaseWheelNavigation = () => {
     wheelNavigationLocked.current = false;
     wheelTargetIndex.current = null;
     wheelDelta.current = 0;
+    if (wheelCooldownTimeout.current !== null) {
+      window.clearTimeout(wheelCooldownTimeout.current);
+      wheelCooldownTimeout.current = null;
+    }
     if (wheelSafetyTimeout.current !== null) {
       window.clearTimeout(wheelSafetyTimeout.current);
       wheelSafetyTimeout.current = null;
@@ -53,9 +59,9 @@ const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => 
     };
   }, []);
 
-  // A wheel step locks until CameraManager says the actual camera animation
-  // has settled on the requested frame. This accommodates different travel
-  // distances instead of relying on a fixed debounce interval.
+  // Camera arrival releases the lock immediately. A short cooldown below also
+  // permits a measured follow-up gesture before a long camera glide has fully
+  // settled, without turning a continuous wheel spin into many skipped works.
   useEffect(() => {
     const handleCameraArrival = (event: Event) => {
       const frameIndex = (event as CustomEvent<{ frameIndex?: number }>).detail?.frameIndex;
@@ -67,6 +73,7 @@ const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => 
     window.addEventListener('tour-camera-arrived', handleCameraArrival);
     return () => {
       window.removeEventListener('tour-camera-arrived', handleCameraArrival);
+      if (wheelCooldownTimeout.current !== null) window.clearTimeout(wheelCooldownTimeout.current);
       if (wheelSafetyTimeout.current !== null) window.clearTimeout(wheelSafetyTimeout.current);
     };
   }, []);
@@ -112,6 +119,10 @@ const SwipeableContainer: React.FC<SwipeableContainerProps> = ({ children }) => 
 
       wheelNavigationLocked.current = true;
       wheelTargetIndex.current = targetIndex === -1 ? null : targetIndex;
+      wheelCooldownTimeout.current = window.setTimeout(
+        releaseWheelNavigation,
+        WHEEL_NAVIGATION_COOLDOWN_MS,
+      );
       wheelSafetyTimeout.current = window.setTimeout(
         releaseWheelNavigation,
         WHEEL_NAVIGATION_SAFETY_TIMEOUT_MS,

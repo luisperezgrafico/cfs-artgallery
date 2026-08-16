@@ -27,10 +27,14 @@ const MAX_TRAVEL_SMOOTH_TIME = 2.1;
 const SMOOTH_TIME_PER_WORLD_UNIT = 0.095;
 const MAX_CAMERA_SPEED = 5.5;
 const REST_VIEW_DURATION_MS = 4200;
+// Leaving the bench is a deliberate decompression moment, not the ordinary
+// between-artwork move. Keep it on the same unhurried cadence as sitting.
+const REST_EXIT_DURATION_MS = 4200;
 const REST_SWITCH_DURATION_MS = 5800;
 const REST_LOOK_SENSITIVITY = 0.003;
 const REST_LOOK_MIN_PITCH = -0.45;
 const REST_LOOK_MAX_PITCH = 0.45;
+const CAMERA_FORWARD = new THREE.Vector3(0, 0, -1);
 const DISABLED_MOUSE_BUTTONS = {
   left: CameraControlsImpl.ACTION.NONE,
   middle: CameraControlsImpl.ACTION.NONE,
@@ -178,7 +182,6 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       (startTarget.y + endTarget.y) / 2,
       (startTarget.z + endTarget.z) / 2,
     );
-
     const position = new THREE.Vector3();
     const target = new THREE.Vector3();
     const startedAt = window.performance.now();
@@ -271,8 +274,14 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       endTarget.y -= getYOffset();
 
       if (arcFromRest) {
-        const duration = smoothTimeForTravel(controls, endPosition, endTarget) * 1000;
-        await runArcTransition(transitionId, startPosition, startTarget, endPosition, endTarget, duration);
+        await runArcTransition(
+          transitionId,
+          startPosition,
+          startTarget,
+          endPosition,
+          endTarget,
+          REST_EXIT_DURATION_MS,
+        );
       } else {
         const previousSmoothTime = controls.smoothTime;
         try {
@@ -317,7 +326,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const overviewTarget = new THREE.Vector3(0, 0, 0);
 
     if (arcFromRest) {
-      const duration = smoothTimeForTravel(controls, overviewPosition, overviewTarget) * 1000;
+      const duration = REST_EXIT_DURATION_MS;
       await runArcTransition(transitionId, startPosition, startTarget, overviewPosition, overviewTarget, duration);
     } else {
       const previousSmoothTime = controls.smoothTime;
@@ -376,19 +385,26 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const controls = cameraControlsRef.current;
     if (!controls) return;
 
-    // Read the camera's real current pose before beginCameraTransition(true)
-    // calls controls.stop(). stop() doesn't freeze the camera where it visibly
-    // is — it snaps "current" straight to whatever transition was already
-    // pending (see camera-controls' stop(): this._target.copy(this._targetEnd)
-    // etc.) — so reading position/target after it, as this used to, silently
-    // teleported the start of the new arc whenever an ordinary (non-rest)
-    // transition was interrupted mid-flight. That teleport-then-glide is what
-    // read as the camera bouncing forward and back, and as an abrupt start
-    // when the previous animation hadn't finished.
+    // Capture the camera's visible pose before interrupting an in-flight
+    // transition. `CameraControls.stop()` jumps its internal state to that
+    // transition's pending destination, so the exact pose is restored below
+    // before the first frame of our bench arc. Without that restoration, a
+    // quick Next from the final artwork visibly blinked at the old destination
+    // and only then began to travel toward the bench.
     const startPosition = controls.getPosition(new THREE.Vector3(), false);
     const startTarget = controls.getTarget(new THREE.Vector3(), false);
 
     const transitionId = beginCameraTransition(true);
+    controls.setLookAt(
+      startPosition.x,
+      startPosition.y,
+      startPosition.z,
+      startTarget.x,
+      startTarget.y,
+      startTarget.z,
+      false,
+    );
+    controls.update(0);
     setZoomedFrameId(null);
     syncRestLook(viewpoint);
     restLookEnabledRef.current = false;
@@ -417,6 +433,20 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       (startTarget.y + endTarget.y) / 2,
       (startTarget.z + endTarget.z) / 2,
     );
+    // On a left-to-right bench switch, both the camera and target cross the
+    // room centre. A plain Bezier for both makes their separation nearly zero
+    // halfway through, concentrating almost a 180° turn into one abrupt beat.
+    // The benches keep a near-constant viewing distance, so unlike the wide
+    // overview-to-bench arrival we can safely rotate the look direction itself
+    // and preserve that distance throughout the move.
+    const startDirection = startTarget.clone().sub(startPosition).normalize();
+    const endDirection = endTarget.clone().sub(endPosition).normalize();
+    const startLookDistance = startPosition.distanceTo(startTarget);
+    const endLookDistance = endPosition.distanceTo(endTarget);
+    const startLookQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, startDirection);
+    const endLookQuaternion = new THREE.Quaternion().setFromUnitVectors(CAMERA_FORWARD, endDirection);
+    const lookQuaternion = new THREE.Quaternion();
+    const lookDirection = new THREE.Vector3();
     const position = new THREE.Vector3();
     const target = new THREE.Vector3();
     const startedAt = window.performance.now();
@@ -428,7 +458,14 @@ const CameraManager: React.FC<CameraManagerProps> = ({
       const eased = easeInOutCubic(progress);
 
       quadraticBezier(position, startPosition, positionControl, endPosition, eased);
-      quadraticBezier(target, startTarget, targetControl, endTarget, eased);
+      if (isBenchSwitch) {
+        lookQuaternion.slerpQuaternions(startLookQuaternion, endLookQuaternion, eased);
+        lookDirection.copy(CAMERA_FORWARD).applyQuaternion(lookQuaternion).normalize();
+        const lookDistance = THREE.MathUtils.lerp(startLookDistance, endLookDistance, eased);
+        target.copy(position).addScaledVector(lookDirection, lookDistance);
+      } else {
+        quadraticBezier(target, startTarget, targetControl, endTarget, eased);
+      }
       controls.setLookAt(
         position.x,
         position.y,
@@ -515,12 +552,23 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   }, [applyRestLook, gl.domElement, restView]);
 
   useEffect(() => {
-    const leavingRestView = previousRestViewRef.current !== null && !restView;
-    previousRestViewRef.current = restView ?? null;
-
     if (restView) {
+      // A rest-view arrival is an explicit camera transition, not a pose to
+      // reapply on every render. In particular, `onRestArrival` updates the
+      // surrounding UI once the camera settles; restarting this transition at
+      // that point looked like a slow, unnecessary bounce away from and back
+      // to the bench. A fresh object only arrives when a visitor chooses a
+      // different bench, which should still animate normally.
+      if (previousRestViewRef.current === restView) return;
+      previousRestViewRef.current = restView;
       moveToRestView(restView);
-    } else if (currentFrameIndex >= 0 && currentFrameIndex < imagesCount) {
+      return;
+    }
+
+    const leavingRestView = previousRestViewRef.current !== null;
+    previousRestViewRef.current = null;
+
+    if (currentFrameIndex >= 0 && currentFrameIndex < imagesCount) {
       zoomToFrame(currentFrameIndex, leavingRestView);
     } else if (currentFrameIndex === -1) {
       resetCamera(leavingRestView);

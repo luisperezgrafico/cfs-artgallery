@@ -40,7 +40,7 @@ function Door() {
         <button className="door-enter" onClick={() => setEntered(true)}>
           Enter the gallery
         </button>
-        <Link href="/list" className="door-list-link">
+        <Link href="/list#list-view-top" className="door-list-link">
           Simple list view
         </Link>
       </div>

@@ -30,6 +30,10 @@ function useHighlightCurrentArtwork(items: ListArtworkEntry[]): string | null {
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
   useEffect(() => {
+    // The door deliberately links to this anchor so the list always opens as
+    // a fresh catalogue, rather than inheriting the last 3D artwork position.
+    if (window.location.hash === '#list-view-top') return;
+
     const saved = readVisitPosition();
     if (!saved || saved.frameIndex < 0) return;
 
