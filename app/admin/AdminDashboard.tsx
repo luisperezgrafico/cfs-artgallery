@@ -97,7 +97,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="admin-contrast min-h-screen bg-zinc-950 text-white">
       <header className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <span className="font-semibold text-sm tracking-wide">ME/CFS Gallery — Admin</span>
         <div className="flex items-center gap-4">

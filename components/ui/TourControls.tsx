@@ -88,7 +88,7 @@ const TourControls: React.FC<{
         className="fixed bottom-0 left-0 right-0 z-30 flex flex-col items-center"
         style={bottomStyle}
       >
-        <div className="flex gap-3 items-center bg-black/40 backdrop-blur-md px-6 py-4 rounded-full shadow-lg">
+        <div className="flex gap-3 items-center bg-black/40 md:bg-black/65 backdrop-blur-md px-6 py-4 rounded-full shadow-lg">
           <button
             onClick={goPrevious}
             disabled={!hasPreviousArtwork}
@@ -136,7 +136,7 @@ const TourControls: React.FC<{
           </button>
         </div>
 
-        <div className="text-white/60 text-xs mt-2 tabular-nums">
+        <div className="text-white/60 md:text-white/80 drop-shadow text-xs mt-2 tabular-nums">
           {currentFrameIndex + 1} / {totalFrames}
           {' · '}
           {isMobile ? 'Tap or swipe to navigate' : '← → arrows · Esc to exit'}

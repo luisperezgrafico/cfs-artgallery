@@ -818,6 +818,20 @@
   transform: translateY(-1px);
 }
 
+/* The admin uses a deliberately dark zinc surface. Its old 25–50% white
+   helper text became too faint on desktop displays, especially in forms with
+   a lot of metadata. Keep the compact mobile treatment, but raise those
+   muted tones to readable contrast from tablet size upward. */
+@media (min-width: 768px) {
+  .admin-contrast .text-white\/25 { color: rgb(255 255 255 / 0.56); }
+  .admin-contrast .text-white\/30 { color: rgb(255 255 255 / 0.58); }
+  .admin-contrast .text-white\/35 { color: rgb(255 255 255 / 0.62); }
+  .admin-contrast .text-white\/40 { color: rgb(255 255 255 / 0.66); }
+  .admin-contrast .text-white\/45 { color: rgb(255 255 255 / 0.68); }
+  .admin-contrast .text-white\/50 { color: rgb(255 255 255 / 0.70); }
+  .admin-contrast .text-white\/55 { color: rgb(255 255 255 / 0.72); }
+}
+
 .admin-login-submit:disabled {
   opacity: 0.6;
   cursor: default;
