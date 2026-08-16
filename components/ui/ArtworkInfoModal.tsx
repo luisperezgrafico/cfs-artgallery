@@ -88,7 +88,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
   const contentNotes = artwork.contentNotes ?? [];
   const hasContentNotes = contentNotes.length > 0;
   const canPlayAudio = !!(artwork.audioUrl && hasDescription);
-  const audioLabel = artwork.audioSource === 'uploaded' ? 'Artist audio' : 'AI voice';
+  const audioLabel = artwork.audioSource === 'uploaded' ? 'Artist audio' : null;
 
   const toggleAudio = async () => {
     if (artwork.longDescription) setExpanded(true);
@@ -156,7 +156,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                   className="pointer-events-none absolute right-0 bottom-full mb-2 whitespace-nowrap px-3 py-2 text-xs shadow-lg"
                   style={{
                     color: 'var(--panel-btn-text)',
-                    background: 'var(--panel-btn-bg)',
+                    background: 'var(--panel-bg)',
                     border: '1px solid var(--panel-border)',
                     borderRadius: '2px',
                     fontFamily: "Georgia, 'Times New Roman', serif",
@@ -167,15 +167,31 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                 </div>
               )}
               {canShelf && (
-                <button
-                  onClick={handleToggleShelf}
-                  aria-label={shelved ? 'Remove from shelf' : 'Add to shelf'}
-                  title={shelved ? 'Remove from shelf' : 'Add to shelf'}
-                  className="w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
-                  style={{ color: shelved ? '#c0665a' : 'var(--panel-btn-text)' }}
-                >
-                  <Heart size={15} fill={shelved ? 'currentColor' : 'none'} />
-                </button>
+                <div className="relative group">
+                  <button
+                    onClick={handleToggleShelf}
+                    aria-label={shelved ? 'Remove from shelf' : 'Add to shelf'}
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                    style={{ color: shelved ? '#c0665a' : 'var(--panel-btn-text)' }}
+                  >
+                    <Heart size={15} fill={shelved ? 'currentColor' : 'none'} />
+                  </button>
+                  {!shelfFeedback && (
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none absolute right-0 bottom-full z-10 mb-2 whitespace-nowrap px-3 py-2 text-xs opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+                      style={{
+                        color: 'var(--panel-btn-text)',
+                        background: 'var(--panel-bg)',
+                        border: '1px solid var(--panel-border)',
+                        borderRadius: '2px',
+                        fontFamily: "Georgia, 'Times New Roman', serif",
+                      }}
+                    >
+                      {shelved ? 'Remove from shelf' : 'Add to shelf'}
+                    </span>
+                  )}
+                </div>
               )}
               <button
                 onClick={close}
@@ -247,15 +263,17 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
                         : <Volume2 size={14} />}
                     {audioState === 'playing' ? 'Pause' : audioState === 'ended' ? 'Replay' : 'Listen'}
                   </button>
-                  <span
-                    className="ml-3 align-middle text-xs"
-                    style={{
-                      color: audioState === 'error' ? '#b55a3a' : 'var(--panel-subtitle)',
-                      fontFamily: "Georgia, 'Times New Roman', serif",
-                    }}
-                  >
-                    {audioState === 'error' ? 'Audio unavailable' : audioLabel}
-                  </span>
+                  {(audioState === 'error' || audioLabel) && (
+                    <span
+                      className="ml-3 align-middle text-xs"
+                      style={{
+                        color: audioState === 'error' ? '#b55a3a' : 'var(--panel-subtitle)',
+                        fontFamily: "Georgia, 'Times New Roman', serif",
+                      }}
+                    >
+                      {audioState === 'error' ? 'Audio unavailable' : audioLabel}
+                    </span>
+                  )}
                   <audio {...audioProps} src={artwork.audioUrl} />
                 </div>
               )}

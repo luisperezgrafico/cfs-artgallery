@@ -19,10 +19,13 @@ interface FrameProps {
 const BLANK_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 const PLAQUE_TEXTURE_WIDTH = 768;
 // Height (and the font sizes/baselines below) scaled up ~20% from the
-// original 240 for legibility — width stays put so the text-fitting/
-// maxTextWidth math is unaffected.
-const PLAQUE_TEXTURE_HEIGHT = 288;
-const PLAQUE_FONT_STACK = 'Inter, "Segoe UI", Arial, sans-serif';
+// original 240 for legibility, with four pixels trimmed from the lower
+// whitespace — width stays put so the text-fitting/maxTextWidth math is
+// unaffected.
+const PLAQUE_TEXTURE_HEIGHT = 284;
+// Match the editorial serif used by the gallery's HTML modals. Canvas text
+// needs its own stack because these plaques are rendered into a texture.
+const PLAQUE_FONT_STACK = 'Georgia, "Times New Roman", serif';
 
 function createLinenTexture(): THREE.CanvasTexture {
   const size = 256;
@@ -98,10 +101,10 @@ function createPlaqueTexture({
 
   if (isSubmit) {
     drawFittedText(ctx, title, 106, 82, 600, '#2b3644', maxTextWidth);
-    drawFittedText(ctx, subtitle, 192, 58, 500, '#637687', maxTextWidth);
+    drawFittedText(ctx, subtitle, 196, 58, 500, '#637687', maxTextWidth);
   } else {
     drawFittedText(ctx, title, 98, 86, 600, '#2b3644', maxTextWidth);
-    drawFittedText(ctx, subtitle, 175, 67, 500, '#5a6878', maxTextWidth);
+    drawFittedText(ctx, subtitle, 179, 67, 500, '#5a6878', maxTextWidth);
     if (footer) {
       drawFittedText(ctx, footer, 245, 53, 500, '#7d8f9f', maxTextWidth);
     }
@@ -169,7 +172,9 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
     const frameBottom = (height + 0.1) / 2;
 
     const plaqueW = 0.90;
-    const plaqueH = 0.34;
+    // Keep the plaque's top edge in place while trimming its lower edge by
+    // roughly four texture pixels' worth of visual height.
+    const plaqueH = 0.335;
     const plaqueY = -(frameBottom + plaqueH / 2 + 0.18);
     const plaqueZ = -0.03;
     const artistLine = [image.artist, image.date].filter(Boolean).join(' · ');

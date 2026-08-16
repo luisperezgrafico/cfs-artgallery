@@ -8,7 +8,7 @@ import { useTour } from '../../contexts/TourContext';
 import { useShelf } from '../../contexts/ShelfContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import { useAmbientMusic } from '../../contexts/AmbientMusicContext';
-import { clampMenuTabY, readMenuTabY, saveMenuTabY, saveVisitPosition } from '../../utils/userPreferences';
+import { saveVisitPosition } from '../../utils/userPreferences';
 import { DWELL_SECONDS_OPTIONS } from '../../utils/tourEstimate';
 import ThemeToggle from './ThemeToggle';
 import FeedbackModal from './FeedbackModal';
@@ -34,7 +34,7 @@ function CollapsibleSection({
         className="w-full flex items-center justify-between gap-3 pb-4"
         aria-expanded={open}
       >
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--panel-subtitle)]">
+        <span className="text-[10px] lg:text-[0.7rem] font-semibold uppercase tracking-widest text-[var(--panel-subtitle)]">
           {title}
         </span>
         {open ? <ChevronUp size={14} className="text-[var(--panel-subtitle)]" /> : <ChevronDown size={14} className="text-[var(--panel-subtitle)]" />}
@@ -44,43 +44,21 @@ function CollapsibleSection({
   );
 }
 
-function useIsMobile() {
-  const [mobile, setMobile] = useState(false);
-  useEffect(() => {
-    const mql = window.matchMedia('(hover: none) and (pointer: coarse)');
-    setMobile(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
-  }, []);
-  return mobile;
-}
-
 const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'main' | 'shelf'>('main');
-  const [tabY, setTabY] = useState(() => readMenuTabY());
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [guidedTourOpen, setGuidedTourOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [feedbackSectionOpen, setFeedbackSectionOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const feedbackButtonRef = useRef<HTMLButtonElement | null>(null);
-  const isMobile = useIsMobile();
   const router = useRouter();
   const { rooms, activeRoomIndex, setActiveRoomIndex, openArtworkInRoom, getRoomImages } = useRoom();
   const { quitTour, startTour, currentFrameIndex } = useTour();
   const { items: shelfItems, remove: removeFromShelf } = useShelf();
   const { narrationEnabled, setNarrationEnabled, dwellSeconds, setDwellSeconds } = useGuidedTourPreferences();
   const { isPlaying: ambientMusicPlaying, toggle: toggleAmbientMusic } = useAmbientMusic();
-  const dragState = useRef<{
-    pointerId: number | null;
-    startY: number;
-    startTabY: number;
-    dragged: boolean;
-  }>({ pointerId: null, startY: 0, startTabY: tabY, dragged: false });
-  const tabYRef = useRef(tabY);
-  const suppressClick = useRef(false);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -89,10 +67,6 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
-
-  useEffect(() => {
-    tabYRef.current = tabY;
-  }, [tabY]);
 
   useEffect(() => {
     if (!isOpen) setView('main');
@@ -149,53 +123,6 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     router.push('/list');
   };
 
-  const handleTabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    dragState.current = {
-      pointerId: e.pointerId,
-      startY: e.clientY,
-      startTabY: tabY,
-      dragged: false,
-    };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handleTabPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const state = dragState.current;
-    if (state.pointerId !== e.pointerId) return;
-
-    const delta = e.clientY - state.startY;
-    if (Math.abs(delta) > 4) state.dragged = true;
-    if (!state.dragged) return;
-
-    e.preventDefault();
-    const nextTabY = clampMenuTabY(state.startTabY + delta / window.innerHeight);
-    tabYRef.current = nextTabY;
-    setTabY(nextTabY);
-  };
-
-  const finishTabDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const state = dragState.current;
-    if (state.pointerId !== e.pointerId) return;
-
-    if (state.dragged) {
-      suppressClick.current = true;
-      saveMenuTabY(tabYRef.current);
-    }
-
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-    state.pointerId = null;
-  };
-
-  const handleTabClick = () => {
-    if (suppressClick.current) {
-      suppressClick.current = false;
-      return;
-    }
-    setIsOpen(!isOpen);
-  };
-
   const openFeedback = () => {
     setIsOpen(false);
     setFeedbackModalOpen(true);
@@ -219,30 +146,23 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
         />
       )}
 
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label="Open menu"
+          aria-expanded="false"
+          className="fixed top-4 right-4 z-50 h-11 min-w-11 flex items-center justify-center gap-2 rounded-full bg-[var(--floating-surface)] hover:bg-[var(--floating-surface-strong)] backdrop-blur-md px-3 text-[var(--floating-text)] shadow-lg transition-colors md:px-4"
+          style={{ top: 'max(1rem, env(safe-area-inset-top))', right: 'max(1rem, env(safe-area-inset-right))' }}
+        >
+          <span className="hidden md:inline text-sm font-medium">Menu</span>
+          <Menu size={18} />
+        </button>
+      )}
+
       <div
         className={`fixed right-0 top-0 bottom-0 z-50 transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        {/* Tab button */}
-        <button
-          onClick={handleTabClick}
-          onPointerDown={handleTabPointerDown}
-          onPointerMove={handleTabPointerMove}
-          onPointerUp={finishTabDrag}
-          onPointerCancel={finishTabDrag}
-          aria-label={isOpen ? 'Close menu' : 'Open menu'}
-          className="absolute left-0 -translate-x-full -translate-y-1/2 flex items-center justify-center bg-black/40 hover:bg-black/50 backdrop-blur-md text-white transition-colors shadow-lg rounded-l-xl border-l border-t border-b border-white/15 cursor-grab active:cursor-grabbing"
-          style={{
-            top: `${tabY * 100}%`,
-            paddingTop: '1rem',
-            paddingBottom: '1rem',
-            paddingLeft: '0.75rem',
-            paddingRight: '0.65rem',
-            touchAction: 'none',
-          }}
-        >
-          {isOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
-
         {/* Drawer panel */}
         <div
           className="h-full w-[75vw] max-w-sm backdrop-blur-xl border-l flex flex-col overflow-y-auto"
@@ -254,10 +174,18 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 pb-5 border-b shrink-0"
-            style={{ paddingTop: 'max(3rem, env(safe-area-inset-top))', borderColor: 'var(--panel-separator)' }}
+            className="flex items-center justify-between gap-4 px-5 pb-4 border-b shrink-0"
+            style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', borderColor: 'var(--panel-separator)' }}
           >
             <span className="font-semibold text-base tracking-wide" style={{ color: 'var(--panel-title)' }}>Gallery</span>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close menu"
+              className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)] text-[var(--panel-btn-text)]"
+            >
+              <X size={18} />
+            </button>
           </div>
 
           {view === 'shelf' ? (
@@ -268,9 +196,9 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
               >
                 <ChevronLeft size={14} /> Back
               </button>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 flex items-center gap-1.5 text-[var(--panel-subtitle)]">
+              <p className="text-[10px] lg:text-[0.7rem] font-semibold uppercase tracking-widest mb-3 px-1 flex items-center gap-1.5 text-[var(--panel-subtitle)]">
                 My Shelf
-                <span className="font-normal normal-case tracking-normal text-[9px] opacity-70">{shelfItems.length}</span>
+                <span className="font-normal normal-case tracking-normal text-[9px] lg:text-[0.625rem] opacity-70">{shelfItems.length}</span>
               </p>
               <ul className="space-y-1">
                 {shelfItems.map(item => (
@@ -312,7 +240,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
 
               {/* Rooms */}
               <div className={`px-4 ${shelfItems.length > 0 ? 'pt-3' : 'pt-5'} pb-3 shrink-0`}>
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-3 px-1 text-[var(--panel-subtitle)]">
+                <p className="text-[10px] lg:text-[0.7rem] font-semibold uppercase tracking-widest mb-3 px-1 text-[var(--panel-subtitle)]">
                   Rooms
                 </p>
                 <ul className="space-y-0.5">
@@ -419,25 +347,22 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 open={controlsOpen}
                 onToggle={() => setControlsOpen(o => !o)}
               >
-                {isMobile ? (
-                  <ul className="space-y-2 text-xs text-[var(--panel-subtitle)]">
-                    <li><span className="text-[var(--panel-text)]">Tap artwork</span> — zoom in</li>
-                    <li><span className="text-[var(--panel-text)]">Tap plaque</span> — read description</li>
-                    <li><span className="text-[var(--panel-text)]">Tap bench</span> — sit and look around</li>
-                    <li><span className="text-[var(--panel-text)]">Swipe left / right</span> — navigate artworks</li>
-                    <li><span className="text-[var(--panel-text)]">Eye-off button</span> — hide interface</li>
-                    <li><span className="text-[var(--panel-text)]">Swipe down</span> — exit zoom</li>
-                  </ul>
-                ) : (
-                  <ul className="space-y-2 text-xs text-[var(--panel-subtitle)]">
-                    <li><span className="text-[var(--panel-text)]">Click artwork</span> — zoom in</li>
-                    <li><span className="text-[var(--panel-text)]">Click plaque</span> — read description</li>
-                    <li><span className="text-[var(--panel-text)]">Click bench</span> — sit and look around</li>
-                    <li><span className="text-[var(--panel-text)]">← → arrows</span> — navigate artworks</li>
-                    <li><span className="text-[var(--panel-text)]">Eye-off button</span> — hide interface</li>
-                    <li><span className="text-[var(--panel-text)]">Escape</span> — exit zoom</li>
-                  </ul>
-                )}
+                <ul className="space-y-2 text-xs text-[var(--panel-subtitle)] lg:hidden">
+                  <li><span className="text-[var(--panel-text)]">Tap artwork</span> — zoom in</li>
+                  <li><span className="text-[var(--panel-text)]">Tap plaque</span> — read description</li>
+                  <li><span className="text-[var(--panel-text)]">Tap bench</span> — sit and look around</li>
+                  <li><span className="text-[var(--panel-text)]">Swipe left / right</span> — navigate artworks</li>
+                  <li><span className="text-[var(--panel-text)]">Eye-off button</span> — hide interface</li>
+                  <li><span className="text-[var(--panel-text)]">Swipe down</span> — exit zoom</li>
+                </ul>
+                <ul className="hidden space-y-2 text-xs text-[var(--panel-subtitle)] lg:block">
+                  <li><span className="text-[var(--panel-text)]">Click artwork</span> — zoom in</li>
+                  <li><span className="text-[var(--panel-text)]">Click plaque</span> — read description</li>
+                  <li><span className="text-[var(--panel-text)]">Click bench</span> — sit and look around</li>
+                  <li><span className="text-[var(--panel-text)]">← → arrows</span> — navigate artworks</li>
+                  <li><span className="text-[var(--panel-text)]">Eye-off button</span> — hide interface</li>
+                  <li><span className="text-[var(--panel-text)]">Escape</span> — exit zoom</li>
+                </ul>
               </CollapsibleSection>
 
               <CollapsibleSection

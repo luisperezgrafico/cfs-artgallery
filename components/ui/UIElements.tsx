@@ -2,7 +2,6 @@
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { ArrowRight, X } from 'lucide-react';
-import { useDetectGPU } from '@react-three/drei';
 import { useSwipeable, SwipeEventData } from 'react-swipeable';
 import { useAnimation } from '../../contexts/AnimationContext';
 import { useTour } from '../../contexts/TourContext';
@@ -120,7 +119,6 @@ function HiddenInterfaceLayer({ onShow }: { onShow: () => void }) {
 }
 
 function RestControls({ style }: { style?: React.CSSProperties }) {
-  const { isMobile } = useDetectGPU();
   const { quitTour } = useTour();
   const { rooms, activeRoomIndex, setActiveRoomIndex, getRoomImages } = useRoom();
   const { narrationEnabled, dwellSeconds, requestAutoStart } = useGuidedTourPreferences();
@@ -145,24 +143,25 @@ function RestControls({ style }: { style?: React.CSSProperties }) {
         className="fixed bottom-0 left-0 right-0 z-30 flex flex-col items-center gap-3"
         style={{ paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}
       >
-        <div className="text-white/60 text-xs">
-          {isMobile ? 'Drag your finger to look around' : 'Drag with the mouse to look around'}
+        <div className="text-[var(--floating-muted)] text-xs">
+          <span className="lg:hidden">Drag your finger to look around</span>
+          <span className="hidden lg:inline">Drag with the mouse to look around</span>
         </div>
         <div className="flex gap-3">
           {nextRoom && (
             <button
               onClick={goToNextRoom}
-              className="h-11 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 text-white flex items-center gap-2 shadow-lg transition-colors"
+              className="h-11 rounded-full bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)] backdrop-blur-md px-5 text-[var(--floating-text)] flex items-center gap-2 shadow-lg transition-colors"
             >
               <span className="text-sm font-medium">Next room</span>
-              {nextRoomEstimate && <span className="text-xs text-white/70">— {nextRoomEstimate}</span>}
+              {nextRoomEstimate && <span className="text-xs text-[var(--floating-muted)]">— {nextRoomEstimate}</span>}
               <ArrowRight size={16} />
             </button>
           )}
           <button
             onClick={quitTour}
             aria-label="Exit rest view"
-            className="h-11 rounded-full bg-black/40 hover:bg-black/55 backdrop-blur-md px-4 text-white flex items-center gap-2 shadow-lg transition-colors"
+            className="h-11 rounded-full bg-[var(--floating-surface)] hover:bg-[var(--floating-surface-strong)] backdrop-blur-md px-4 text-[var(--floating-text)] flex items-center gap-2 shadow-lg transition-colors"
           >
             <X size={17} />
             <span className="text-sm font-medium">Exit rest</span>

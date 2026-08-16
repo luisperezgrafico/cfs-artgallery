@@ -246,7 +246,7 @@ const SubmitArtworkModal: React.FC = () => {
         className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
         style={{ padding: safeAreaPadding, animation: 'scaleInSmooth 0.34s ease-out forwards' }}
       >
-        <div className="pointer-events-auto w-full max-w-lg flex flex-col max-h-[92dvh]" style={panelStyle}>
+        <div className="pointer-events-auto w-full max-w-lg md:max-w-4xl flex flex-col max-h-[92dvh]" style={panelStyle}>
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
@@ -292,6 +292,8 @@ const SubmitArtworkModal: React.FC = () => {
           ) : (
             /* ── Form ── */
             <form onSubmit={handleSubmit} noValidate className="overflow-y-auto px-6 py-5 flex flex-col gap-4">
+              <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+                <div className="flex flex-col gap-4">
 
               {/* Title */}
               <div>
@@ -385,11 +387,12 @@ const SubmitArtworkModal: React.FC = () => {
 
               {/* Statement */}
               <div>
-                <label htmlFor="artist-audio" style={labelStyle}>
+                <label htmlFor="artist-statement" style={labelStyle}>
                   Full statement{' '}
                   <span style={{ opacity: 0.55, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
                 </label>
                 <textarea
+                  id="artist-statement"
                   value={values.statement}
                   onChange={e => setValues(p => ({ ...p, statement: e.target.value }))}
                   style={{ ...inputStyle, minHeight: '4.5rem', resize: 'vertical' }}
@@ -397,6 +400,10 @@ const SubmitArtworkModal: React.FC = () => {
                   disabled={busy}
                 />
               </div>
+
+                </div>
+
+                <div className="flex flex-col gap-4">
 
               <div>
                 <label style={labelStyle}>
@@ -500,6 +507,9 @@ const SubmitArtworkModal: React.FC = () => {
                   )}
                 </div>
                 {fieldErrors.artistAudio && <p style={errorText}>{fieldErrors.artistAudio}</p>}
+              </div>
+
+                </div>
               </div>
 
               {/* Generic submit error */}

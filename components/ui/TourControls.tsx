@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { Play, ChevronLeft, ChevronRight, EyeOff, X } from 'lucide-react';
-import { useDetectGPU } from '@react-three/drei';
 import { useTour } from '../../contexts/TourContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import TourEntryModal from './TourEntryModal';
@@ -12,7 +11,6 @@ const TourControls: React.FC<{
   style?: React.CSSProperties;
   onHideInterface?: () => void;
 }> = ({ style, onHideInterface }) => {
-  const { isMobile } = useDetectGPU();
   const {
     isTourStarted, currentFrameIndex, totalFrames,
     images, startTour, nextFrame, previousFrame, quitTour,
@@ -69,13 +67,14 @@ const TourControls: React.FC<{
         >
           <button
             onClick={() => setShowEntryModal(true)}
-            className="bg-white/20 hover:bg-white/30 px-10 py-4 rounded-full text-white flex items-center gap-3 shadow-lg transition-colors"
+            className="bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)] px-10 py-4 rounded-full text-[var(--floating-text)] flex items-center gap-3 shadow-lg transition-colors"
           >
-            <Play size={isMobile ? 18 : 22} />
+            <Play size={20} />
             <span className="text-sm md:text-lg font-semibold">Start the Tour</span>
           </button>
-          <div className="text-white/60 text-xs mt-2">
-            {isMobile ? 'Tap to start' : 'Press Space or Enter to start'}
+          <div className="text-[var(--floating-muted)] text-xs mt-2">
+            <span className="lg:hidden">Tap to start</span>
+            <span className="hidden lg:inline">Press Space or Enter to start</span>
           </div>
         </div>
       </div>
@@ -88,13 +87,13 @@ const TourControls: React.FC<{
         className="fixed bottom-0 left-0 right-0 z-30 flex flex-col items-center"
         style={bottomStyle}
       >
-        <div className="flex gap-3 items-center bg-black/40 md:bg-black/65 backdrop-blur-md px-6 py-4 rounded-full shadow-lg">
+        <div className="flex gap-3 items-center bg-[var(--floating-surface)] md:bg-[var(--floating-surface-strong)] backdrop-blur-md px-6 py-4 rounded-full shadow-lg">
           <button
             onClick={goPrevious}
             disabled={!hasPreviousArtwork}
             aria-label="Previous artwork"
-            className={`bg-white/20 p-2 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors
-              ${!hasPreviousArtwork ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'}`}
+            className={`bg-[var(--floating-control)] p-2 rounded-full text-[var(--floating-text)] w-10 h-10 flex items-center justify-center transition-colors
+              ${!hasPreviousArtwork ? 'bg-[var(--floating-control-disabled)] text-[var(--floating-muted)] cursor-not-allowed' : 'hover:bg-[var(--floating-control-hover)]'}`}
           >
             <ChevronLeft size={20} />
           </button>
@@ -103,7 +102,9 @@ const TourControls: React.FC<{
             onClick={() => setAutoAdvance(!autoAdvance)}
             aria-label={autoAdvance ? 'Auto — switch to manual navigation' : 'Manual — resume auto-advance'}
             className={`h-10 w-20 shrink-0 flex items-center justify-center rounded-full text-sm font-medium transition-colors ${
-              autoAdvance ? 'bg-white text-black' : 'bg-white/10 text-white/80 hover:bg-white/20'
+              autoAdvance
+                ? 'bg-[var(--floating-active)] text-[var(--floating-active-text)]'
+                : 'bg-[var(--floating-control)] text-[var(--floating-text)] hover:bg-[var(--floating-control-hover)]'
             }`}
           >
             {autoAdvance ? 'Auto' : 'Manual'}
@@ -112,8 +113,7 @@ const TourControls: React.FC<{
           <button
             onClick={goNext}
             aria-label={hasNextArtwork ? 'Next artwork' : 'Finish tour at the rest view'}
-            className={`bg-white/20 p-2 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors
-              hover:bg-white/30`}
+            className="bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)] p-2 rounded-full text-[var(--floating-text)] w-10 h-10 flex items-center justify-center transition-colors"
           >
             <ChevronRight size={20} />
           </button>
@@ -122,7 +122,7 @@ const TourControls: React.FC<{
             onClick={onHideInterface}
             aria-label="Hide interface"
             title="Hide interface"
-            className="bg-white/10 hover:bg-white/20 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors"
+            className="bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)] rounded-full text-[var(--floating-text)] w-10 h-10 flex items-center justify-center transition-colors"
           >
             <EyeOff size={19} />
           </button>
@@ -130,16 +130,17 @@ const TourControls: React.FC<{
           <button
             onClick={quitTour}
             aria-label="Exit tour"
-            className="bg-white/10 hover:bg-white/20 rounded-full text-white w-10 h-10 flex items-center justify-center transition-colors"
+            className="bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)] rounded-full text-[var(--floating-text)] w-10 h-10 flex items-center justify-center transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="text-white/60 md:text-white/80 drop-shadow text-xs mt-2 tabular-nums">
+        <div className="text-[var(--floating-text)] md:bg-[var(--floating-surface-strong)] md:px-3 md:py-1 md:rounded-full drop-shadow text-xs mt-2 tabular-nums">
           {currentFrameIndex + 1} / {totalFrames}
           {' · '}
-          {isMobile ? 'Tap or swipe to navigate' : '← → arrows · Esc to exit'}
+          <span className="lg:hidden">Tap or swipe to navigate</span>
+          <span className="hidden lg:inline">← → arrows · Esc to exit</span>
         </div>
       </div>
     </div>

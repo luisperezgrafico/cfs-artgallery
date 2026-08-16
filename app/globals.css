@@ -21,6 +21,18 @@
     --accent: #4a708f;
     --mist: #cfd9e5;
 
+    /* Floating gallery controls are deliberately warm rather than neutral
+       gray, so they belong to the same quiet wood/beige palette as the menu. */
+    --floating-surface: rgba(34, 31, 28, 0.9);
+    --floating-surface-strong: rgba(28, 25, 23, 0.96);
+    --floating-control: #4c4439;
+    --floating-control-hover: #5c5144;
+    --floating-control-disabled: #373028;
+    --floating-text: #f1eadf;
+    --floating-muted: #cbc0af;
+    --floating-active: #eee5d7;
+    --floating-active-text: #2c261f;
+
     /* Theme tokens — door + overlay panels. Default = dark. */
     --door-bg: linear-gradient(160deg, #1a1611 0%, #14110d 55%, #0d0b08 100%);
     --door-title: #ece6da;
@@ -52,11 +64,11 @@
     --field-icon: #b3a894;
   }
 
-  input::placeholder,
-  textarea::placeholder {
-    color: var(--field-hint);
-    opacity: 1;
-  }
+input::placeholder,
+textarea::placeholder {
+  color: var(--field-hint);
+  opacity: 1;
+}
 
   :root[data-theme='light'] {
     /* Text tones are warmed toward the same beige as --door-tagline / --field-*
@@ -130,11 +142,18 @@
   }
 }
 
+/* Native selects otherwise keep whichever rounded utility happened to be
+   applied locally. Their visible field follows the same quiet corners as all
+   other gallery form controls; the operating system owns the opened menu. */
+select {
+  border-radius: 2px;
+}
+
 /* The gallery's compact mobile type becomes more comfortable on larger
    displays without changing the phone layout or fighting browser zoom. */
 @media (min-width: 768px) {
   html {
-    font-size: clamp(16px, calc(14px + 0.25vw), 18px);
+    font-size: clamp(17px, calc(15px + 0.28vw), 19px);
   }
 }
 
@@ -294,6 +313,11 @@
 /* Marks the artwork the visitor was just looking at in the 3D gallery, after
    "Switch to list view" — fades out on its own rather than needing a dismiss. */
 .list-view-item-highlight {
+  /* The normal inter-item gap sits outside the list item. Pull this item's
+     highlight through that whole gap, while matching it with top padding so
+     the artwork and text themselves do not jump. */
+  margin-top: -1.75rem;
+  padding-top: 1.75rem;
   background: rgba(245, 197, 120, 0.14);
   box-shadow: inset 3px 0 0 rgba(245, 197, 120, 0.65);
 }
@@ -412,18 +436,23 @@
 
   .list-view-thumb-wrap {
     width: 100%;
+    aspect-ratio: 4 / 3;
   }
 
   .list-view-thumb {
     width: 100%;
-    height: auto;
-    max-height: 34rem;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
     border-radius: inherit;
   }
 
   .list-view-item-body {
     padding-top: 0.25rem;
+  }
+
+  .list-view-item-link {
+    margin-top: 1.25rem;
+    text-align: left;
   }
 }
 
@@ -526,6 +555,16 @@
 
 .list-nav-btn:hover {
   background: var(--panel-btn-bg-hover);
+}
+
+.now-playing-strip {
+  top: max(1rem, env(safe-area-inset-top));
+}
+
+@media (min-width: 768px) {
+  .now-playing-strip {
+    top: max(2.5rem, calc(env(safe-area-inset-top) + 1.5rem));
+  }
 }
 
 /* ---------- the gallery stage ---------- */

@@ -136,7 +136,6 @@ These have held up so far; they came from `SCOPE.md` and from what the community
 - **Source of truth:** browser `localStorage`, not cookies. Preferences are per-device and the server has no reason to read them; there are no accounts.
 - **Visit resume:** `utils/userPreferences.ts` stores `{ roomId, frameIndex, updatedAt }` under `cfs-gallery:visit-position:v1`. This is deliberately a **room + slot position**, not artwork identity: `roomId` survives room reordering, and `frameIndex` matches the current eight-slot room model (including empty submit canvases).
 - **Tour slots:** arrow navigation skips empty submit canvases in either direction. Moving next from the last real artwork deliberately ends at the bench/rest view, where the visitor can choose the next room or leave; do not disable that final Next action just because later slots are empty.
-- **Menu comfort:** the draggable hamburger tab Y position is stored under `cfs-gallery:menu-tab-y:v1` and clamped away from viewport edges.
 - **My shelf:** device-local favourites under `cfs-gallery:shelf:v1`, via `ShelfContext` + `readShelf`/`writeShelf`.
 - **Failure mode:** storage access is optional and wrapped in `try/catch`; private mode, disabled storage, or malformed values fall back to Room I / overview.
 - **Future preference work:** add small typed helpers to `utils/userPreferences.ts` with versioned keys instead of scattering raw `localStorage` calls across components.

@@ -39,6 +39,7 @@ export default function TourEntryModal({
 
   const applyAmbientMusicChoice = () => {
     if (wantsAmbientMusic && !ambientMusicPlaying) void toggleAmbientMusic();
+    if (!wantsAmbientMusic && ambientMusicPlaying) void toggleAmbientMusic();
   };
 
   const estimateFor = (preset: TourPreset): string | null => {

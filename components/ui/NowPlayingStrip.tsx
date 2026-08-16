@@ -39,35 +39,43 @@ const NowPlayingStrip: React.FC<{ style?: React.CSSProperties; showNarrationCont
   return (
     <div style={style}>
       <div
-        className="fixed left-0 right-0 z-20 flex justify-center px-4"
-        style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
+        className="now-playing-strip fixed left-0 right-0 z-20 flex justify-center px-4"
       >
         <div
-          className={`flex items-center max-w-md bg-black/50 backdrop-blur-md rounded-full shadow-lg ${
-            hasNotes ? 'gap-3 px-3 py-1.5' : 'p-1'
+          className={`flex items-center max-w-md rounded-full transition-[background-color,box-shadow] duration-700 ease-out ${
+            hasNotes
+              ? 'bg-[var(--floating-surface)] md:bg-[var(--floating-surface-strong)] backdrop-blur-md rounded-full shadow-lg gap-3 px-3 py-1.5 md:gap-4 md:px-4 md:py-2'
+              : 'bg-transparent shadow-none p-1 md:p-1.5'
           }`}
         >
-          {hasNotes && (
-            <p className="text-white/75 text-xs leading-snug">
-              <span className="text-white/45">Content notes:</span>{' '}
-              {notes.map(contentNoteLabel).join(' · ')}
-            </p>
-          )}
+          <p
+            aria-hidden={!hasNotes}
+            className={`text-[var(--floating-text)] text-xs leading-snug transition-opacity duration-700 ease-out ${
+              hasNotes ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'
+            }`}
+          >
+            {hasNotes && (
+              <>
+                <span className="text-[var(--floating-muted)]">Content notes:</span>{' '}
+                {notes.map(contentNoteLabel).join(' · ')}
+              </>
+            )}
+          </p>
 
           {showSpeaker ? (
             <button
               onClick={narrationEnabled ? muteNarration : undoMute}
               aria-label={narrationEnabled ? 'Mute narration' : 'Turn narration on'}
               title={narrationEnabled ? 'Mute narration' : 'Turn narration on'}
-              className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+              className={`shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-colors ${
                 narrationEnabled
-                  ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20'
-                  : 'text-white/45 hover:text-white/75 bg-white/5 hover:bg-white/15'
+                  ? 'text-[var(--floating-text)] hover:bg-[var(--floating-control-hover)] bg-[var(--floating-control)]'
+                  : 'text-[var(--floating-muted)] hover:text-[var(--floating-text)] bg-[var(--floating-control-disabled)] hover:bg-[var(--floating-control)]'
               }`}
             >
               {narrationEnabled
-                ? <Volume2 size={14} className={narrationPlaying ? 'opacity-100' : 'opacity-75'} />
-                : <VolumeX size={14} />}
+                ? <Volume2 size={18} className={narrationPlaying ? 'opacity-100' : 'opacity-80'} />
+                : <VolumeX size={18} />}
             </button>
           ) : null}
         </div>

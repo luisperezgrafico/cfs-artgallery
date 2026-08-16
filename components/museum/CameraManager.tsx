@@ -108,7 +108,7 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     position: new THREE.Vector3(),
   });
   const { setZoomedFrameId } = useContext(ZoomContext);
-  const { gl, viewport } = useThree();
+  const { gl, viewport, size } = useThree();
 
   // Remembers the rest viewpoint we were just sitting at, across the render
   // where restView clears — so the very next transition (to a frame or the
@@ -209,9 +209,14 @@ const CameraManager: React.FC<CameraManagerProps> = ({
   }), []);
 
   const getScaleFactor = useCallback(() => {
-    const baseScale = 2.5;
+    // Desktop controls occupy persistent space at the bottom of the viewport.
+    // A slightly wider framing keeps the artwork plaque clear of that chrome.
+    const baseScale = 2.7;
     const isLandscape = viewport.width > viewport.height;
-    if (isMobile) {
+    // GPU detection intentionally treats many tablets as mobile. For framing,
+    // however, a tablet-width viewport has room for the desktop composition.
+    const useCompactFraming = isMobile && size.width < 768;
+    if (useCompactFraming) {
       if (isLandscape) return 3.0;
       if (viewport.width < 2) return 6.5;
       if (viewport.width < 4) return 5;
@@ -220,16 +225,17 @@ const CameraManager: React.FC<CameraManagerProps> = ({
     const aspectRatio = viewport.width / viewport.height;
     if (aspectRatio > 2) return baseScale * 1.2;
     return baseScale;
-  }, [isMobile, viewport.width, viewport.height]);
+  }, [isMobile, size.width, viewport.width, viewport.height]);
 
   const getYOffset = useCallback(() => {
-    if (isMobile) {
+    const useCompactFraming = isMobile && size.width < 768;
+    if (useCompactFraming) {
       if (viewport.width < 2) return 0.4;
       if (viewport.width < 4) return 0.35;
       return 0.3;
     }
-    return 0.1;
-  }, [isMobile, viewport.width]);
+    return 0.18;
+  }, [isMobile, size.width, viewport.width]);
 
   const zoomToFrame = useCallback(
     async (index: number, arcFromRest = false) => {
@@ -287,6 +293,11 @@ const CameraManager: React.FC<CameraManagerProps> = ({
 
       if (transitionId !== cameraTransitionIdRef.current) return;
       if (onFrameChange) onFrameChange(index);
+      // Mouse-wheel navigation waits for this rather than a guessed duration,
+      // so one deliberate scroll cannot skip across multiple artworks.
+      window.dispatchEvent(new CustomEvent('tour-camera-arrived', {
+        detail: { frameIndex: index },
+      }));
     },
     [beginCameraTransition, frameRefs, onFrameChange, getScaleFactor, getYOffset, runArcTransition],
   );

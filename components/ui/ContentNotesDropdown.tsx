@@ -47,7 +47,7 @@ export default function ContentNotesDropdown({
         type="button"
         onClick={() => setOpen(current => !current)}
         disabled={disabled}
-        className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors disabled:opacity-50 ${triggerClass}`}
+        className={`flex w-full items-center justify-between gap-3 rounded-[2px] border px-3 py-2 text-left text-sm transition-colors disabled:opacity-50 ${triggerClass}`}
         aria-expanded={open}
       >
         <span className="truncate">{summary}</span>
@@ -56,14 +56,14 @@ export default function ContentNotesDropdown({
 
       {open && (
         <div
-          className={`max-h-56 overflow-y-auto rounded-lg border p-2 ${panelClass}`}
+          className={`max-h-56 overflow-y-auto rounded-[2px] border p-2 ${panelClass}`}
           data-testid="content-notes-menu"
         >
           <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
             {contentNoteOptions.map(note => (
               <label
                 key={note.value}
-                className={`flex items-center gap-2 rounded-md px-2 py-2 text-xs transition-colors ${itemClass}`}
+                className={`flex items-center gap-2 rounded-[2px] px-2 py-2 text-xs transition-colors ${itemClass}`}
               >
                 <input
                   type="checkbox"

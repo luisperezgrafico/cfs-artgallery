@@ -212,7 +212,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
             close();
           }}
           aria-label="Close"
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
+          className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--floating-text)] backdrop-blur-sm transition-colors bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)]"
         >
           <X size={18} />
         </button>
@@ -265,7 +265,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
       {/* A single shared bar keeps the title and zoom control aligned without
           allowing either to overlap the other. */}
       <div
-        className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-4 bg-black/75 px-5 py-3 backdrop-blur-sm"
+        className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-4 bg-[var(--floating-surface-strong)] px-5 py-3 backdrop-blur-sm"
         style={{
           paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
           paddingLeft: 'max(1.25rem, env(safe-area-inset-left))',
@@ -273,9 +273,9 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
         }}
       >
         <div aria-hidden="true" className="min-w-0">
-          <p className="text-sm font-medium leading-snug text-white/95">{artwork.title}</p>
+          <p className="text-sm font-medium leading-snug text-[var(--floating-text)]">{artwork.title}</p>
           {(artwork.artist || artwork.date) && (
-            <p className="mt-0.5 text-xs italic text-white/90">
+            <p className="mt-0.5 text-xs italic text-[var(--floating-muted)]">
               {artwork.artist}
               {artwork.date ? ` · ${artwork.date}` : ''}
             </p>
@@ -293,7 +293,7 @@ const ArtworkLightbox: React.FC<{ style?: React.CSSProperties }> = ({ style }) =
                 applyTransform({ scale: 2, x: 0, y: 0 });
               }
             }}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm transition-colors bg-white/10 hover:bg-white/20"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--floating-text)] backdrop-blur-sm transition-colors bg-[var(--floating-control)] hover:bg-[var(--floating-control-hover)]"
           >
             {scale > 1 ? <ZoomOut size={18} /> : <ZoomIn size={18} />}
           </button>
