@@ -306,6 +306,11 @@
   position: relative;
   flex-shrink: 0;
   order: 1;
+  padding: 0;
+  border-radius: 8px;
+  background: var(--field-bg-soft);
+  overflow: hidden;
+  cursor: zoom-in;
 }
 
 .list-view-thumb {
@@ -317,12 +322,12 @@
   background: var(--field-bg-soft);
 }
 
-.list-view-zoom-btn {
+.list-view-zoom-indicator {
   position: absolute;
   right: 0.25rem;
   bottom: 0.25rem;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -331,9 +336,11 @@
   color: #fff;
   backdrop-filter: blur(2px);
   transition: background 0.15s ease;
+  pointer-events: none;
 }
 
-.list-view-zoom-btn:hover {
+.list-view-thumb-wrap:hover .list-view-zoom-indicator,
+.list-view-thumb-wrap:focus-visible .list-view-zoom-indicator {
   background: rgba(0, 0, 0, 0.75);
 }
 
@@ -382,6 +389,42 @@
 
 .list-view-item-link:hover {
   color: var(--panel-title);
+}
+
+/* On wider screens, put the artwork on equal footing with its text instead of
+   reducing it to a thumbnail. The text remains first in the DOM so screen
+   reader users still hear the title and artist before the image action. */
+@media (min-width: 768px) {
+  .list-view-header,
+  .list-view-empty,
+  .list-view-items,
+  .list-view-submit-cta-wrap {
+    max-width: 64rem;
+  }
+
+  .list-view-item {
+    display: grid;
+    grid-template-columns: minmax(18rem, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    gap: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  .list-view-thumb-wrap {
+    width: 100%;
+  }
+
+  .list-view-thumb {
+    width: 100%;
+    height: auto;
+    max-height: 34rem;
+    object-fit: contain;
+    border-radius: inherit;
+  }
+
+  .list-view-item-body {
+    padding-top: 0.25rem;
+  }
 }
 
 .list-view-back-to-top {

@@ -63,14 +63,24 @@ function pauseOtherAudio(e: React.SyntheticEvent<HTMLAudioElement>) {
   });
 }
 
-function ZoomButton({ index, title }: { index: number; title: string }) {
+function ArtworkPreviewButton({
+  index,
+  artwork,
+}: {
+  index: number;
+  artwork: ImageMetadata;
+}) {
   const { startTour } = useTour();
+  const imageDescription = artwork.altText?.trim() || artwork.title;
+  const accessibleLabel = imageDescription === artwork.title
+    ? `View full image of ${artwork.title}`
+    : `View full image of ${artwork.title}. ${imageDescription}`;
 
   return (
     <button
       type="button"
-      className="list-view-zoom-btn"
-      aria-label={`View full image of ${title}`}
+      className="list-view-thumb-wrap"
+      aria-label={accessibleLabel}
       onClick={() => {
         startTour(index);
         // ArtworkLightbox resets isOpen whenever currentFrameIndex changes (so
@@ -79,7 +89,20 @@ function ZoomButton({ index, title }: { index: number; title: string }) {
         setTimeout(() => window.dispatchEvent(new CustomEvent('open-artwork-lightbox')), 0);
       }}
     >
-      <ZoomIn size={16} />
+      {/* The button already supplies the artwork description to assistive
+          technology, so the visual image is not announced twice. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={artwork.url}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+        className="list-view-thumb"
+      />
+      <span className="list-view-zoom-indicator" aria-hidden="true">
+        <ZoomIn size={18} />
+      </span>
     </button>
   );
 }
@@ -127,17 +150,7 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
               </Link>
             </div>
             {artwork.url && (
-              <div className="list-view-thumb-wrap">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={artwork.url}
-                  alt={artwork.altText?.trim() || artwork.title}
-                  loading="lazy"
-                  decoding="async"
-                  className="list-view-thumb"
-                />
-                <ZoomButton index={index} title={artwork.title} />
-              </div>
+              <ArtworkPreviewButton index={index} artwork={artwork} />
             )}
           </li>
           );
