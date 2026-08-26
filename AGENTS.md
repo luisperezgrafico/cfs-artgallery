@@ -25,7 +25,7 @@ A calm, dreamlike **virtual 3D art gallery** for the ME/CFS community. Visitors 
 
 ```bash
 npm install
-npm run dev       # http://localhost:3000
+npm run dev       # http://localhost:3002 (3000 queda reservado para tests de SillyTavern)
 npm run build     # production build
 
 npm test          # Vitest — storage + admin state logic
