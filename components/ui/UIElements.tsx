@@ -17,6 +17,7 @@ import ArtworkInfoModal from './ArtworkInfoModal';
 import ArtworkLightbox from './ArtworkLightbox';
 import SubmitArtworkModal from './SubmitArtworkModal';
 import HamburgerMenu from './HamburgerMenu';
+import ResumeVisitChip from './ResumeVisitChip';
 
 const HIDE_INTERFACE_FADE_MS = 520;
 const TOUR_CONTROLS_EXIT_MS = 350;
@@ -358,6 +359,7 @@ const UIElements: React.FC = () => {
                 </div>
               )}
               <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
+              <ResumeVisitChip style={{ animation: 'fadeIn 1s ease-out forwards' }} />
             </div>
           )}
         </>

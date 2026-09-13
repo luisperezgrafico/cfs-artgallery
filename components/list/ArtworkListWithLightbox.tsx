@@ -8,6 +8,7 @@ import ArtworkLightbox from '../ui/ArtworkLightbox';
 import SubmitArtworkModal from '../ui/SubmitArtworkModal';
 import { ImageMetadata } from '../../types/museum';
 import { readVisitPosition } from '../../utils/userPreferences';
+import { artworkLinkHref } from '../../utils/galleryLink';
 import ListNavControls from './ListNavControls';
 
 export interface ListArtworkEntry {
@@ -24,8 +25,8 @@ function listItemDomId(roomId: string, frameIndex: number): string {
 
 // "Switch to list view" (HamburgerMenu) saves the artwork the visitor was on
 // before navigating here — scroll to it and give it a brief highlight, the
-// same visit-position record /?room=&frame= already reads coming back the
-// other way, so the two links stay in sync without any new state to carry.
+// same visit-position record the gallery reads back through its /?room= links,
+// so the two directions stay in sync without any new state to carry.
 function useHighlightCurrentArtwork(items: ListArtworkEntry[]): string | null {
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
@@ -149,7 +150,7 @@ export default function ArtworkListWithLightbox({ items }: { items: ListArtworkE
                   Your browser does not support audio playback.
                 </audio>
               )}
-              <Link href={`/?room=${roomId}&frame=${frameIndex}`} className="list-view-item-link">
+              <Link href={artworkLinkHref(roomId, artwork, frameIndex)} className="list-view-item-link">
                 View in the 3D gallery
               </Link>
             </div>

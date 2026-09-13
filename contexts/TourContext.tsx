@@ -59,6 +59,14 @@ export const TourProvider: React.FC<TourProviderProps> = ({
   const [isSeated, setIsSeated] = useState(false);
 
   const setCurrentFrameIndex = useCallback((index: number) => {
+    // The camera reports -1 when it settles back at the overview, but that
+    // report comes from an async transition and can arrive after a newer
+    // navigation already superseded it — e.g. a shared link placing a frame
+    // while the room is still animating its opening overview, or the visitor
+    // restarting the tour within a second of quitting. With an artwork already
+    // current, that stale -1 would leave the UI claiming frame "0 / 8" over a
+    // room that is perfectly fine. Ignore it; the index is the newer one.
+    if (index < 0 && currentFrameIndexRef.current >= 0) return;
     setRestView(null);
     setIsSeated(false);
     setHasCompletedRoom(false);

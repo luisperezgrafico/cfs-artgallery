@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import { saveVisitPosition } from '@/utils/userPreferences';
+import { parseGalleryLink } from '@/utils/galleryLink';
 
 const Gallery = dynamic(() => import('@/components/Gallery'), {
   ssr: false,
@@ -14,18 +14,20 @@ const Gallery = dynamic(() => import('@/components/Gallery'), {
 
 function Door() {
   const searchParams = useSearchParams();
-  const roomId = searchParams.get('room');
-  const frameParam = searchParams.get('frame');
-  const [entered, setEntered] = useState(false);
+  // A shared link is a destination, not a preference. It decides where this
+  // visit opens, and it deliberately does NOT write the visit position saved on
+  // this device — opening someone's link must not erase where the visitor was
+  // (utils/userPreferences: room + slot, read by RoomProvider and the list view).
+  const link = useMemo(() => parseGalleryLink(searchParams), [searchParams]);
+  const [entered, setEntered] = useState(link !== null);
 
+  // useSearchParams is empty on the very first client render; enter as soon as
+  // the link shows up instead of charging the visitor a click on the door.
   useEffect(() => {
-    if (!roomId) return;
-    const frameIndex = frameParam !== null ? Number(frameParam) : -1;
-    saveVisitPosition(roomId, Number.isInteger(frameIndex) ? frameIndex : -1);
-    setEntered(true);
-  }, [roomId, frameParam]);
+    if (link) setEntered(true);
+  }, [link]);
 
-  if (entered) return <Gallery />;
+  if (entered) return <Gallery link={link} />;
 
   return (
     <main className="door">
