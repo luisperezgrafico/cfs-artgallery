@@ -88,8 +88,7 @@ describe('shouldShowMenuLabel', () => {
 });
 
 describe('hasTopStripMessage', () => {
-  const linked = {
-    arrivedViaLink: true,
+  const withSavedPosition = {
     beforeEntry: { roomId: 'room-2', frameIndex: 0 },
     rooms,
     currentRoomId: 'room-1',
@@ -98,25 +97,24 @@ describe('hasTopStripMessage', () => {
     dismissed: false,
   };
 
-  it('is true when a shared link landed while a different position was saved', () => {
-    expect(hasTopStripMessage(linked)).toBe(true);
+  it('is true while a position is offered — on a plain visit too, not only after a link', () => {
+    expect(hasTopStripMessage(withSavedPosition)).toBe(true);
   });
 
-  it('is false without a link, with nothing saved, and once the offer is over', () => {
-    expect(hasTopStripMessage({ ...linked, arrivedViaLink: false })).toBe(false);
-    expect(hasTopStripMessage({ ...linked, beforeEntry: null })).toBe(false);
-    expect(hasTopStripMessage({ ...linked, navigated: true })).toBe(false);
-    expect(hasTopStripMessage({ ...linked, dismissed: true })).toBe(false);
+  it('is false with nothing saved, and once the offer is over', () => {
+    expect(hasTopStripMessage({ ...withSavedPosition, beforeEntry: null })).toBe(false);
+    expect(hasTopStripMessage({ ...withSavedPosition, navigated: true })).toBe(false);
+    expect(hasTopStripMessage({ ...withSavedPosition, dismissed: true })).toBe(false);
   });
 
   it('is false when the visitor is already standing on the offered position', () => {
-    expect(hasTopStripMessage({ ...linked, currentRoomId: 'room-2', currentFrameIndex: 0 })).toBe(false);
+    expect(hasTopStripMessage({ ...withSavedPosition, currentRoomId: 'room-2', currentFrameIndex: 0 })).toBe(false);
   });
 });
 
 describe('MenuButton', () => {
   const render = (labelVisible: boolean) => renderToStaticMarkup(
-    <MenuButton labelVisible={labelVisible} onClick={() => {}} />,
+    <MenuButton stripFree={labelVisible} onClick={() => {}} />,
   );
 
   it('keeps the icon and the accessible name whether or not the word is shown', () => {
@@ -132,7 +130,7 @@ describe('MenuButton', () => {
   });
 
   it('carries the state the CSS collapses from', () => {
-    expect(render(true)).toContain('data-label-visible="true"');
-    expect(render(false)).toContain('data-label-visible="false"');
+    expect(render(true)).toContain('data-strip-free="true"');
+    expect(render(false)).toContain('data-strip-free="false"');
   });
 });

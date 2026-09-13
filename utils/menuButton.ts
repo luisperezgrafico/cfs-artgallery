@@ -37,7 +37,6 @@ export function isViewingArtwork(args: {
 }
 
 export interface TopStripMessageInputs {
-  arrivedViaLink: boolean;
   /** Where the visitor was before this visit began, captured once at entry. */
   beforeEntry: SavedVisitPosition | null;
   rooms: { id: string; name: string; images: ImageMetadata[] }[];
@@ -60,7 +59,6 @@ export interface TopStripMessageInputs {
  */
 export function hasTopStripMessage(args: TopStripMessageInputs): boolean {
   return shouldOfferVisitReturn({
-    arrivedViaLink: args.arrivedViaLink,
     saved: describeSavedPosition(args.beforeEntry, args.rooms),
     currentRoomId: args.currentRoomId,
     currentFrameIndex: args.currentFrameIndex,

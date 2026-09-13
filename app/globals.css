@@ -582,7 +582,7 @@ select {
   the strip is free. The width is what animates — hiding only the label would
   make the button jump — and the label fades out faster than the box closes, so
   what the visitor reads mid-transition is a word going quiet rather than a word
-  cut in half. State comes from data-label-visible (components/ui/MenuButton).
+  cut in half. State comes from data-strip-free (components/ui/MenuButton).
 */
 .menu-button {
   gap: 0.5rem;
@@ -610,26 +610,31 @@ select {
     opacity 0.3s linear 0.24s;
 }
 
-.menu-button[data-label-visible='false'] {
-  gap: 0;
-  padding-left: 0;
-  padding-right: 0;
-  /* Collapsing starts a beat late so it matches the label (below). */
-  transition:
-    background-color 0.2s ease,
-    padding 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s,
-    gap 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s;
-}
+/* Only a phone is narrow enough for the word and the strip's messages to
+   collide, so only a phone gives the word up. On a desktop there is room for
+   both and it stays put. */
+@media (max-width: 767px) {
+  .menu-button[data-strip-free='false'] {
+    gap: 0;
+    padding-left: 0;
+    padding-right: 0;
+    /* Collapsing starts a beat late so it matches the label (below). */
+    transition:
+      background-color 0.2s ease,
+      padding 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s,
+      gap 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s;
+  }
 
-.menu-button[data-label-visible='false'] .menu-button-label {
-  max-width: 0;
-  opacity: 0;
-  /* Collapsing: the word goes quiet first, and only then does the box close on
-     it — measured, not assumed: clipping used to begin while the word was
-     still half visible. */
-  transition:
-    max-width 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s,
-    opacity 0.22s linear;
+  .menu-button[data-strip-free='false'] .menu-button-label {
+    max-width: 0;
+    opacity: 0;
+    /* Collapsing: the word goes quiet first, and only then does the box close
+       on it — measured, not assumed: clipping used to begin while the word was
+       still half visible. */
+    transition:
+      max-width 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s,
+      opacity 0.22s linear;
+  }
 }
 
 @media (min-width: 768px) {
@@ -646,7 +651,7 @@ select {
   }
 
   .menu-button-label,
-  .menu-button[data-label-visible='false'] .menu-button-label {
+  .menu-button[data-strip-free='false'] .menu-button-label {
     transition: none;
   }
 }

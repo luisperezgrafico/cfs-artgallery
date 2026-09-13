@@ -56,7 +56,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const feedbackButtonRef = useRef<HTMLButtonElement | null>(null);
   const router = useRouter();
-  const { rooms, activeRoomIndex, setActiveRoomIndex, openArtworkInRoom, getRoomImages, arrivedViaLink, visitReturn } = useRoom();
+  const { rooms, activeRoomIndex, setActiveRoomIndex, openArtworkInRoom, getRoomImages, visitReturn } = useRoom();
   const { quitTour, startTour, currentFrameIndex, isTourStarted, isResting } = useTour();
   const { items: shelfItems, remove: removeFromShelf } = useShelf();
   const { narrationEnabled, setNarrationEnabled, dwellSeconds, setDwellSeconds } = useGuidedTourPreferences();
@@ -143,7 +143,6 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   // artwork by artwork. See utils/menuButton.
   const viewingArtwork = isViewingArtwork({ isTourStarted, isResting, currentFrameIndex });
   const topStripMessage = hasTopStripMessage({
-    arrivedViaLink,
     beforeEntry: visitReturn.beforeEntry,
     rooms: rooms.map(room => ({ id: room.id, name: room.name, images: getRoomImages(room.id) })),
     currentRoomId: rooms[activeRoomIndex]?.id ?? '',
@@ -164,7 +163,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
         />
       )}
 
-      {!isOpen && <MenuButton labelVisible={labelVisible} onClick={() => setIsOpen(true)} />}
+      {!isOpen && <MenuButton stripFree={labelVisible} onClick={() => setIsOpen(true)} />}
 
       <div
         className={`fixed right-0 top-0 bottom-0 z-50 transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}

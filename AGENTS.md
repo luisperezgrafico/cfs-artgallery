@@ -50,7 +50,7 @@ app/page.tsx (the "door")
 ```
 
 - **Rooms are data.** New rooms cost curation, not engineering:
-  - `config/roomsConfig.ts` — the room list: `{ id, name, images, theme }` + the per-room color `RoomTheme`s. Currently 4 rooms; **only `room-1` has artworks**, II–IV are empty.
+  - `config/roomsConfig.ts` — the room list: `{ id, name, images, theme }` + the per-room color `RoomTheme`s. Placeholder art is configured per room here; live artworks arrive from the server and are merged on top, so an empty `images` array does not mean the room is empty in production.
   - `config/imagesConfig.ts` — artwork metadata (`ImageMetadata`: url, `aspectRatio`, title, artist, date, link, description). Frame size is derived from `aspectRatio`.
   - `config/roomConfig.ts` — default room dimensions.
   - `types/museum.ts` — shared types.
@@ -119,15 +119,15 @@ These have held up so far; they came from `SCOPE.md` and from what the community
 3. **Respect `prefers-reduced-motion`** for every animation (glides become crossfades).
 4. **Energy/performance is the value prop, not an afterthought.** Low-poly, no photorealism, no 4K textures; keep GPU cost near zero while the visitor is still. Load budget: door+lobby ≤ 5 MB, each room ≤ 2 MB. Target: a 4-year-old mid-range Android.
 5. **No autoplay** of sound/video. No flashing content. Calm typography, generous spacing.
-6. A plain **list view** fallback is a first-class requirement — **still the biggest gap** (not built).
+6. A plain **list view** fallback is a first-class requirement, not a nice-to-have: it is how the gallery stays usable when 3D is too expensive, too tiring, or unreachable.
 
-## Pending / known state
+## Known quirks
 
-- **The accessible list view is not built** — see principle 6. Biggest open item.
-- Submissions, moderation and email are **built and working** (see *Backend* below).
+These are traps, not a status board: what is built and what is next lives in `docs/feedback-triage.md` and in Git, which do not go stale the way a checklist here does.
+
 - **No linter configured**; `npx tsc --noEmit` plus the test suites are the checks.
 - **Floor reflection flicker** (`MeshReflectorMaterial` on the floor) is a known issue — parked, not being worked on right now.
-- Rooms II–IV have no artworks yet; filled with submit canvases.
+- **`useDetectGPU` (drei) downloads a benchmark table from unpkg** on every load. When that fetch fails it falls back to tier 1, and `Floor.tsx` quietly serves the cheap, less reflective floor — so a visitor on a bad connection gets a worse-looking gallery with no error anywhere. The environment map used to be a second such dependency; it is now served from `public/hdri/` (see `docs/environment-map.md`).
 
 ## Theming (dark / light)
 
