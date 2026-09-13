@@ -573,6 +573,84 @@ select {
   }
 }
 
+/* ---------- the menu button ---------- */
+
+/*
+  The word "Menu" cedes the top strip; the icon never does. While an artwork is
+  on screen, or while a message is up there (the content note, the "return to
+  your visit" chip), the button collapses to its icon circle and grows back once
+  the strip is free. The width is what animates — hiding only the label would
+  make the button jump — and the label fades out faster than the box closes, so
+  what the visitor reads mid-transition is a word going quiet rather than a word
+  cut in half. State comes from data-label-visible (components/ui/MenuButton).
+*/
+.menu-button {
+  gap: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 0.75rem;
+  /* Soft and unhurried: a symmetric ease with no overshoot, so the button
+     breathes rather than snaps. Slow enough to read as a change of state,
+     never as movement that demands attention. */
+  transition:
+    background-color 0.2s ease,
+    padding 0.62s cubic-bezier(0.33, 0, 0.67, 1),
+    gap 0.62s cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.menu-button-label {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  /* A ceiling, not a size: the word is never clipped at rest, and it is in em
+     so it still fits the word if the browser's base font size grows. */
+  max-width: 4em;
+  opacity: 1;
+  transition:
+    max-width 0.62s cubic-bezier(0.33, 0, 0.67, 1),
+    opacity 0.3s linear 0.24s;
+}
+
+.menu-button[data-label-visible='false'] {
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+  /* Collapsing starts a beat late so it matches the label (below). */
+  transition:
+    background-color 0.2s ease,
+    padding 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s,
+    gap 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s;
+}
+
+.menu-button[data-label-visible='false'] .menu-button-label {
+  max-width: 0;
+  opacity: 0;
+  /* Collapsing: the word goes quiet first, and only then does the box close on
+     it — measured, not assumed: clipping used to begin while the word was
+     still half visible. */
+  transition:
+    max-width 0.62s cubic-bezier(0.33, 0, 0.67, 1) 0.12s,
+    opacity 0.22s linear;
+}
+
+@media (min-width: 768px) {
+  .menu-button {
+    padding-left: 1.25rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Reduced motion: the word still cedes the strip, it just does it at once. */
+@media (prefers-reduced-motion: reduce) {
+  .menu-button {
+    transition: background-color 0.2s ease;
+  }
+
+  .menu-button-label,
+  .menu-button[data-label-visible='false'] .menu-button-label {
+    transition: none;
+  }
+}
+
 /* ---------- the gallery stage ---------- */
 
 .stage {

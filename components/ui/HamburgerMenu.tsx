@@ -2,15 +2,17 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, ChevronLeft, ChevronUp, Heart, List, Menu, Music, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronUp, Heart, List, Music, X } from 'lucide-react';
 import { useRoom } from '../../contexts/RoomContext';
 import { useTour } from '../../contexts/TourContext';
 import { useShelf } from '../../contexts/ShelfContext';
 import { useGuidedTourPreferences } from '../../contexts/GuidedTourContext';
 import { useAmbientMusic } from '../../contexts/AmbientMusicContext';
 import { saveVisitPosition } from '../../utils/userPreferences';
+import { hasTopStripMessage, isViewingArtwork, shouldShowMenuLabel } from '../../utils/menuButton';
 import { DWELL_SECONDS_OPTIONS } from '../../utils/tourEstimate';
 import ThemeToggle from './ThemeToggle';
+import MenuButton from './MenuButton';
 import FeedbackModal from './FeedbackModal';
 
 function CollapsibleSection({
@@ -54,8 +56,8 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const feedbackButtonRef = useRef<HTMLButtonElement | null>(null);
   const router = useRouter();
-  const { rooms, activeRoomIndex, setActiveRoomIndex, openArtworkInRoom, getRoomImages } = useRoom();
-  const { quitTour, startTour, currentFrameIndex } = useTour();
+  const { rooms, activeRoomIndex, setActiveRoomIndex, openArtworkInRoom, getRoomImages, arrivedViaLink, visitReturn } = useRoom();
+  const { quitTour, startTour, currentFrameIndex, isTourStarted, isResting } = useTour();
   const { items: shelfItems, remove: removeFromShelf } = useShelf();
   const { narrationEnabled, setNarrationEnabled, dwellSeconds, setDwellSeconds } = useGuidedTourPreferences();
   const { isPlaying: ambientMusicPlaying, toggle: toggleAmbientMusic } = useAmbientMusic();
@@ -135,6 +137,22 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     window.requestAnimationFrame(() => feedbackButtonRef.current?.focus());
   };
 
+  // The word "Menu" cedes the top strip; the icon never does. Both inputs are
+  // the *mode* — an artwork on screen, a message up there — never "does this
+  // artwork carry a content note?", which would make the word flash in and out
+  // artwork by artwork. See utils/menuButton.
+  const viewingArtwork = isViewingArtwork({ isTourStarted, isResting, currentFrameIndex });
+  const topStripMessage = hasTopStripMessage({
+    arrivedViaLink,
+    beforeEntry: visitReturn.beforeEntry,
+    rooms: rooms.map(room => ({ id: room.id, name: room.name, images: getRoomImages(room.id) })),
+    currentRoomId: rooms[activeRoomIndex]?.id ?? '',
+    currentFrameIndex,
+    navigated: visitReturn.navigated,
+    dismissed: visitReturn.dismissed,
+  });
+  const labelVisible = shouldShowMenuLabel({ viewingArtwork, topStripMessage });
+
   return (
     <div style={style}>
       {/* Backdrop */}
@@ -146,19 +164,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
         />
       )}
 
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          aria-label="Open menu"
-          aria-expanded="false"
-          className="fixed top-4 right-4 z-50 h-11 min-w-11 flex items-center justify-center gap-2 rounded-full bg-[var(--floating-surface)] hover:bg-[var(--floating-surface-strong)] backdrop-blur-md px-3 text-[var(--floating-text)] shadow-lg transition-colors md:px-4"
-          style={{ top: 'max(1rem, env(safe-area-inset-top))', right: 'max(1rem, env(safe-area-inset-right))' }}
-        >
-          <span className="hidden md:inline text-sm font-medium">Menu</span>
-          <Menu size={18} />
-        </button>
-      )}
+      {!isOpen && <MenuButton labelVisible={labelVisible} onClick={() => setIsOpen(true)} />}
 
       <div
         className={`fixed right-0 top-0 bottom-0 z-50 transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
