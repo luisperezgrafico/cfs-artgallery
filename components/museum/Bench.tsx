@@ -2,14 +2,28 @@
 
 import React from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
+import { benchDesignForRoom } from '../../utils/benchDesign';
+import { useRoom } from '../../contexts/RoomContext';
+import ProceduralBench from './ProceduralBench';
+
+/** Slack above the seat: thumbs are imprecise and a bench top is a thin edge. */
+const HIT_MARGIN = 0.04;
 
 interface BenchProps {
   position: [number, number, number];
   rotation?: [number, number, number];
   onClick?: () => void;
+  /** Room whose bench to build; defaults to the room on stage. */
+  roomId?: string;
 }
 
-const Bench: React.FC<BenchProps> = ({ position, rotation = [0, 0, 0], onClick }) => {
+const Bench: React.FC<BenchProps> = ({ position, rotation = [0, 0, 0], onClick, roomId }) => {
+  // Museum hands the room down to Frame but not to its benches, and the room is
+  // already in context, so take it from there unless a caller passes one —
+  // `benchDesignForRoom` still falls back to Room I for an unknown id.
+  const { rooms, activeRoomIndex } = useRoom();
+  const design = benchDesignForRoom(roomId ?? rooms[activeRoomIndex]?.id);
+
   React.useEffect(() => {
     return () => {
       if (onClick) document.body.style.cursor = '';
@@ -38,20 +52,13 @@ const Bench: React.FC<BenchProps> = ({ position, rotation = [0, 0, 0], onClick }
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
     >
-      {/* Seat */}
-      <mesh position={[0, 0.38, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.5, 0.07, 0.34]} />
-        <meshStandardMaterial color="#1c120a" roughness={0.85} metalness={0.05} />
-      </mesh>
-      {/* Left support */}
-      <mesh position={[-0.6, 0.18, 0]} castShadow receiveShadow>
-        <boxGeometry args={[0.07, 0.36, 0.3]} />
-        <meshStandardMaterial color="#1c120a" roughness={0.85} metalness={0.05} />
-      </mesh>
-      {/* Right support */}
-      <mesh position={[0.6, 0.18, 0]} castShadow receiveShadow>
-        <boxGeometry args={[0.07, 0.36, 0.3]} />
-        <meshStandardMaterial color="#1c120a" roughness={0.85} metalness={0.05} />
+      <ProceduralBench design={design} />
+      {/* A bench is openwork — legs, reveals, thin lips — so one invisible
+          volume over the whole silhouette keeps sitting down a comfortable tap
+          on a phone, in every room. */}
+      <mesh position={[0, (design.seatHeight + HIT_MARGIN) / 2, 0]}>
+        <boxGeometry args={[design.width, design.seatHeight + HIT_MARGIN, design.depth]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
     </group>
   );
