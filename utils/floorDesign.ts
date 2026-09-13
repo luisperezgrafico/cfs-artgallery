@@ -3,8 +3,9 @@ import * as THREE from 'three';
 /**
  * Floor finishes, one per room — the same solution shape as `frameDesign.ts`
  * and `benchDesign.ts`: a registry keyed by `roomId`, pure data, and one unit
- * test on the registry. Four rooms cost four data entries here — no textures,
- * no models, no dependencies, nothing drawn on the floor.
+ * test on the registry. This file is only *how the light behaves*; which stone a
+ * floor is cut from is a second registry, `utils/floorPattern.ts`. Four rooms
+ * cost four data entries here — no models, no dependencies.
  *
  * The brief is deliberate: the floor must never compete with the artwork, so
  * there are **no tiles, no checkerboard, no seams, no inlays**. What changes
