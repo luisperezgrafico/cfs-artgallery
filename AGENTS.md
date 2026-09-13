@@ -101,6 +101,10 @@ No database. Everything persists as JSON and images in **Vercel Blob**.
 
 - **Visual captures:** reuse `scripts/visual-smoke.cjs`; see [the visual testing guide](docs/visual-testing.md) before capturing or delegating a visual check. `--view entrance` captures the room without starting the tour; `--view artwork --room room-1 --frame 0` opens a specific artwork. The script waits for the scene to settle and saves PNG + JSON evidence; this is separate from the admin e2e suite.
 
+- **Mobile captures:** `scripts/mobile-state-capture.cjs` — the desktop script cannot do these (fixed 1280×960 viewport, one URL per run). Use it for anything that only exists on a phone: a mobile viewport, touch, overlay states that depend on `localStorage` (the return-visit chip), or measuring whether two overlay elements overlap. It reports each element's box and the overlap area alongside the PNG.
+
+- **A capture is not evidence until someone opens it.** Both scripts can write a PNG of a half-loaded scene, a room you did not mean to visit, or the drawer covering a third of the frame — and a run that reports `ok` will not tell you. Look at the image before drawing any conclusion from it, and never let a number measured over an unseen screenshot stand in for that.
+
 - **`tests/unit/`** (Vitest, `npm test`) — `lib/storage.ts` against the memory backend (idempotency, write serialization, delete-by-id) and the admin reducer (optimistic updates, rollback, stale-read guards).
 - **`tests/e2e/`** (Playwright, `npm run test:e2e`) — drives the real admin panel: a card appears, moves to Approved when approved, doesn't come back on tab switch / refresh / reload, and the right artwork is deleted. Failure paths are covered by intercepting the API. Some tests log `[timing]` lines and assert a budget, so a regression that reintroduces a full reload shows up as a slowdown.
 - **Seeding:** `tests/e2e/fixtures.ts` → `seed(request, {...})` wipes and populates the in-memory store via `/api/testing/reset`.
