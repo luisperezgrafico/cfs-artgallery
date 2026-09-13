@@ -3,6 +3,7 @@
 import React from 'react';
 import type { ThreeEvent } from '@react-three/fiber';
 import { benchDesignForRoom } from '../../utils/benchDesign';
+import { benchPreviewDesign } from '../../utils/benchPreview';
 import { useRoom } from '../../contexts/RoomContext';
 import ProceduralBench from './ProceduralBench';
 
@@ -22,7 +23,13 @@ const Bench: React.FC<BenchProps> = ({ position, rotation = [0, 0, 0], onClick, 
   // already in context, so take it from there unless a caller passes one —
   // `benchDesignForRoom` still falls back to Room I for an unknown id.
   const { rooms, activeRoomIndex } = useRoom();
-  const design = benchDesignForRoom(roomId ?? rooms[activeRoomIndex]?.id);
+  // `?bench=<key>` previews a prototype design in whatever room is on stage;
+  // without it (every visitor's visit) the room draws its own bench.
+  const design = React.useMemo(
+    () => benchPreviewDesign(typeof window === 'undefined' ? null : window.location.search)
+      ?? benchDesignForRoom(roomId ?? rooms[activeRoomIndex]?.id),
+    [roomId, rooms, activeRoomIndex],
+  );
 
   React.useEffect(() => {
     return () => {

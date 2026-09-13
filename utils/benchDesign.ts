@@ -36,6 +36,12 @@ export interface BenchPart {
   taper?: number;
   /** 'lathe' only — half cross-section, from the part's base (y = 0) up to size[1]. */
   profile?: [radius: number, y: number][];
+  /**
+   * 'box' / 'taper' — tilt of the part about its own centre, in radians. A
+   * placement, like `position`: the part keeps its own true size, so a tilted
+   * leg or a fan raker is still measured (and budgeted) as the block it is.
+   */
+  rotation?: [x: number, y: number, z: number];
 }
 
 export interface BenchDesign {
@@ -84,14 +90,18 @@ export const BENCH_DESIGNS: Record<string, BenchDesign> = {
   },
 
   'room-2': {
-    // Ardoise: a brushed aluminium slab floating over a slate plinth, with the
-    // same recessed reveal and fine bright lip as the floating moulding.
+    // Ardoise, the cantilever: one prow — narrow on the floor, wide under the
+    // seat — carries a thin slab that overhangs it by half a metre at each end,
+    // with the moulding's bright lip left as the gap between slab and base.
     id: 'floating', seatHeight: 0.42, width: 1.6, depth: 0.42,
     parts: [
-      { shape: 'box', size: [1.6, 0.05, 0.42], position: [0, 0.395, 0], material: 0 },
-      { shape: 'box', size: [1.56, 0.014, 0.38], position: [0, 0.363, 0], material: 1 },
-      { shape: 'box', size: [1.24, 0.056, 0.26], position: [0, 0.328, 0], material: 2 },
-      { shape: 'box', size: [1.1, 0.3, 0.24], position: [0, 0.15, 0], material: 2 },
+      { shape: 'box', size: [1.6, 0.028, 0.42], position: [0, 0.406, 0], material: 0 },
+      { shape: 'box', size: [1.52, 0.012, 0.4], position: [0, 0.385, 0], material: 1 },
+      // Upside down on purpose: `taper` only narrows a part's top face, and
+      // this prow has to stand on its narrow one.
+      { shape: 'taper', size: [0.52, 0.335, 0.34], position: [0, 0.1825, 0], material: 0, taper: 0.45, rotation: [Math.PI, 0, 0] },
+      // A dark sole under the prow: a shadow on the floor, not a white foot.
+      { shape: 'box', size: [0.32, 0.015, 0.2], position: [0, 0.0075, 0], material: 2 },
     ],
     materials: [
       { color: '#7c8792', metalness: 0.45, roughness: 0.42 },
@@ -124,6 +134,77 @@ export const BENCH_DESIGNS: Record<string, BenchDesign> = {
   },
 
   'room-4': {
+    // Indigo, the sled: two champagne patines with turned-up tips, a pair of
+    // flared ebony blades on each, and the slab flying above them on a
+    // pinstripe. The terraces of the room's bench stand up into a base.
+    id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
+    parts: [
+      { shape: 'box', size: [1.54, 0.05, 0.4], position: [0, 0.395, 0], material: 0 },
+      { shape: 'box', size: [1.5, 0.012, 0.36], position: [0, 0.364, 0], material: 1 },
+      { shape: 'box', size: [1.42, 0.02, 0.34], position: [0, 0.348, 0], material: 2 },
+      // Blades flare upwards and lean outwards a little: corbels on a sled, not
+      // posts. `taper` narrows a top face, so the flare is made by turning the
+      // part over — the turn and the lean compose, verified in the unit test.
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [-0.63, 0.179, 0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, -0.12] },
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [0.63, 0.179, 0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, 0.12] },
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [-0.63, 0.179, -0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, -0.12] },
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [0.63, 0.179, -0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, 0.12] },
+      { shape: 'box', size: [1.3, 0.02, 0.026], position: [0, 0.01, 0.155], material: 1 },
+      { shape: 'box', size: [1.3, 0.02, 0.026], position: [0, 0.01, -0.155], material: 1 },
+      // The upturned tip every sled has, in place of a blunt runner end: it
+      // starts inside the runner and leaves it as one continuous line.
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [0.6757, 0.0522, 0.155], material: 1, rotation: [0, 0, -0.7] },
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [-0.6757, 0.0522, 0.155], material: 1, rotation: [0, 0, 0.7] },
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [0.6757, 0.0522, -0.155], material: 1, rotation: [0, 0, -0.7] },
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [-0.6757, 0.0522, -0.155], material: 1, rotation: [0, 0, 0.7] },
+    ],
+    materials: [
+      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
+      { color: '#13111b', metalness: 0, roughness: 0.88 },
+    ],
+  },
+};
+
+/**
+ * An éventail: four champagne rakers opening inwards from a shoe at one end of
+ * the bench, spread across the two blade planes. Every raker is a thin bar
+ * pivoting on the shoe's top and cut to reach the slab's underside exactly, so
+ * the fan reads as one fan and not as four legs.
+ */
+function rakerFan(end: -1 | 1): BenchPart[] {
+  const pivotX = 0.6 * end, pivotY = 0.066, underside = 0.347;
+  return [0, 0.25, 0.48, 0.72].flatMap((lean): BenchPart[] =>
+    [0.11, -0.11].map((z) => {
+      const length = (underside - pivotY) / Math.cos(lean);
+      return {
+        shape: 'box' as const,
+        size: [0.018, length, 0.045] as [number, number, number],
+        position: [
+          pivotX - end * (length / 2) * Math.sin(lean),
+          pivotY + (length / 2) * Math.cos(lean),
+          z,
+        ] as [number, number, number],
+        material: 1 as const,
+        rotation: [0, 0, lean * end] as [number, number, number],
+      };
+    }),
+  );
+}
+
+/**
+ * Prototype benches, in their own registry on purpose.
+ *
+ * `BENCH_DESIGNS` stays exactly one bench per room — that is the invariant the
+ * gallery relies on and the one the tests police. These are proposals for a
+ * room, not the room's bench: they share its materials and finish language, and
+ * nothing in the visitor's path ever reaches them. They are keyed
+ * `<roomId>-alt-<letter>` and reachable only through a preview URL
+ * (see `utils/benchPreview`), so a room can be judged with two candidates side
+ * by side and the room's own bench deleted nothing.
+ */
+export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
+  'room-4-alt-b': {
     // Indigo: ebony terraces stepping inwards, separated by champagne
     // pinstripes and stopped by short vertical flutes — the deco moulding's
     // terraces turned into a base.
@@ -145,10 +226,87 @@ export const BENCH_DESIGNS: Record<string, BenchDesign> = {
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
   },
+
+  'room-2-alt-a': {
+    // Ardoise: a brushed aluminium slab floating over a slate plinth, with the
+    // same recessed reveal and fine bright lip as the floating moulding.
+    id: 'floating', seatHeight: 0.42, width: 1.6, depth: 0.42,
+    parts: [
+      { shape: 'box', size: [1.6, 0.05, 0.42], position: [0, 0.395, 0], material: 0 },
+      { shape: 'box', size: [1.56, 0.014, 0.38], position: [0, 0.363, 0], material: 1 },
+      { shape: 'box', size: [1.24, 0.056, 0.26], position: [0, 0.328, 0], material: 2 },
+      { shape: 'box', size: [1.1, 0.3, 0.24], position: [0, 0.15, 0], material: 2 },
+    ],
+    materials: [
+      { color: '#7c8792', metalness: 0.45, roughness: 0.42 },
+      { color: '#c8cfd4', metalness: 0.5, roughness: 0.42 },
+      { color: '#12181e', metalness: 0, roughness: 0.88 },
+    ],
+  },
+
+
+  'room-2-alt-b': {
+    // Ardoise, legs over mass: the same brushed slab and slate as the room's
+    // bench, but carried on two hairpin pairs per end — eight slender legs
+    // instead of a plinth — so the room gets air under the seat.
+    id: 'floating', seatHeight: 0.42, width: 1.6, depth: 0.42,
+    parts: [
+      { shape: 'box', size: [1.6, 0.032, 0.42], position: [0, 0.404, 0], material: 0 },
+      { shape: 'box', size: [1.5, 0.012, 0.38], position: [0, 0.382, 0], material: 1 },
+      { shape: 'box', size: [1.38, 0.028, 0.3], position: [0, 0.362, 0], material: 2 },
+      // Each pair meets under the seat and lands splayed: a hairpin, not a post.
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [0.5683, 0.1808, 0.105], material: 0, rotation: [0, 0, -0.3] },
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [0.6717, 0.1808, 0.105], material: 0, rotation: [0, 0, 0.3] },
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [-0.5683, 0.1808, 0.105], material: 0, rotation: [0, 0, 0.3] },
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [-0.6717, 0.1808, 0.105], material: 0, rotation: [0, 0, -0.3] },
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [0.5683, 0.1808, -0.105], material: 0, rotation: [0, 0, -0.3] },
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [0.6717, 0.1808, -0.105], material: 0, rotation: [0, 0, 0.3] },
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [-0.5683, 0.1808, -0.105], material: 0, rotation: [0, 0, 0.3] },
+      { shape: 'box', size: [0.022, 0.35, 0.022], position: [-0.6717, 0.1808, -0.105], material: 0, rotation: [0, 0, -0.3] },
+      // One slate shoe per end, sized to the splay so both pairs land on it.
+      { shape: 'box', size: [0.3, 0.014, 0.26], position: [0.62, 0.007, 0], material: 2 },
+      { shape: 'box', size: [0.3, 0.014, 0.26], position: [-0.62, 0.007, 0], material: 2 },
+    ],
+    materials: [
+      { color: '#7c8792', metalness: 0.45, roughness: 0.42 },
+      { color: '#c8cfd4', metalness: 0.5, roughness: 0.42 },
+      { color: '#12181e', metalness: 0, roughness: 0.88 },
+    ],
+  },
+
+  'room-4-alt-a': {
+    // Indigo, the fan: nothing solid under the seat. Two éventails of champagne
+    // rakers — each opening inwards from a low ebony shoe to the slab's
+    // underside — hold a very thin slab, so the light passes under the bench.
+    id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
+    parts: [
+      { shape: 'box', size: [1.54, 0.045, 0.4], position: [0, 0.3975, 0], material: 0 },
+      { shape: 'box', size: [1.48, 0.01, 0.36], position: [0, 0.37, 0], material: 1 },
+      { shape: 'box', size: [1.42, 0.018, 0.34], position: [0, 0.356, 0], material: 2 },
+      // One shoe per end, under both raker planes.
+      { shape: 'box', size: [0.13, 0.062, 0.3], position: [-0.6, 0.031, 0], material: 2 },
+      { shape: 'box', size: [0.13, 0.062, 0.3], position: [0.6, 0.031, 0], material: 2 },
+      // One éventail per end, both raker planes each.
+      ...rakerFan(-1),
+      ...rakerFan(1),
+    ],
+    materials: [
+      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
+      { color: '#13111b', metalness: 0, roughness: 0.88 },
+    ],
+  },
+
 };
 
 export function benchDesignForRoom(roomId?: string): BenchDesign {
   return BENCH_DESIGNS[roomId ?? 'room-1'] ?? BENCH_DESIGNS['room-1'];
+}
+
+/** Every bench the gallery can draw: the four of the rooms, then the prototypes. */
+export function benchDesignForKey(key?: string | null): BenchDesign | null {
+  if (!key) return null;
+  return BENCH_DESIGNS[key] ?? BENCH_ALTERNATES[key] ?? null;
 }
 
 /** The whole bench vocabulary: a block, a block with a scaled top face, or a turned leg. */
@@ -172,6 +330,8 @@ export function createBenchGeometry(design: BenchDesign): THREE.BufferGeometry {
   try {
     const positions: number[] = [], normals: number[] = [], uvs: number[] = [];
     const geometry = new THREE.BufferGeometry();
+    const vertex = new THREE.Vector3();
+    const vertexNormal = new THREE.Vector3();
     for (const material of [0, 1, 2]) {
       const start = positions.length / 3;
       design.parts.forEach((part, index) => {
@@ -182,10 +342,25 @@ export function createBenchGeometry(design: BenchDesign): THREE.BufferGeometry {
         const normal = flat.getAttribute('normal');
         const uv = flat.getAttribute('uv');
         const [x, y, z] = part.position;
-        for (let vertex = 0; vertex < position.count; vertex++) {
-          positions.push(position.getX(vertex) + x, position.getY(vertex) + y, position.getZ(vertex) + z);
-          normals.push(normal.getX(vertex), normal.getY(vertex), normal.getZ(vertex));
-          uvs.push(uv.getX(vertex), uv.getY(vertex));
+        // A rotation is a placement, like the position: it turns the part
+        // about its own centre — position and normal together, so the faces
+        // stay lit — and the part itself is still built, measured and budgeted
+        // at its own size.
+        const rotation = part.rotation
+          ? new THREE.Matrix4().makeRotationFromEuler(
+              new THREE.Euler(part.rotation[0], part.rotation[1], part.rotation[2]),
+            )
+          : null;
+        for (let point = 0; point < position.count; point++) {
+          vertex.set(position.getX(point), position.getY(point), position.getZ(point));
+          vertexNormal.set(normal.getX(point), normal.getY(point), normal.getZ(point));
+          if (rotation) {
+            vertex.applyMatrix4(rotation);
+            vertexNormal.applyMatrix4(rotation);
+          }
+          positions.push(vertex.x + x, vertex.y + y, vertex.z + z);
+          normals.push(vertexNormal.x, vertexNormal.y, vertexNormal.z);
+          uvs.push(uv.getX(point), uv.getY(point));
         }
         if (flat !== partGeometry) flat.dispose();
       });
