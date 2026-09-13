@@ -13,7 +13,7 @@ export interface RoomConfig {
 const THEME_INDIGO: RoomTheme = {
   // Dark indigo / cinematic — ceiling darkened to match other dark themes
   wallColor:        '#1A1637',
-  ceilingColor:     '#0b0a18',
+  ceilingColor:     '#0a0916',
   floorColor:       '#050505',
   hemisphereTop:    '#2a1f50',
   hemisphereBottom: '#08060f',
@@ -26,7 +26,7 @@ const THEME_INDIGO: RoomTheme = {
 const THEME_ARDOISE: RoomTheme = {
   // Room II — Ardoise: deep blue-slate / contemporary museum
   wallColor:        '#1c2230',
-  ceilingColor:     '#0f131d',
+  ceilingColor:     '#0e111a',
   floorColor:       '#07080c',
   hemisphereTop:    '#252e40',
   hemisphereBottom: '#07080c',
@@ -39,7 +39,7 @@ const THEME_ARDOISE: RoomTheme = {
 const THEME_FORET: RoomTheme = {
   // Room III — Vert Forêt: deep sage green / National Gallery dark rooms
   wallColor:        '#253028',
-  ceilingColor:     '#151b16',
+  ceilingColor:     '#131814',
   floorColor:       '#080e0a',
   hemisphereTop:    '#364838',
   hemisphereBottom: '#080e0a',
@@ -52,7 +52,7 @@ const THEME_FORET: RoomTheme = {
 const THEME_OCRE: RoomTheme = {
   // Ocre Profond: warm sienna / Wallace Collection / Spanish museums
   wallColor:        '#2a1c14',
-  ceilingColor:     '#16100d',
+  ceilingColor:     '#140e0c',
   floorColor:       '#0a0806',
   hemisphereTop:    '#422a18',
   hemisphereBottom: '#0a0806',

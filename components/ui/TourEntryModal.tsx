@@ -82,7 +82,7 @@ export default function TourEntryModal({
       />
 
       <div
-        className="relative w-full max-w-md p-6 space-y-5"
+        className="panel-warm relative w-full max-w-md p-6 space-y-5"
         style={{
           background: 'var(--panel-bg)',
           border: '1px solid var(--panel-border)',
