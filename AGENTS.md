@@ -99,6 +99,8 @@ No database. Everything persists as JSON and images in **Vercel Blob**.
 
 ## Tests
 
+- **Match verification to risk, and stop there.** Trivial and reversible (a token, a colour, a string, a handler you already located): type-check the change and say what you changed — no captures, no browser. Capture or instrument only when a failure would be invisible in the diff: camera/3D framing, floors and lighting, storage and stale reads, auth, moderation, email, money, anything leaving the machine. One capture per state: if a state was already captured for this change, do not repeat it, and never add a control run or a second path "just in case" unless the first result was ambiguous. If a check would cost more than a couple of minutes and you are unsure it is warranted, ask once and proceed.
+
 - **Visual captures:** reuse `scripts/visual-smoke.cjs`; see [the visual testing guide](docs/visual-testing.md) before capturing or delegating a visual check. `--view entrance` captures the room without starting the tour; `--view artwork --room room-1 --frame 0` opens a specific artwork. The script waits for the scene to settle and saves PNG + JSON evidence; this is separate from the admin e2e suite.
 
 - **Mobile captures:** `scripts/mobile-state-capture.cjs` — the desktop script cannot do these (fixed 1280×960 viewport, one URL per run). Use it for anything that only exists on a phone: a mobile viewport, touch, overlay states that depend on `localStorage` (the return-visit chip), or measuring whether two overlay elements overlap. It reports each element's box and the overlap area alongside the PNG.
