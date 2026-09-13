@@ -272,6 +272,107 @@ async function launch() {
   }).catch((e) => { log(`[launch] chrome channel failed (${e.message.split('\n')[0]}), using bundled chromium`); return chromium.launch({ headless: true }); });
 }
 
+/**
+ * The artwork panel's share control, measured box by box. Self-contained: it is
+ * serialized to the page, so it cannot reference anything outside itself.
+ */
+function panelProbe() {
+  const classOf = (el) => (typeof el.className === 'string' ? el.className : '');
+  const visible = (el) => {
+    if (!el || !el.isConnected) return false;
+    let node = el;
+    while (node && node.nodeType === 1) {
+      const cs = getComputedStyle(node);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+      const op = parseFloat(cs.opacity);
+      if (!Number.isNaN(op) && op <= 0.01) return false;
+      node = node.parentElement;
+    }
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
+  const byLabel = (label) => Array.from(document.querySelectorAll('[aria-label]'))
+    .find((el) => el.getAttribute('aria-label') === label && visible(el));
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height), right: Math.round(r.right), bottom: Math.round(r.bottom) };
+  };
+  const overlap = (a, b) => {
+    if (!a || !b) return null;
+    const w = Math.max(0, Math.min(a.right, b.right) - Math.max(a.x, b.x));
+    const h = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y));
+    return Math.round(w * h);
+  };
+  const inside = (r) => !r || (r.x >= 0 && r.right <= window.innerWidth && r.y >= 0 && r.bottom <= window.innerHeight);
+
+  const share = byLabel('Share this artwork') || byLabel('Share this room');
+  const heart = byLabel('Add to shelf') || byLabel('Remove from shelf');
+  const close = byLabel('Close');
+  const title = document.querySelector('h2');
+  const pill = Array.from(document.querySelectorAll('div'))
+    .find((d) => classOf(d).includes('bottom-full') && /copied|Could not copy|shared/i.test(d.textContent || '') && visible(d));
+  const label = document.querySelector('label[for="artwork-share-link"]');
+  const input = document.querySelector('#artwork-share-link');
+  const hint = document.querySelector('#artwork-share-link-hint');
+
+  const shareRect = rect(share);
+  const heartRect = rect(heart);
+  const closeRect = rect(close);
+  const pillRect = rect(pill);
+  const titleRect = rect(title);
+  const inputRect = rect(input);
+  const labelRect = rect(label);
+  const hintRect = rect(hint);
+
+  return {
+    share: shareRect,
+    shareLabel: share ? share.getAttribute('aria-label') : null,
+    shareIcon: share ? !!share.querySelector('svg') : false,
+    heart: heartRect,
+    close: closeRect,
+    title: titleRect,
+    gapShareHeart: shareRect && heartRect ? Math.round(heartRect.x - shareRect.right) : null,
+    gapHeartClose: heartRect && closeRect ? Math.round(closeRect.x - heartRect.right) : null,
+    pill: pillRect,
+    pillText: pill ? (pill.textContent || '').trim() : null,
+    label: labelRect,
+    input: inputRect,
+    inputValue: input ? input.value : null,
+    inputFocused: input ? document.activeElement === input : false,
+    inputScrolledToStart: input ? input.scrollLeft === 0 : null,
+    hint: hintRect,
+    overlapShareHeart: overlap(shareRect, heartRect),
+    overlapShareClose: overlap(shareRect, closeRect),
+    overlapPillTitle: overlap(pillRect, titleRect),
+    overlapPillShare: overlap(pillRect, shareRect),
+    overlapPillHeart: overlap(pillRect, heartRect),
+    overlapInputTitle: overlap(inputRect, titleRect),
+    overlapInputLabel: overlap(inputRect, labelRect),
+    pillInsideViewport: pillRect ? inside(pillRect) : null,
+    controlsInsideViewport: [shareRect, heartRect, closeRect].every(inside),
+    fallbackInsideViewport: [labelRect, inputRect, hintRect].every(inside),
+    liveRegions: Array.from(document.querySelectorAll('[role="status"][aria-live]'))
+      .map((el) => (el.textContent || '').trim()).filter(Boolean),
+  };
+}
+
+/** Real path to the panel: tap the artwork, then the lightbox's info button. */
+async function openArtworkPanel(page) {
+  const info = page.getByRole('button', { name: 'Read artwork information' });
+  const vp = page.viewportSize();
+  await page.mouse.click(Math.round(vp.width / 2), Math.round(vp.height * 0.5));
+  const lit = await info.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false);
+  if (lit) {
+    await info.click();
+    log('[panel] opened via canvas tap -> lightbox -> info button');
+  } else {
+    log('[panel] canvas tap did not open the lightbox; dispatching the plaque event');
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('open-artwork-info', { detail: { x: 120, y: 420 } })));
+  }
+  await page.getByRole('button', { name: /^Share this (artwork|room)$/ }).waitFor({ state: 'visible', timeout: 8000 });
+}
+
 async function main() {
   const states = (process.argv[2] || 'ABCD').split('');
   const browser = await launch();
@@ -445,6 +546,56 @@ async function main() {
     log(`[G] ${JSON.stringify(after)}`);
     mergeReport('G', { beforeClick: beforeClick.evidence, after, png: await shot(page, 'G-collapsed-button-opens-menu') });
     await ctx.close();
+  }
+
+  if (states.includes('H')) {
+    // The share control in the artwork panel, on a phone. Two states are worth
+    // looking at: the confirmation that the link was copied, and the fallback
+    // when the clipboard refuses them — measured box by box, not just captured.
+    for (const variant of ['copied', 'manual']) {
+      const ctx = await browser.newContext({
+        viewport: VIEWPORT, deviceScaleFactor: DPR, locale: 'en-GB', reducedMotion: 'no-preference',
+      });
+      if (variant === 'copied') {
+        await ctx.grantPermissions(['clipboard-write'], { origin: BASE });
+      } else {
+        await ctx.addInitScript(() => {
+          Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: { writeText: () => Promise.reject(new DOMException('denied', 'NotAllowedError')) },
+          });
+          delete navigator.share;
+        });
+      }
+      const page = await ctx.newPage();
+      page.on('pageerror', (e) => log(`[pageerror H/${variant}] ${String(e).slice(0, 140)}`));
+      log(`--- H/${variant}: phone, artwork panel + share`);
+      await page.goto(`${BASE}/?room=room-1&art=static-silva-quieta`, { waitUntil: 'domcontentloaded' });
+      await waitReady(page, { mode: 'artwork', frame: 2, expectStrip: false, expectChip: false }, `H/${variant} artwork`);
+      await openArtworkPanel(page);
+      // The panel scales in over 340ms from opacity 0; measure the buttons once
+      // the panel has arrived, or the boxes read as absent mid-animation.
+      await page.waitForTimeout(600);
+      const closed = await page.evaluate(panelProbe);
+      await page.getByRole('button', { name: 'Share this artwork' }).click();
+      await page.waitForTimeout(700);
+      const shared = await page.evaluate(panelProbe);
+      const verdict = {
+        buttonsInARow: closed.gapShareHeart !== null && closed.gapShareHeart >= 0 && closed.gapHeartClose >= 0,
+        noOverlapBetweenControls: !closed.overlapShareHeart && !closed.overlapShareClose,
+        controlsInsideViewport: closed.controlsInsideViewport,
+        notice: shared.pillText,
+        noticeInsideViewport: shared.pillInsideViewport,
+        noticeOverTitle: shared.overlapPillTitle,
+        fallbackInsideViewport: shared.fallbackInsideViewport,
+        fallbackOverTitle: shared.overlapInputTitle,
+        liveRegions: shared.liveRegions,
+        inputValue: shared.inputValue,
+      };
+      log(`[H/${variant}] ${JSON.stringify(verdict)}`);
+      mergeReport(`H-${variant}`, { closed, shared, verdict, png: await shot(page, `H-${variant}-phone-panel-share`) });
+      await ctx.close();
+    }
   }
 
   await browser.close();
