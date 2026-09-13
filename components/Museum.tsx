@@ -31,6 +31,7 @@ interface MuseumProps {
 const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }) => {
   const {
     currentFrameIndex,
+    isTourStarted,
     restView,
     setCurrentFrameIndex,
     startTour,
@@ -104,6 +105,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
                   image={image}
                   index={index}
                   roomId={roomId}
+                  isActive={isTourStarted && currentFrameIndex === index}
                   ref={(el) => {
                     frameRefs.current[index] = el;
                   }}

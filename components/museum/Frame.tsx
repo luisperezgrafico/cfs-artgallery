@@ -13,6 +13,15 @@ interface FrameProps {
   image: ImageMetadata;
   index: number;
   roomId?: string;
+  /**
+   * True only while this artwork is the one the visitor is looking at.
+   * A plaque answers for the piece you are standing in front of, never for a
+   * room seen from the overview — otherwise, in a partly empty room, a tap on
+   * the wall opened the submission form before the visitor had entered any
+   * frame. Passed down from the tour state so every room, present or future,
+   * behaves the same.
+   */
+  isActive?: boolean;
   onFrameClick?: (index: number) => void;
 }
 
@@ -121,7 +130,7 @@ function createPlaqueTexture({
 }
 
 const Frame = forwardRef<THREE.Mesh, FrameProps>(
-  ({ position, rotation, image, index, roomId, onFrameClick }, ref) => {
+  ({ position, rotation, image, index, roomId, isActive = false, onFrameClick }, ref) => {
     const [error, setError] = useState(false);
     const internalRef = useRef<THREE.Mesh>(null);
 
@@ -189,8 +198,12 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
       [artistLine, image.isEmpty, image.title],
     );
 
+    // Both plaques keep swallowing the tap wherever they are shown, so a tap on
+    // a plaque is never mistaken for a tap on the artwork behind it; they just
+    // stop having an effect once the visitor has left this frame.
     const handlePlaqueClick = (e: ThreeEvent<MouseEvent | PointerEvent>) => {
       e.stopPropagation();
+      if (!isActive) return;
       const native = e.nativeEvent as PointerEvent;
       const x = native?.clientX ?? window.innerWidth / 2;
       const y = native?.clientY ?? window.innerHeight * 0.75;
@@ -201,6 +214,7 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
 
     const handleSubmitClick = (e: ThreeEvent<MouseEvent | PointerEvent>) => {
       e.stopPropagation();
+      if (!isActive) return;
       const native = e.nativeEvent as PointerEvent;
       const x = native?.clientX ?? window.innerWidth / 2;
       const y = native?.clientY ?? window.innerHeight * 0.75;
