@@ -9,30 +9,32 @@ import MuseumStage from './MuseumStage';
 import UIElements from './ui/UIElements';
 import { ImageMetadata } from '../types/museum';
 import { saveVisitPosition } from '../utils/userPreferences';
-import { GalleryLink, entryFrameIndex, isLinkLanding, resolveLinkDestination } from '../utils/galleryLink';
+import { GalleryLink, entryFrameIndex, isEntryLanding, resolveLinkDestination } from '../utils/galleryLink';
 import { ShelfProvider, useShelf } from '../contexts/ShelfContext';
 import { GuidedTourPreferenceProvider, GuidedTourEngineProvider } from '../contexts/GuidedTourContext';
 import { AmbientMusicProvider } from '../contexts/AmbientMusicContext';
 
 function VisitPositionPersistence({ roomId }: { roomId: string }) {
   const { currentFrameIndex, totalFrames } = useTour();
-  const { linkLanding, clearLinkPlacement } = useRoom();
+  const { entryLanding, clearEntryLanding } = useRoom();
 
   React.useEffect(() => {
     // -1 means "not on an artwork right now" (quit, or sitting at the bench) —
     // never persist that, or exiting the tour would erase the resume point.
     if (currentFrameIndex < 0 || currentFrameIndex >= totalFrames) return;
-    // The frame a shared link placed the visitor on is the sender's choice, not
+    // A frame a shared link placed the visitor on is the sender's choice, not
     // the visitor's visit: their saved position predates the link and must
-    // survive it. Compared by value, so the effect running twice (React strict
-    // mode) cannot slip a save through between the two runs.
-    if (linkLanding?.roomId === roomId && linkLanding.frameIndex !== null) {
-      if (linkLanding.frameIndex === currentFrameIndex) return;
+    // survive it. (A landing without a frame — a room link, and every plain
+    // visit — never claims a frame here.) Compared by value, so the effect
+    // running twice (React strict mode) cannot slip a save through between the
+    // two runs.
+    if (entryLanding?.roomId === roomId && entryLanding.frameIndex !== null) {
+      if (entryLanding.frameIndex === currentFrameIndex) return;
       // They moved on by themselves: from here the position is theirs again.
-      clearLinkPlacement();
+      clearEntryLanding();
     }
     saveVisitPosition(roomId, currentFrameIndex);
-  }, [roomId, currentFrameIndex, totalFrames, linkLanding, clearLinkPlacement]);
+  }, [roomId, currentFrameIndex, totalFrames, entryLanding, clearEntryLanding]);
 
   return null;
 }
@@ -46,18 +48,20 @@ function VisitPositionPersistence({ roomId }: { roomId: string }) {
  * re-read the (by then overwritten) saved position, so returning once produced
  * a fresh offer pointing back — an endless ping-pong between two rooms.
  *
- * The link's own landing is not navigation: compared by value with
- * `isLinkLanding`, exactly as the visit-position persistence does it.
+ * Open on this visit's landing (wherever it opened: a link's destination, or
+ * the restored room's overview on a plain visit) is not navigation: compared by
+ * value with `isEntryLanding`, exactly as the visit-position persistence does
+ * it.
  */
 function VisitorNavigationWatch({ roomId }: { roomId: string }) {
-  const { arrivedViaLink, linkLanding, visitReturn, markVisitorNavigated } = useRoom();
+  const { entryLanding, visitReturn, markVisitorNavigated } = useRoom();
   const { currentFrameIndex } = useTour();
 
   useEffect(() => {
-    if (!arrivedViaLink || visitReturn.navigated) return;
-    if (isLinkLanding(linkLanding, roomId, currentFrameIndex)) return;
+    if (visitReturn.navigated) return;
+    if (isEntryLanding(entryLanding, roomId, currentFrameIndex)) return;
     markVisitorNavigated();
-  }, [arrivedViaLink, currentFrameIndex, linkLanding, markVisitorNavigated, roomId, visitReturn.navigated]);
+  }, [currentFrameIndex, entryLanding, markVisitorNavigated, roomId, visitReturn.navigated]);
 
   return null;
 }
@@ -98,10 +102,9 @@ function SharedLinkResolver({ roomId, catalogReady }: { roomId: string; catalogR
     getRoomImages,
     sharedLink,
     clearSharedLink,
-    markArrivedViaLink,
     openArtworkInRoom,
     setActiveRoomIndex,
-    registerLinkPlacement,
+    registerEntryLanding,
   } = useRoom();
   const { startTour, currentFrameIndex } = useTour();
   const applied = useRef(false);
@@ -127,12 +130,10 @@ function SharedLinkResolver({ roomId, catalogReady }: { roomId: string; catalogR
     if (!destination) return;
     if (currentFrameIndex !== entryFrame.current) return;
 
-    markArrivedViaLink();
-
     // Tell the persistence (and the offer) where this link landed: the sender's
     // choice, not the visitor's. A room-only landing carries no frame — the
     // point is that arriving there is not the visitor navigating.
-    registerLinkPlacement(
+    registerEntryLanding(
       destination.roomId,
       destination.kind === 'artwork' ? destination.frameIndex : null,
     );
@@ -152,9 +153,8 @@ function SharedLinkResolver({ roomId, catalogReady }: { roomId: string; catalogR
     clearSharedLink,
     currentFrameIndex,
     getRoomImages,
-    markArrivedViaLink,
     openArtworkInRoom,
-    registerLinkPlacement,
+    registerEntryLanding,
     roomId,
     rooms,
     setActiveRoomIndex,

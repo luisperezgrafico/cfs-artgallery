@@ -18,13 +18,17 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * Arrived through a shared link? The visitor's own visit is still where they
- * left it, and this offers it back — quietly. Deliberately not a modal: someone
- * with brain fog opening a link from bed is not charged a decision before they
- * see anything. It is ignorable, closable, keyboard reachable, and it lives in
- * the HTML overlay like every other control (never in the 3D scene).
+ * Where this visit opened, versus where the visitor left off before it: this
+ * offers the saved position back — quietly. Deliberately not a modal: someone
+ * with brain fog is not charged a decision before they see anything. It is
+ * ignorable, closable, keyboard reachable, and it lives in the HTML overlay
+ * like every other control (never in the 3D scene).
  *
- * It offers exactly one thing — where the visitor was *before* opening the link
+ * Offered on every visit that lands away from the saved position: a plain visit
+ * restores the room but opens on its overview, so the artwork the visitor was
+ * on is otherwise only reachable by starting the tour.
+ *
+ * It offers exactly one thing — where the visitor was *before* this visit began
  * — and that value lives in RoomContext, captured once at entry. The chip itself
  * is remounted whenever the room changes, so nothing it offers may be captured
  * here: reading the saved position again on remount would offer "where you were
@@ -35,7 +39,6 @@ export default function ResumeVisitChip({ style }: { style?: React.CSSProperties
     rooms,
     activeRoomIndex,
     getRoomImages,
-    arrivedViaLink,
     visitReturn,
     markVisitorNavigated,
     dismissVisitReturn,
@@ -49,7 +52,6 @@ export default function ResumeVisitChip({ style }: { style?: React.CSSProperties
   );
 
   const offerReturn = shouldOfferVisitReturn({
-    arrivedViaLink,
     saved,
     currentRoomId: rooms[activeRoomIndex]?.id ?? '',
     currentFrameIndex,

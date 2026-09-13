@@ -6,8 +6,8 @@ import { getInitialRoomIndex, readVisitPosition } from '../utils/userPreferences
 import { ImageMetadata } from '../types/museum';
 import { mergeRoomArtworks } from '../utils/roomArtworks';
 import {
+  EntryLanding,
   GalleryLink,
-  LinkLanding,
   VisitReturnState,
   initialVisitReturnState,
   resolveLinkDestination,
@@ -33,21 +33,18 @@ interface RoomContextValue {
    */
   sharedLink: GalleryLink | null;
   clearSharedLink: () => void;
-  /** True once a shared link has decided where this visit opens. */
-  arrivedViaLink: boolean;
-  markArrivedViaLink: () => void;
   /**
-   * Where a shared link put the visitor: its room, and the frame it placed
-   * (null for a link to a room, which lands on the overview). It is the
-   * sender's choice, not the visitor's own move, so two things compare it by
-   * value instead of trusting a one-shot flag (which a double-invoked effect
-   * under React strict mode would defeat): the visit-position persistence, so
-   * it never saves the sender's frame over the visitor's saved position, and
-   * the offer below, so landing is not mistaken for navigating.
+   * Where this visit opened: a shared link's destination when there is one, and
+   * otherwise the room the visitor left, on its overview. It is not a place the
+   * visitor drove to themselves, so two things compare it by value instead of
+   * trusting a one-shot flag (which a double-invoked effect under React strict
+   * mode would defeat): the visit-position persistence, so it never saves a
+   * link's frame over the visitor's saved position, and the offer below, so
+   * landing is not mistaken for navigating.
    */
-  linkLanding: LinkLanding | null;
-  registerLinkPlacement: (roomId: string, frameIndex: number | null) => void;
-  clearLinkPlacement: () => void;
+  entryLanding: EntryLanding | null;
+  registerEntryLanding: (roomId: string, frameIndex: number | null) => void;
+  clearEntryLanding: () => void;
   /**
    * The offer to return to where the visitor was before this visit began. Lives
    * here, above the per-room remount boundary, because it must not be re-read
@@ -89,16 +86,20 @@ export function RoomProvider({
     const pending: GalleryLink | null = link && (link.artworkId !== undefined || roomIndex < 0)
       ? link
       : null;
-    const arrivedViaLink = roomIndex >= 0 || destination !== null;
+    const entryRoomIndex = roomIndex >= 0 ? roomIndex : getInitialRoomIndex(allRooms);
     return {
-      roomIndex: roomIndex >= 0 ? roomIndex : getInitialRoomIndex(allRooms),
+      roomIndex: entryRoomIndex,
       frameIndex: legacyFrame,
-      arrivedViaLink,
       pending,
-      // Where the link landed. A link to a room lands on the overview: no frame.
-      landing: arrivedViaLink && roomIndex >= 0
+      // Where this visit opens. A link that resolves against the configured
+      // rooms lands on its own destination; anything else — a plain visit, or a
+      // link still waiting for the live catalogue — opens on the overview of
+      // the room the visitor left, and that is the landing until something
+      // (SharedLinkResolver) registers a new one.
+      landing: (roomIndex >= 0
         ? { roomId: allRooms[roomIndex].id, frameIndex: legacyFrame }
-        : null,
+        : { roomId: allRooms[entryRoomIndex].id, frameIndex: null }
+      ),
     };
   });
 
@@ -112,13 +113,14 @@ export function RoomProvider({
       : null,
   );
   const [sharedLink, setSharedLink] = useState<GalleryLink | null>(initialEntry.pending);
-  const [arrivedViaLink, setArrivedViaLink] = useState(initialEntry.arrivedViaLink);
-  const [linkLanding, setLinkLanding] = useState<LinkLanding | null>(initialEntry.landing);
+  const [entryLanding, setEntryLanding] = useState<EntryLanding | null>(initialEntry.landing);
 
   // One read, at entry, before anything the visitor does can overwrite it — and
-  // never again (see VisitReturnState in utils/galleryLink).
+  // never again (see VisitReturnState in utils/galleryLink). Read on every
+  // visit, link or not: the offer is the shortcut to the artwork a plain visit
+  // no longer opens on (the room is restored, its overview is where you stand).
   const [visitReturn, setVisitReturn] = useState<VisitReturnState>(() =>
-    initialVisitReturnState(link ? readVisitPosition() : null),
+    initialVisitReturnState(readVisitPosition()),
   );
 
   const roomImages = useMemo(
@@ -143,13 +145,12 @@ export function RoomProvider({
   }, []);
 
   const clearSharedLink = useCallback(() => setSharedLink(null), []);
-  const markArrivedViaLink = useCallback(() => setArrivedViaLink(true), []);
 
-  const registerLinkPlacement = useCallback((roomId: string, frameIndex: number | null) => {
-    setLinkLanding({ roomId, frameIndex });
+  const registerEntryLanding = useCallback((roomId: string, frameIndex: number | null) => {
+    setEntryLanding({ roomId, frameIndex });
   }, []);
 
-  const clearLinkPlacement = useCallback(() => setLinkLanding(null), []);
+  const clearEntryLanding = useCallback(() => setEntryLanding(null), []);
 
   const markVisitorNavigated = useCallback(() => setVisitReturn(withVisitorNavigation), []);
   const dismissVisitReturn = useCallback(() => setVisitReturn(withDismissal), []);
@@ -165,11 +166,9 @@ export function RoomProvider({
       getRoomImages,
       sharedLink,
       clearSharedLink,
-      arrivedViaLink,
-      markArrivedViaLink,
-      linkLanding,
-      registerLinkPlacement,
-      clearLinkPlacement,
+      entryLanding,
+      registerEntryLanding,
+      clearEntryLanding,
       visitReturn,
       markVisitorNavigated,
       dismissVisitReturn,

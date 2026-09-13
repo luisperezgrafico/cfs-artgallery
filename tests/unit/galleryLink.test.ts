@@ -3,13 +3,16 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { rooms } from '../../config/roomsConfig';
 import type { ImageMetadata } from '../../types/museum';
 import {
+  absoluteGalleryUrl,
   artworkLinkHref,
+  artworkShareHref,
   describeSavedPosition,
   entryFrameIndex,
   initialVisitReturnState,
-  isLinkLanding,
+  isEntryLanding,
   parseGalleryLink,
   resolveLinkDestination,
+  roomLinkHref,
   shouldOfferVisitReturn,
   staticLinkCatalog,
   withDismissal,
@@ -213,21 +216,71 @@ describe('artworkLinkHref', () => {
   });
 });
 
+describe('artworkShareHref: what the share control hands out', () => {
+  it('shares a room link for a room', () => {
+    expect(roomLinkHref('room-3')).toBe('/?room=room-3');
+    // The link a room link produces must resolve back to that room.
+    expect(resolve('room=room-3')).toEqual({ kind: 'room', roomId: 'room-3', roomIndex: 2 });
+  });
+
+  it('shares the canonical id link for an artwork that has one', () => {
+    const artwork = rooms[0].images[2];
+    expect(artworkShareHref('room-1', artwork, 2)).toBe('/?room=room-1&art=static-silva-quieta');
+    // Which is the artwork it says it is — not merely a slot that happens to
+    // hold it today.
+    expect(resolve('room=room-1&art=static-silva-quieta')).toMatchObject({
+      kind: 'artwork',
+      roomId: 'room-1',
+      frameIndex: 2,
+    });
+  });
+
+  it('shares the room instead of an index for an artwork without a stable id', () => {
+    const { id: _ignored, ...withoutId } = rooms[0].images[0];
+    const href = artworkShareHref('room-2', withoutId as ImageMetadata, 4);
+
+    // Not `?frame=4`: that would open whichever artwork sits in the fourth slot
+    // by the time the recipient clicks, and silently hand them a different
+    // picture. The room always opens where the artwork actually hangs.
+    expect(href).toBe('/?room=room-2');
+    expect(href).not.toContain('frame');
+    expect(resolve(href.slice(2))).toEqual({ kind: 'room', roomId: 'room-2', roomIndex: 1 });
+  });
+});
+
+describe('absoluteGalleryUrl: the origin is the page\'s own', () => {
+  it('makes a gallery path absolute against whatever origin it is given', () => {
+    const href = artworkShareHref('room-1', rooms[0].images[2], 2);
+
+    expect(absoluteGalleryUrl(href, 'http://localhost:3002'))
+      .toBe('http://localhost:3002/?room=room-1&art=static-silva-quieta');
+    expect(absoluteGalleryUrl(href, 'https://gallery.tailnet.ts.net'))
+      .toBe('https://gallery.tailnet.ts.net/?room=room-1&art=static-silva-quieta');
+    // A trailing slash on the origin must not double up.
+    expect(absoluteGalleryUrl(href, 'https://cfs-gallery.vercel.app/'))
+      .toBe('https://cfs-gallery.vercel.app/?room=room-1&art=static-silva-quieta');
+  });
+
+  it('still produces a usable URL from a bare path', () => {
+    expect(absoluteGalleryUrl('?room=room-1', 'http://localhost:3002'))
+      .toBe('http://localhost:3002/?room=room-1');
+  });
+});
+
 describe('the offer to return to the saved visit', () => {
   const catalogImages = (roomId: string) => staticLinkCatalog(rooms).find(r => r.id === roomId)!.images;
-  const saved = describeSavedPosition(
-    { roomId: 'room-2', frameIndex: 7 },
+  const described = (position: { roomId: string; frameIndex: number }) => describeSavedPosition(
+    position,
     rooms.map(room => ({ id: room.id, name: room.name, images: catalogImages(room.id) })),
   );
+  const saved = described({ roomId: 'room-2', frameIndex: 7 });
   const offered = (args: {
-    arrivedViaLink?: boolean;
     saved?: typeof saved;
     currentRoomId?: string;
     currentFrameIndex?: number;
     visitorNavigated?: boolean;
     dismissed?: boolean;
   }) => shouldOfferVisitReturn({
-    arrivedViaLink: true,
     saved,
     currentRoomId: 'room-1',
     currentFrameIndex: -1,
@@ -248,14 +301,24 @@ describe('the offer to return to the saved visit', () => {
     expect(describeSavedPosition({ roomId: 'room-2', frameIndex: 99 }, names)).toBeNull();
   });
 
-  it('is offered only when a link took the visitor somewhere else', () => {
+  it('is offered on a plain visit too, whenever the saved position is elsewhere', () => {
+    // A plain visit restores the room but opens on its overview, so the saved
+    // artwork is never where the visitor already stands.
+    expect(offered({ currentRoomId: 'room-2', currentFrameIndex: -1 })).toBe(true);
+    // The room is the one they are in: the offer is the shortcut to that artwork.
     expect(offered({ currentRoomId: 'room-1', currentFrameIndex: -1 })).toBe(true);
-    expect(offered({ currentRoomId: 'room-2', currentFrameIndex: 3 })).toBe(true);
-    // Not from a link: a plain visit never gets the offer.
-    expect(offered({ arrivedViaLink: false })).toBe(false);
+    // Arriving through a link is no longer a special case — same rule.
+    expect(offered({ currentRoomId: 'room-1', currentFrameIndex: 3 })).toBe(true);
+
     // Already standing on the saved artwork.
     expect(offered({ currentRoomId: 'room-2', currentFrameIndex: 7 })).toBe(false);
+    // Nothing saved, or nothing describable (unknown room, a negative slot — the
+    // visitor had left the tour or was sitting at the bench — a slot past the end
+    // of the room): the offer would lead nowhere, so there is no offer.
     expect(offered({ saved: null })).toBe(false);
+    expect(offered({ currentRoomId: 'room-2', currentFrameIndex: -1, saved: described({ roomId: 'room-2', frameIndex: -1 }) })).toBe(false);
+    expect(offered({ currentRoomId: 'room-2', currentFrameIndex: -1, saved: described({ roomId: 'room-2', frameIndex: 99 }) })).toBe(false);
+    expect(offered({ currentRoomId: 'room-2', currentFrameIndex: -1, saved: described({ roomId: 'room-gone', frameIndex: 2 }) })).toBe(false);
   });
 
   describe('lifecycle', () => {
@@ -264,7 +327,7 @@ describe('the offer to return to the saved visit', () => {
     it('offers the position captured at entry, and keeps offering it while the visitor only looks around', () => {
       const entry = state();
       expect(entry.beforeEntry).toEqual({ roomId: 'room-2', frameIndex: 7 });
-      // The link's own landing: the visitor has not navigated, so the offer stands.
+      // Still at the landing: the visitor has not navigated, so the offer stands.
       expect(offered({ visitorNavigated: entry.navigated, dismissed: entry.dismissed })).toBe(true);
     });
 
@@ -317,29 +380,42 @@ describe('the offer to return to the saved visit', () => {
       expect(chip).not.toContain('readVisitPosition');
       expect(chip).toContain('visitReturn');
 
-      // One read, at entry, above the per-room remount boundary.
+      // One read, at entry, above the per-room remount boundary — and on every
+      // visit, not only on link arrivals: a plain visit opens on the overview,
+      // and this offer is the shortcut back to its artwork.
       const roomContext = readFileSync(new URL('../../contexts/RoomContext.tsx', import.meta.url), 'utf8');
       expect(roomContext.match(/readVisitPosition\(/g)).toHaveLength(1);
+      expect(roomContext).toContain('initialVisitReturnState(readVisitPosition())');
     });
   });
 });
 
-describe('the link landing is not the visitor navigating', () => {
+describe('the visit landing is not the visitor navigating', () => {
   it('recognises the room a room-link landed on, overview included', () => {
     // A link to a room lands on the overview: no frame, and still the landing.
-    expect(isLinkLanding({ roomId: 'room-3', frameIndex: null }, 'room-3', -1)).toBe(true);
-    expect(isLinkLanding({ roomId: 'room-3', frameIndex: null }, 'room-3', 0)).toBe(false);
-    expect(isLinkLanding({ roomId: 'room-3', frameIndex: null }, 'room-1', -1)).toBe(false);
+    expect(isEntryLanding({ roomId: 'room-3', frameIndex: null }, 'room-3', -1)).toBe(true);
+    expect(isEntryLanding({ roomId: 'room-3', frameIndex: null }, 'room-3', 0)).toBe(false);
+    expect(isEntryLanding({ roomId: 'room-3', frameIndex: null }, 'room-1', -1)).toBe(false);
   });
 
   it('recognises the artwork a frame link landed on', () => {
-    expect(isLinkLanding({ roomId: 'room-1', frameIndex: 4 }, 'room-1', 4)).toBe(true);
-    expect(isLinkLanding({ roomId: 'room-1', frameIndex: 4 }, 'room-1', 5)).toBe(false);
-    expect(isLinkLanding({ roomId: 'room-1', frameIndex: 4 }, 'room-1', -1)).toBe(false);
+    expect(isEntryLanding({ roomId: 'room-1', frameIndex: 4 }, 'room-1', 4)).toBe(true);
+    expect(isEntryLanding({ roomId: 'room-1', frameIndex: 4 }, 'room-1', 5)).toBe(false);
+    expect(isEntryLanding({ roomId: 'room-1', frameIndex: 4 }, 'room-1', -1)).toBe(false);
   });
 
-  it('has no landing to recognise without a link', () => {
-    expect(isLinkLanding(null, 'room-1', -1)).toBe(false);
+  it('recognises the restored room a plain visit opened on', () => {
+    // A plain visit lands on the overview of the room it restored.
+    const plain = { roomId: 'room-1', frameIndex: null };
+    expect(isEntryLanding(plain, 'room-1', -1)).toBe(true);
+    // Stepping into a frame is the visitor's own move, and so is another room:
+    // the offer must end there rather than follow them around.
+    expect(isEntryLanding(plain, 'room-1', 0)).toBe(false);
+    expect(isEntryLanding(plain, 'room-3', -1)).toBe(false);
+  });
+
+  it('has no landing to recognise without one', () => {
+    expect(isEntryLanding(null, 'room-1', -1)).toBe(false);
   });
 });
 

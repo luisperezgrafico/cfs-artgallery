@@ -160,6 +160,41 @@ export function artworkLinkHref(
   return `/?${params.toString()}`;
 }
 
+/** A link to a room: `/?room=room-3`. */
+export function roomLinkHref(roomId: string): string {
+  return `/?${new URLSearchParams({ room: roomId }).toString()}`;
+}
+
+/**
+ * The link the share control hands out for an artwork: canonical, by stable id.
+ *
+ * An artwork with no id cannot be shared *as an artwork*. The only other thing
+ * the format can carry is a slot index, and that silently points at a different
+ * picture the moment one is approved in front of it — the exact lie the
+ * canonical link exists to avoid, and one the visitor cannot see happening. So
+ * it degrades to the room, which always opens where the artwork hangs and never
+ * claims to show something it does not.
+ */
+export function artworkShareHref(
+  roomId: string,
+  artwork: ImageMetadata,
+  frameIndex: number,
+): string {
+  return artwork.id ? artworkLinkHref(roomId, artwork, frameIndex) : roomLinkHref(roomId);
+}
+
+/**
+ * The same link, absolute.
+ *
+ * A share sheet or a clipboard needs a full URL, and the gallery runs on
+ * localhost, on a tailnet and on Vercel — so the origin is read from the page
+ * at the moment of sharing, never hardcoded.
+ */
+export function absoluteGalleryUrl(href: string, origin: string): string {
+  const base = origin.replace(/\/+$/, '');
+  return `${base}${href.startsWith('/') ? href : `/${href}`}`;
+}
+
 export interface SavedPositionDescription {
   roomId: string;
   roomName: string;
@@ -196,21 +231,30 @@ export function describeSavedPosition(
   };
 }
 
-/** Where a shared link put the visitor: its room, and the frame it placed (null for a link to a room, which lands on the overview). */
-export interface LinkLanding {
+/**
+ * Where a visit opened: its room, and the frame that placed the visitor there
+ * (`null` when the visit opened on the room overview).
+ *
+ * On a shared link this is the sender's destination; on a plain visit it is the
+ * restored room at its overview. Either way the visitor did not drive
+ * themselves here, so it must not be mistaken for navigation — which is why it
+ * is a value compared by identity rather than a one-shot flag (a double-invoked
+ * effect under React strict mode would defeat the flag).
+ */
+export interface EntryLanding {
   roomId: string;
   frameIndex: number | null;
 }
 
 /**
- * Whether this (room, frame) is still where the shared link put the visitor.
- * The link's own landing is not the visitor navigating: it is the same
- * distinction the visit-position persistence makes, and both need it — the
- * persistence so it does not save the sender's frame over the visitor's
- * position, the offer below so it is not dismissed on arrival.
+ * Whether this (room, frame) is still where the visit opened.
+ * The landing is not the visitor navigating: it is the same distinction the
+ * visit-position persistence makes, and both need it — the persistence so it
+ * does not save a link's frame over the visitor's position, the offer below so
+ * it is not dismissed on arrival.
  */
-export function isLinkLanding(
-  landing: LinkLanding | null,
+export function isEntryLanding(
+  landing: EntryLanding | null,
   roomId: string,
   frameIndex: number,
 ): boolean {
@@ -258,6 +302,12 @@ export function withDismissal(state: VisitReturnState): VisitReturnState {
 /**
  * Whether to offer "return to where you left off".
  *
+ * Offered on every visit that lands anywhere other than the saved position,
+ * not only on the visits that arrive through a shared link: a plain visit
+ * restores the room the visitor left but always opens on its overview, so the
+ * artwork they were on is one they can only reach by starting the tour — the
+ * offer is that shortcut.
+ *
  * One rule: the offer belongs to the moment of landing, and it is over the
  * instant the visitor navigates for themselves — another artwork, starting the
  * tour, another room. By then they have decided where they want to be, and
@@ -265,17 +315,14 @@ export function withDismissal(state: VisitReturnState): VisitReturnState {
  * discreet control they can also close early.
  */
 export function shouldOfferVisitReturn(args: {
-  arrivedViaLink: boolean;
   saved: SavedPositionDescription | null;
   currentRoomId: string;
   currentFrameIndex: number;
   visitorNavigated: boolean;
   dismissed: boolean;
 }): boolean {
-  const {
-    arrivedViaLink, saved, currentRoomId, currentFrameIndex, visitorNavigated, dismissed,
-  } = args;
-  if (!arrivedViaLink || !saved) return false;
+  const { saved, currentRoomId, currentFrameIndex, visitorNavigated, dismissed } = args;
+  if (!saved) return false;
   if (visitorNavigated || dismissed) return false;
   // Already standing on the artwork the offer would take them to.
   return !(saved.roomId === currentRoomId && saved.frameIndex === currentFrameIndex);
