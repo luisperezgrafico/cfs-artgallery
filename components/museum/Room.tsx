@@ -62,7 +62,7 @@ const WallTrim: React.FC<WallTrimProps> = ({
 const Room: React.FC<RoomProps> = ({
   width, length, height, wallTiltAngle = 0.15,
   wallColor    = '#1A1637',
-  ceilingColor = '#1a1538',
+  ceilingColor = '#15112d',
   floorColor   = '#050505',
   trimColor    = '#3b2a1e',
   roomId,
