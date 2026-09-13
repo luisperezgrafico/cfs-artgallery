@@ -14,9 +14,9 @@ shipped set costs ~180 KB:
 
 - `marble023_512.jpg` — [Marble 023](https://ambientcg.com/view?id=Marble023), Room II.
 - `concrete030_512.jpg` — [Concrete 030](https://ambientcg.com/view?id=Concrete030), Room III.
-- `concrete036_512.jpg` — [Concrete 036](https://ambientcg.com/view?id=Concrete036), Room IV.
+- `terrazzo005_512.jpg` — [Terrazzo 005](https://ambientcg.com/view?id=Terrazzo005), Room IV.
 
 `public/floor-pattern/` also holds three textures used only by the prototypes
-reachable through `?floor=<key>` (Marble 012, Marble 016, Terrazzo 005) — same
+reachable through `?floor=<key>` (Marble 012, Marble 016, Concrete 036) — same
 licence, safe to delete with the prototypes they belong to. Room I's stone is
 generated in code, so it carries no asset: see `utils/floorPattern.ts`.

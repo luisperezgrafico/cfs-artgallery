@@ -122,19 +122,21 @@ export const FLOOR_PATTERNS: Record<string, FloorPattern> = {
     gain: 1, opacity: 0.22, roughness: 0.8, tint: '#8aa38f',
   },
   'room-4': {
-    // Indigo — dark polished resin, and the room where the *generated* mask fails
-    // for a second reason: with one broad wave over six metres, even at depth 0.6
-    // it perturbs the floor band by 0.75/255 — invisible, no matter how correct
-    // the compensation is. Fine structure is what makes a generated mask read;
-    // a slow gradient gives the eye nothing. So a photograph again: a poured
-    // smooth surface tinted into the room's indigo. 14% of 26.6 -> 42.6 keeps
-    // Room IV the darkest floor of the four, which is its whole character; at
-    // 20% the indigo greys out, and the speckled terrazzo reads as chips (the
-    // one thing the brief rules out). Studies: `room-4-pat-liso-indigo-*`.
+    // Indigo — dark polished resin. Three things were learned here, in order:
+    // the *generated* mask cannot work at all (one broad wave over six metres
+    // perturbs the floor band by 0.75/255 — a slow gradient gives the eye
+    // nothing, however correct the compensation is); a smooth poured surface
+    // (concrete036 at 14%) read too quiet next to the other three rooms; and a
+    // floor with its own figure was worth more than the room's title of darkest
+    // floor. What won is a poured aggregate — terrazzo chips tinted into the
+    // room's indigo, study `room-4-pat-terrazo-oscuro` — the one language none
+    // of the other rooms speaks. Measured on the bare floor: 26.6 -> 51.4, wall
+    // band unmoved (91.0). The smooth surface stays available as
+    // `room-4-pat-liso-indigo-*` for a quieter room.
     id: 'room-4', room: 'room-4', kind: 'lime-cloud', technique: 'overlay-mesh',
-    source: 'imported', file: '/floor-pattern/concrete036_512.jpg',
+    source: 'imported', file: '/floor-pattern/terrazzo005_512.jpg',
     tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.14, roughness: 0.35, tint: '#7b74ab',
+    gain: 1, opacity: 0.24, roughness: 0.35, tint: '#3a3560',
   },
 };
 
@@ -274,6 +276,37 @@ export const FLOOR_PATTERN_STUDIES: Record<string, FloorPattern> = {
     technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete036_512.jpg',
     tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
     gain: 1, opacity: 0.14, roughness: 0.35, tint: '#7b74ab',
+  },
+  // Room IV, round 2 — the room reads too quiet next to the other three, so this
+  // isolates the two levers that actually move it: dose (more of the same
+  // material) and contrast (a material with its own figure). A third option in
+  // the room's indigo lays down a veined marble, to judge whether reusing Room
+  // II's language is worth the presence. Plain smooth surfaces with *less*
+  // deviation than the current one were measured and dropped: fine noise is not
+  // what the eye reads at this scale.
+  'room-4-pat-liso-fuerte': {
+    id: 'room-4-pat-liso-fuerte', room: 'room-4', kind: 'lime-cloud',
+    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete036_512.jpg',
+    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
+    gain: 1, opacity: 0.28, roughness: 0.35, tint: '#7b74ab',
+  },
+  'room-4-pat-terrazo': {
+    id: 'room-4-pat-terrazo', room: 'room-4', kind: 'lime-cloud',
+    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/terrazzo005_512.jpg',
+    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
+    gain: 1, opacity: 0.2, roughness: 0.35, tint: '#6f68a0',
+  },
+  'room-4-pat-terrazo-oscuro': {
+    id: 'room-4-pat-terrazo-oscuro', room: 'room-4', kind: 'lime-cloud',
+    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/terrazzo005_512.jpg',
+    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
+    gain: 1, opacity: 0.24, roughness: 0.35, tint: '#3a3560',
+  },
+  'room-4-pat-marmol-indigo': {
+    id: 'room-4-pat-marmol-indigo', room: 'room-4', kind: 'lime-cloud',
+    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble016_512.jpg',
+    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
+    gain: 1, opacity: 0.18, roughness: 0.3, tint: '#6b64a8',
   },
   'room-4-pat-resina-onda': {
     id: 'room-4-pat-resina-onda', room: 'room-4', kind: 'marble-veins',
