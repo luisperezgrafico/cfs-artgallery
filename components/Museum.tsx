@@ -82,6 +82,7 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
           ceilingColor={theme.ceilingColor}
           floorColor={theme.floorColor}
           trimColor={theme.trimColor}
+          roomId={roomId}
           portalGap={PORTAL_OUTER_WIDTH}
         />
 

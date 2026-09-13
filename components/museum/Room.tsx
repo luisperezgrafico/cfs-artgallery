@@ -12,6 +12,8 @@ interface RoomProps {
   ceilingColor?: string;
   floorColor?: string;
   trimColor?: string;
+  /** Room whose finishes to use (floor, and anything else keyed by room id) */
+  roomId?: string;
   /** Width to leave free in the middle of the back baseboard, for the entrance portal */
   portalGap?: number;
 }
@@ -63,6 +65,7 @@ const Room: React.FC<RoomProps> = ({
   ceilingColor = '#1a1538',
   floorColor   = '#050505',
   trimColor    = '#3b2a1e',
+  roomId,
   portalGap    = 0,
 }) => {
   const frontWidth     = width - 1 * (length * Math.sin(wallTiltAngle));
@@ -72,7 +75,13 @@ const Room: React.FC<RoomProps> = ({
   return (
     <group>
       {/* Floor */}
-      <Floor width={ceilingWidth} length={length} position={[0, 0, length / 2]} color={floorColor} />
+      <Floor
+        width={ceilingWidth}
+        length={length}
+        position={[0, 0, length / 2]}
+        color={floorColor}
+        roomId={roomId}
+      />
 
       {/* Ceiling */}
       <mesh position={[0, height, length / 2]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
