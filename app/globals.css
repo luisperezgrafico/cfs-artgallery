@@ -29,8 +29,8 @@
     --floating-control: #1a1a1a;
     --floating-control-hover: #262626;
     --floating-control-disabled: #141414;
-    --floating-text: #f1eadf;
-    --floating-muted: #cbc0af;
+    --floating-text: #f2f2f2;
+    --floating-muted: #c2c2c2;
     --floating-active: #eaeaea;
     --floating-active-text: #1a1a1a;
 
@@ -45,27 +45,27 @@
     --door-btn-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
 
     --panel-bg: rgba(16, 16, 16, 0.92);
-    --panel-border: rgba(180, 160, 128, 0.18);
+    --panel-border: rgba(255, 255, 255, 0.14);
     --panel-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
-    --panel-title: #ece6da;
-    --panel-subtitle: #b3a894;
-    --panel-text: #c9c1b2;
-    --panel-separator: rgba(180, 160, 128, 0.18);
+    --panel-title: #f0f0f0;
+    --panel-subtitle: #adadad;
+    --panel-text: #c6c6c6;
+    --panel-separator: rgba(255, 255, 255, 0.12);
     --panel-btn-bg: rgba(255, 255, 255, 0.10);
     --panel-btn-bg-hover: rgba(255, 255, 255, 0.20);
-    --panel-btn-text: #ece6da;
+    --panel-btn-text: #f0f0f0;
     --panel-chip-bg: rgba(255, 255, 255, 0.14);
-    --panel-chip-border: rgba(180, 160, 128, 0.44);
-    --panel-chip-text: #ece6da;
+    --panel-chip-border: rgba(255, 255, 255, 0.30);
+    --panel-chip-text: #f0f0f0;
 
     /* form fields inside overlay panels */
     --field-bg: rgba(255, 255, 255, 0.06);
     --field-bg-soft: rgba(255, 255, 255, 0.03);
-    --field-border: rgba(180, 160, 128, 0.28);
-    --field-text: #ece6da;
-    --field-label: #b3a894;
-    --field-hint: #8a8272;
-    --field-icon: #b3a894;
+    --field-border: rgba(255, 255, 255, 0.18);
+    --field-text: #f0f0f0;
+    --field-label: #adadad;
+    --field-hint: #8c8c8c;
+    --field-icon: #adadad;
   }
 
 input::placeholder,
