@@ -70,7 +70,7 @@ const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme, roomId }) => {
         <color attach="background" args={['#000000']} />
         <Suspense fallback={null}>
           <Museum images={images} theme={theme} roomId={roomId} />
-          <Environment files={ENVIRONMENT_MAP} />
+          <Environment files={ENVIRONMENT_MAP} environmentIntensity={0.7} />
           <AssetsLoadedSignal onLoaded={handleAssetsLoaded} />
         </Suspense>
       </Canvas>

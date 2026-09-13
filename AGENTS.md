@@ -126,7 +126,8 @@ These have held up so far; they came from `SCOPE.md` and from what the community
 These are traps, not a status board: what is built and what is next lives in `docs/feedback-triage.md` and in Git, which do not go stale the way a checklist here does.
 
 - **No linter configured**; `npx tsc --noEmit` plus the test suites are the checks.
-- **Floor reflection flicker** (`MeshReflectorMaterial` on the floor) is a known issue — parked, not being worked on right now.
+- **The floor shines from the environment map, not the reflector.** `MeshReflectorMaterial`'s `mixStrength` is nearly inert on this floor (measured: ~7% darker with it almost off). What lights the floor is the `<Environment>` HDRI; `environmentIntensity` (currently 0.7) is the lever for how strong the floor reflection reads. Turn the environment off and the floor goes almost black.
+- **Floor reflection flicker** was the cheap tier's reflection resolution: 124 px made the reflection crawl during camera moves. Raised to 512 px per room (`utils/floorDesign.ts`, the `low` finish), which cut it noticeably.
 - **`useDetectGPU` (drei) downloads a benchmark table from unpkg** on every load. When that fetch fails it falls back to tier 1, and `Floor.tsx` quietly serves the cheap, less reflective floor — so a visitor on a bad connection gets a worse-looking gallery with no error anywhere. The environment map used to be a second such dependency; it is now served from `public/hdri/` (see `docs/environment-map.md`).
 
 ## Theming (dark / light)
