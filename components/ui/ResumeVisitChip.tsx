@@ -119,12 +119,12 @@ export default function ResumeVisitChip({ style }: { style?: React.CSSProperties
         <button
           type="button"
           onClick={resume}
-          aria-label={`Return to your visit: ${where}`}
+          aria-label={`Return to your last visit: ${where}`}
           className="flex items-center gap-2 min-w-0 text-[var(--floating-text)] transition-colors"
         >
           <Undo2 size={15} className="shrink-0" />
-          <span className="text-sm font-medium whitespace-nowrap">Return to your visit</span>
-          <span className="text-xs text-[var(--floating-muted)] truncate">{saved.roomName}</span>
+          <span className="text-sm font-medium whitespace-nowrap">Return to your last visit</span>
+          <span className="hidden sm:inline text-xs text-[var(--floating-muted)] truncate">{saved.roomName}</span>
           {saved.title && (
             <span className="hidden sm:inline text-xs text-[var(--floating-muted)] truncate">
               · {saved.title}

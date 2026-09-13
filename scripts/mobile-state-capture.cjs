@@ -83,7 +83,7 @@ function probe(args) {
 
   const stripRoot = document.querySelector('.now-playing-strip');
   const stripPill = stripRoot ? stripRoot.querySelector('div') : null;
-  const chipButton = document.querySelector('[aria-label^="Return to your visit"]');
+  const chipButton = document.querySelector('[aria-label^="Return to your last visit"]');
   const chipPill = chipButton ? chipButton.parentElement : null;
 
   const playButton = byText('Start the Tour');

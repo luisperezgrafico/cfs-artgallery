@@ -159,6 +159,21 @@ describe('a link never rewrites the saved visit position', () => {
   });
 });
 
+describe('return-visit chip copy', () => {
+  it('uses concise mobile copy and reserves saved location details for desktop', () => {
+    const chip = readFileSync(new URL('../../components/ui/ResumeVisitChip.tsx', import.meta.url), 'utf8');
+
+    expect(chip).toContain('>Return to your last visit</span>');
+    expect(chip).toContain('hidden sm:inline text-xs text-[var(--floating-muted)] truncate');
+    expect(chip).toContain('{saved.roomName}');
+    expect(chip).toContain('· {saved.title}');
+    expect(chip).not.toContain('>Return to your visit</span>');
+
+    const mobileCapture = readFileSync(new URL('../../scripts/mobile-state-capture.cjs', import.meta.url), 'utf8');
+    expect(mobileCapture).toContain('[aria-label^="Return to your last visit"]');
+  });
+});
+
 describe('entering the gallery: the room is resumed, the artwork is not', () => {
   beforeEach(() => {
     (globalThis as unknown as { window: unknown }).window = { localStorage: fakeStorage() };
