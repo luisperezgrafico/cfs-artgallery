@@ -5,6 +5,7 @@ import { useTexture, Text } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ImageMetadata } from '../../types/museum';
+import FrameMoulding from './FrameMoulding';
 
 interface FrameProps {
   position: [number, number, number];
@@ -214,15 +215,14 @@ const Frame = forwardRef<THREE.Mesh, FrameProps>(
 
     return (
       <group position={position} rotation={rotation}>
-        {/* Frame box */}
+        {/* Keep the camera target and hit area stable; the visible frame is hollow. */}
         <mesh
           ref={internalRef}
           onClick={() => onFrameClick?.(index)}
-          castShadow
-          receiveShadow
         >
           <boxGeometry args={[width + 0.1, height + 0.1, 0.1]} />
-          <meshStandardMaterial color="#222" />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+          <FrameMoulding width={width} height={height} roomId={roomId} />
 
           <mesh position={[0, 0, 0.051]}>
             <planeGeometry args={[width, height]} />
