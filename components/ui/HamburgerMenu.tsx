@@ -153,7 +153,11 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
   const labelVisible = shouldShowMenuLabel({ viewingArtwork, topStripMessage });
 
   return (
-    <div style={style}>
+    // The drawer has to sit above the floating chrome. The visit-resume chip is
+    // a sibling with its own z-index and the later position in the DOM, so
+    // without an explicit stacking level here (the animated wrapper makes this
+    // element its own context) the chip drew over the open drawer.
+    <div style={{ ...style, position: 'relative', zIndex: 40 }}>
       {/* Backdrop */}
       {isOpen && (
         <div

@@ -214,7 +214,7 @@ const ArtworkInfoModal: React.FC<{ style?: React.CSSProperties }> = ({ style }) 
         }}
       >
         <div
-          className="pointer-events-auto w-full max-w-lg flex flex-col max-h-[85dvh]"
+          className="panel-warm pointer-events-auto w-full max-w-lg flex flex-col max-h-[85dvh]"
           style={{
             background: 'var(--panel-bg)',
             border: '1px solid var(--panel-border)',

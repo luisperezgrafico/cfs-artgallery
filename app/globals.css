@@ -26,9 +26,9 @@
        matched the ochre one. */
     --floating-surface: rgba(18, 18, 18, 0.9);
     --floating-surface-strong: rgba(12, 12, 12, 0.96);
-    --floating-control: #1a1a1a;
-    --floating-control-hover: #262626;
-    --floating-control-disabled: #141414;
+    --floating-control: #2e2e2e;
+    --floating-control-hover: #3d3d3d;
+    --floating-control-disabled: #191919;
     --floating-text: #f2f2f2;
     --floating-muted: #c2c2c2;
     --floating-active: #eaeaea;
@@ -67,6 +67,36 @@
     --field-hint: #8c8c8c;
     --field-icon: #adadad;
   }
+
+/*
+ * Warm panel variant — the two artwork modals (info and submit) keep the
+ * original wood/beige chrome on purpose: they are read while standing in front
+ * of a piece, and the panel is meant to feel part of the room rather than part
+ * of the app. Add `panel-warm` to a panel root and the panel/field tokens below
+ * it are re-pointed. In light theme the `:root[data-theme='light']` block still
+ * wins, so nothing changes there.
+ */
+.panel-warm {
+  --panel-bg: rgba(30, 27, 22, 0.98);
+  --panel-border: rgba(180, 160, 128, 0.18);
+  --panel-title: #ece6da;
+  --panel-subtitle: #b3a894;
+  --panel-text: #c9c1b2;
+  --panel-separator: rgba(180, 160, 128, 0.18);
+  --panel-btn-bg: rgba(180, 160, 128, 0.14);
+  --panel-btn-bg-hover: rgba(180, 160, 128, 0.26);
+  --panel-btn-text: #ece6da;
+  --panel-chip-bg: rgba(180, 160, 128, 0.22);
+  --panel-chip-border: rgba(180, 160, 128, 0.44);
+  --panel-chip-text: #ece6da;
+  --field-bg: rgba(255, 255, 255, 0.06);
+  --field-bg-soft: rgba(255, 255, 255, 0.03);
+  --field-border: rgba(180, 160, 128, 0.28);
+  --field-text: #ece6da;
+  --field-label: #b3a894;
+  --field-hint: #8a8272;
+  --field-icon: #b3a894;
+}
 
 input::placeholder,
 textarea::placeholder {
