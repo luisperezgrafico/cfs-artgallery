@@ -13,6 +13,24 @@ interface MuseumStageProps {
   roomId?: string;
 }
 
+/**
+ * The room's ambient/reflected light comes from a local HDRI, served from
+ * `public/hdri/` — never from a third-party CDN.
+ *
+ * `<Environment preset="city" />` fetched its map from `raw.githack.com` at
+ * runtime (drei's presets do that), so an unreachable CDN left the gallery
+ * stuck on "Loading" forever: the map loads inside the same Suspense boundary
+ * as the scene. Same image drei's `city` preset uses, so the rooms' walls,
+ * floor and frames keep reflecting exactly what they reflected before.
+ *
+ * Origin/licence: "Potsdamer Platz" by Greg Zaal (polyhaven.com, CC0) via
+ * pmndrs/drei-assets commit 456060a2 — the same image the `city` preset uses,
+ * downsampled 2x in linear space to 512x256 (387 KiB). See
+ * docs/environment-map.md for the hashes, the method, and why the smaller size
+ * costs nothing the renderer would have sampled.
+ */
+const ENVIRONMENT_MAP = '/hdri/potsdamer_platz_512.hdr';
+
 // Signals "assets loaded" from inside the Suspense boundary, not from its
 // fallback. The previous approach (mounting an empty fallback and firing on
 // its *unmount*) only works if Suspense actually falls back on the first
@@ -52,7 +70,7 @@ const MuseumStage: React.FC<MuseumStageProps> = ({ images, theme, roomId }) => {
         <color attach="background" args={['#000000']} />
         <Suspense fallback={null}>
           <Museum images={images} theme={theme} roomId={roomId} />
-          <Environment preset="city" />
+          <Environment files={ENVIRONMENT_MAP} />
           <AssetsLoadedSignal onLoaded={handleAssetsLoaded} />
         </Suspense>
       </Canvas>
