@@ -9,14 +9,14 @@ import MuseumStage from './MuseumStage';
 import UIElements from './ui/UIElements';
 import { ImageMetadata } from '../types/museum';
 import { getInitialFrameIndex, saveVisitPosition } from '../utils/userPreferences';
-import { GalleryLink, resolveLinkDestination } from '../utils/galleryLink';
+import { GalleryLink, isLinkLanding, resolveLinkDestination } from '../utils/galleryLink';
 import { ShelfProvider, useShelf } from '../contexts/ShelfContext';
 import { GuidedTourPreferenceProvider, GuidedTourEngineProvider } from '../contexts/GuidedTourContext';
 import { AmbientMusicProvider } from '../contexts/AmbientMusicContext';
 
 function VisitPositionPersistence({ roomId }: { roomId: string }) {
   const { currentFrameIndex, totalFrames } = useTour();
-  const { linkPlacedFrame, clearLinkPlacement } = useRoom();
+  const { linkLanding, clearLinkPlacement } = useRoom();
 
   React.useEffect(() => {
     // -1 means "not on an artwork right now" (quit, or sitting at the bench) —
@@ -26,13 +26,38 @@ function VisitPositionPersistence({ roomId }: { roomId: string }) {
     // the visitor's visit: their saved position predates the link and must
     // survive it. Compared by value, so the effect running twice (React strict
     // mode) cannot slip a save through between the two runs.
-    if (linkPlacedFrame?.roomId === roomId) {
-      if (linkPlacedFrame.frameIndex === currentFrameIndex) return;
+    if (linkLanding?.roomId === roomId && linkLanding.frameIndex !== null) {
+      if (linkLanding.frameIndex === currentFrameIndex) return;
       // They moved on by themselves: from here the position is theirs again.
       clearLinkPlacement();
     }
     saveVisitPosition(roomId, currentFrameIndex);
-  }, [roomId, currentFrameIndex, totalFrames, linkPlacedFrame, clearLinkPlacement]);
+  }, [roomId, currentFrameIndex, totalFrames, linkLanding, clearLinkPlacement]);
+
+  return null;
+}
+
+/**
+ * The offer to return to where the visitor was belongs to the moment of
+ * landing. The instant they navigate for themselves — another artwork, starting
+ * the tour, another room — they have decided where they want to be, and the
+ * offer is over for the session. It also has to end *there*: before this, the
+ * offer outlived the whole visit, and every room change remounted the chip and
+ * re-read the (by then overwritten) saved position, so returning once produced
+ * a fresh offer pointing back — an endless ping-pong between two rooms.
+ *
+ * The link's own landing is not navigation: compared by value with
+ * `isLinkLanding`, exactly as the visit-position persistence does it.
+ */
+function VisitorNavigationWatch({ roomId }: { roomId: string }) {
+  const { arrivedViaLink, linkLanding, visitReturn, markVisitorNavigated } = useRoom();
+  const { currentFrameIndex } = useTour();
+
+  useEffect(() => {
+    if (!arrivedViaLink || visitReturn.navigated) return;
+    if (isLinkLanding(linkLanding, roomId, currentFrameIndex)) return;
+    markVisitorNavigated();
+  }, [arrivedViaLink, currentFrameIndex, linkLanding, markVisitorNavigated, roomId, visitReturn.navigated]);
 
   return null;
 }
@@ -104,11 +129,13 @@ function SharedLinkResolver({ roomId, catalogReady }: { roomId: string; catalogR
 
     markArrivedViaLink();
 
-    if (destination.kind === 'artwork') {
-      // Tell the persistence this frame is the link's doing, not the visitor's:
-      // their saved position must survive opening someone's link.
-      registerLinkPlacement(destination.roomId, destination.frameIndex);
-    }
+    // Tell the persistence (and the offer) where this link landed: the sender's
+    // choice, not the visitor's. A room-only landing carries no frame — the
+    // point is that arriving there is not the visitor navigating.
+    registerLinkPlacement(
+      destination.roomId,
+      destination.kind === 'artwork' ? destination.frameIndex : null,
+    );
 
     if (destination.roomId !== roomId) {
       if (destination.kind === 'artwork') {
@@ -165,6 +192,7 @@ function GalleryContent({ catalogReady }: { catalogReady: boolean }) {
           <GuidedTourEngineProvider>
             <ConsumePendingTourTarget roomId={activeRoom.id} />
             <SharedLinkResolver roomId={activeRoom.id} catalogReady={catalogReady} />
+            <VisitorNavigationWatch roomId={activeRoom.id} />
             <ShelfCatalogSync enabled={catalogReady} />
             <VisitPositionPersistence roomId={activeRoom.id} />
             <SwipeableContainer>

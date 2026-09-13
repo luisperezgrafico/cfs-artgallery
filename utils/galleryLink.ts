@@ -175,19 +175,87 @@ export function describeSavedPosition(
   };
 }
 
+/** Where a shared link put the visitor: its room, and the frame it placed (null for a link to a room, which lands on the overview). */
+export interface LinkLanding {
+  roomId: string;
+  frameIndex: number | null;
+}
+
 /**
- * Whether to offer "return to where you left off". Only worth it when the
- * visitor arrived through a link (the gallery jumped somewhere they did not
- * choose) and their own saved visit is a real artwork slot somewhere else.
- * Never a modal, never blocking: just a discreet control they can ignore.
+ * Whether this (room, frame) is still where the shared link put the visitor.
+ * The link's own landing is not the visitor navigating: it is the same
+ * distinction the visit-position persistence makes, and both need it — the
+ * persistence so it does not save the sender's frame over the visitor's
+ * position, the offer below so it is not dismissed on arrival.
+ */
+export function isLinkLanding(
+  landing: LinkLanding | null,
+  roomId: string,
+  frameIndex: number,
+): boolean {
+  if (!landing) return false;
+  return landing.roomId === roomId && frameIndex === (landing.frameIndex ?? -1);
+}
+
+/**
+ * The offer to return to where the visitor was before this visit began.
+ *
+ * `beforeEntry` is captured exactly once, when the link is opened, and is never
+ * read from storage again: the visit-position persistence keeps overwriting the
+ * stored position as the visitor moves, so re-reading would turn the offer into
+ * "go back to where you were ten seconds ago" — and, every time a room change
+ * remounts the chip, into an endless ping-pong between two rooms.
+ *
+ * `navigated` and `dismissed` are one-way: once the offer is over it is over for
+ * the session.
+ */
+export interface VisitReturnState {
+  /** Where the visitor was when the link was opened. Captured at entry, never re-read. */
+  beforeEntry: SavedVisitPosition | null;
+  /** The visitor has navigated for themselves since landing. */
+  navigated: boolean;
+  /** The visitor closed the offer. */
+  dismissed: boolean;
+}
+
+export function initialVisitReturnState(
+  savedAtEntry: SavedVisitPosition | null,
+): VisitReturnState {
+  return { beforeEntry: savedAtEntry, navigated: false, dismissed: false };
+}
+
+/** The visitor moved on their own: the offer is over. */
+export function withVisitorNavigation(state: VisitReturnState): VisitReturnState {
+  return state.navigated ? state : { ...state, navigated: true };
+}
+
+/** The visitor closed the chip: it stays closed. */
+export function withDismissal(state: VisitReturnState): VisitReturnState {
+  return state.dismissed ? state : { ...state, dismissed: true };
+}
+
+/**
+ * Whether to offer "return to where you left off".
+ *
+ * One rule: the offer belongs to the moment of landing, and it is over the
+ * instant the visitor navigates for themselves — another artwork, starting the
+ * tour, another room. By then they have decided where they want to be, and
+ * offering them somewhere else is noise. Never a modal, never blocking: just a
+ * discreet control they can also close early.
  */
 export function shouldOfferVisitReturn(args: {
   arrivedViaLink: boolean;
   saved: SavedPositionDescription | null;
   currentRoomId: string;
   currentFrameIndex: number;
+  visitorNavigated: boolean;
+  dismissed: boolean;
 }): boolean {
-  const { arrivedViaLink, saved, currentRoomId, currentFrameIndex } = args;
+  const {
+    arrivedViaLink, saved, currentRoomId, currentFrameIndex, visitorNavigated, dismissed,
+  } = args;
   if (!arrivedViaLink || !saved) return false;
+  if (visitorNavigated || dismissed) return false;
+  // Already standing on the artwork the offer would take them to.
   return !(saved.roomId === currentRoomId && saved.frameIndex === currentFrameIndex);
 }
