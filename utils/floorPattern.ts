@@ -98,8 +98,8 @@ export const FLOOR_PATTERNS: Record<string, FloorPattern> = {
     // Ardoise, wet polished slate — and the room where the *generated* mask was
     // abandoned: its reflection is a sharp mirror, so dimming the reflection
     // reads as stripes over a mirrored room, not as stone. What works here is a
-    // photograph laid on top (study `room-2-pat-marmol-azul-suave`): a real
-    // blue-black marble over the mirror, at the dose where the room's reflection
+    // photograph laid on top: a real blue-black marble over the mirror, at the
+    // dose where the room's reflection
     // — its whole identity — is still legible. Measured: the floor band goes
     // 29.4 -> 52.0 with the wall band unmoved (87.6).
     id: 'room-2', room: 'room-2', kind: 'marble-veins', technique: 'overlay-mesh',
@@ -129,10 +129,10 @@ export const FLOOR_PATTERNS: Record<string, FloorPattern> = {
     // (concrete036 at 14%) read too quiet next to the other three rooms; and a
     // floor with its own figure was worth more than the room's title of darkest
     // floor. What won is a poured aggregate — terrazzo chips tinted into the
-    // room's indigo, study `room-4-pat-terrazo-oscuro` — the one language none
-    // of the other rooms speaks. Measured on the bare floor: 26.6 -> 51.4, wall
-    // band unmoved (91.0). The smooth surface stays available as
-    // `room-4-pat-liso-indigo-*` for a quieter room.
+    // room's indigo — the one language none of the other rooms speaks. Measured
+    // on the bare floor: 26.6 -> 51.4, wall band unmoved (91.0). The quieter
+    // options stay as studies: `room-4-pat-liso-indigo-medio` (the surface this
+    // room had before) and `room-4-pat-terrazo-indigo` (same stone, less chip).
     id: 'room-4', room: 'room-4', kind: 'lime-cloud', technique: 'overlay-mesh',
     source: 'imported', file: '/floor-pattern/terrazzo005_512.jpg',
     tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
@@ -142,224 +142,58 @@ export const FLOOR_PATTERNS: Record<string, FloorPattern> = {
 
 /** Prototypes: reachable through `?floor=<key>`, never drawn on an ordinary visit. */
 export const FLOOR_PATTERN_STUDIES: Record<string, FloorPattern> = {
-  // Room I — the three rounds it took to get to the sober veining above.
-  'room-1-pat-marble': {
-    id: 'room-1-pat-marble', room: 'room-1', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 3, depth: 0.85, bands: 2, cross: 2, sharpness: 13, warp: 1.1, grain: 0.12,
-    gain: 1.15, opacity: 0, roughness: 0, tint: '#2b1c11',
-  },
-  'room-1-pat-marble-fine': {
-    id: 'room-1-pat-marble-fine', room: 'room-1', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 1.8, depth: 0.75, bands: 3, cross: 3, sharpness: 17, warp: 1.3, grain: 0.16,
-    gain: 1.12, opacity: 0, roughness: 0, tint: '#2b1c11',
-  },
-  'room-1-pat-marble-plain': {
-    id: 'room-1-pat-marble-plain', room: 'room-1', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 2.4, depth: 0.6, bands: 3, cross: 3, sharpness: 22, warp: 0.7, grain: 0.08,
-    gain: 1.1, opacity: 0, roughness: 0, tint: '#2b1c11',
-  },
-  'room-1-pat-smoke': {
-    id: 'room-1-pat-smoke', room: 'room-1', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 3.4, depth: 0.8, bands: 2, cross: 2, sharpness: 7, warp: 1.4, grain: 0.22,
-    gain: 1.2, opacity: 0, roughness: 0, tint: '#2b1c11',
-  },
-  'room-1-pat-lime': {
-    id: 'room-1-pat-lime', room: 'room-1', kind: 'lime-cloud', technique: 'albedo-map',
-    tile: 4.2, depth: 0.5, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1.05, opacity: 0, roughness: 0, tint: '#2b1c11',
-  },
+  // Only two kinds of study earn their place here: one that proves a *technique*
+  // cannot work (so nobody reaches for it again), and one stone a room could
+  // still choose. The dose scans, the rejected rounds and the dead ends were
+  // deleted on purpose — the numbers that decided each room are in the comment
+  // above that room, which is where a reader looks.
+
+  // Room I — the rejected technique. Laid over a diffuse room the layer reads as
+  // waves of fog, not stone: it lifted the floor band to 33.8 against the 30.4
+  // this room holds.
   'room-1-pat-layer': {
     id: 'room-1-pat-layer', room: 'room-1', kind: 'marble-veins', technique: 'overlay-mesh',
     tile: 3, depth: 0.85, bands: 2, cross: 2, sharpness: 13, warp: 1.1, grain: 0.12,
     gain: 1, opacity: 0.22, roughness: 0.5, tint: '#2b1c11',
   },
 
-  // Room II — Ardoise, wet polished slate. Slate cleaves in parallel planes, so
-  // the veins here run long, close and barely warped. Round 1 (six to ten *thin*
-  // lines, depth 0.45-0.55) perturbed the floor band about half as much as Room
-  // I's accepted stone and read as nothing: what carries a pattern here is how
-  // much floor a vein covers, not how sharp its edge is. These four widen the
-  // band, raise the depth, and keep one candidate at the ceiling to find out
-  // whether this room can carry a pattern at all.
-  'room-2-pat-laja': {
-    id: 'room-2-pat-laja', room: 'room-2', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 3.2, depth: 0.85, bands: 5, cross: 1, sharpness: 9, warp: 0.3, grain: 0.1,
-    gain: 1.12, opacity: 0, roughness: 0, tint: '#101c2c',
-  },
-  'room-2-pat-laja-fina': {
-    id: 'room-2-pat-laja-fina', room: 'room-2', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 3.2, depth: 0.95, bands: 9, cross: 1, sharpness: 13, warp: 0.3, grain: 0.14,
-    gain: 1.18, opacity: 0, roughness: 0, tint: '#101c2c',
-  },
-  'room-2-pat-cruzada': {
-    // The same stone with the grain running across the room instead, to judge
-    // direction rather than density.
-    id: 'room-2-pat-cruzada', room: 'room-2', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 3.2, depth: 0.9, bands: 1, cross: 7, sharpness: 11, warp: 0.3, grain: 0.12,
-    gain: 1.15, opacity: 0, roughness: 0, tint: '#101c2c',
-  },
+  // Room II — the ceiling probe. This room's reflection is a sharp mirror, and a
+  // generated mask can only dim the reflection, so it reads as stripes over a
+  // mirrored room. This is that mask at its strongest dose; it still does not
+  // read as stone, which is why the photograph above carries this room.
   'room-2-pat-max': {
-    // The ceiling probe: if the floor band still does not move here, the room
-    // cannot carry a pattern without giving up the mirror that defines it.
     id: 'room-2-pat-max', room: 'room-2', kind: 'marble-veins', technique: 'albedo-map',
     tile: 3.2, depth: 1, bands: 5, cross: 1, sharpness: 9, warp: 0.3, grain: 0.1,
     gain: 1.2, opacity: 0, roughness: 0, tint: '#101c2c',
   },
-  // Room II, round 4 — the photograph route. A generated mask can only dim the
-  // reflection; a *photograph* of stone laid on top brings its own colour and
-  // veining and a lit surface, at the price of covering the mirror it sits on.
-  // Three doses of one blue-black marble plus a light grey control, so the
-  // question is how much veil this room tolerates, not which stone.
-  // Room III — Vert Forêt, matte absorbent stone. The mirror is nearly gone here
-  // (mirror 0.14), so a generated mask has almost nothing to modulate; a
-  // photograph is the only lever that carries. Two stones: a charcoal marble
-  // with fine veining, which stays dark and so protects the room's identity, and
-  // a plain grey concrete, which reads as smooth matte stone but lifts the band.
-  // Each at two tints, plus one lower dose, because 'how much' is the open
-  // question and 'green' is the room's palette, not necessarily its floor.
+
+  // Room III — the runner-up: a charcoal marble with fine veining. It works, and
+  // it stays dark. It was dropped for its language, not its numbers — two dark
+  // veined marbles in Rooms II and III read as one floor moved around. This is
+  // the stone to reach for if this room ever wants to be darker.
   'room-3-pat-negro-veta': {
     id: 'room-3-pat-negro-veta', room: 'room-3', kind: 'lime-cloud',
     technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble016_512.jpg',
     tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
     gain: 1, opacity: 0.18, roughness: 0.65, tint: '#ffffff',
   },
-  'room-3-pat-negro-verde': {
-    id: 'room-3-pat-negro-verde', room: 'room-3', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble016_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.24, roughness: 0.65, tint: '#6d8f74',
-  },
-  'room-3-pat-hormigon': {
-    id: 'room-3-pat-hormigon', room: 'room-3', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete030_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.18, roughness: 0.8, tint: '#ffffff',
-  },
-  'room-3-pat-hormigon-verde': {
-    id: 'room-3-pat-hormigon-verde', room: 'room-3', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete030_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.22, roughness: 0.8, tint: '#8aa38f',
-  },
-  'room-3-pat-hormigon-suave': {
-    id: 'room-3-pat-hormigon-suave', room: 'room-3', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete030_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.1, roughness: 0.8, tint: '#ffffff',
-  },
-  // Room IV — Indigo, dark polished resin. Not stone: a veined marble here would
-  // repeat Room II's language, so the four options are two *poured* materials
-  // (a speckled chip floor and a plain mottled one, both tinted into the room's
-  // indigo) and two generated swirls — this room's reflection is diffuse
-  // (blurFactor ~1.2, like Room I), so a generated mask does read as material
-  // here, and it would be the only room carrying no downloaded asset.
-  'room-4-pat-terrazo-indigo': {
-    id: 'room-4-pat-terrazo-indigo', room: 'room-4', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/terrazzo005_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.16, roughness: 0.4, tint: '#6f68a0',
-  },
-  'room-4-pat-liso-indigo': {
-    id: 'room-4-pat-liso-indigo', room: 'room-4', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete036_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.2, roughness: 0.35, tint: '#7b74ab',
-  },
-  'room-4-pat-liso-indigo-suave': {
-    id: 'room-4-pat-liso-indigo-suave', room: 'room-4', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete036_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.1, roughness: 0.35, tint: '#7b74ab',
-  },
+
+  // Room IV — the quieter alternative: a plain mottled surface poured in the
+  // room's indigo. This is the floor this room had before the aggregate, kept
+  // for a room that wants presence without figure.
   'room-4-pat-liso-indigo-medio': {
     id: 'room-4-pat-liso-indigo-medio', room: 'room-4', kind: 'lime-cloud',
     technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete036_512.jpg',
     tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
     gain: 1, opacity: 0.14, roughness: 0.35, tint: '#7b74ab',
   },
-  // Room IV, round 2 — the room reads too quiet next to the other three, so this
-  // isolates the two levers that actually move it: dose (more of the same
-  // material) and contrast (a material with its own figure). A third option in
-  // the room's indigo lays down a veined marble, to judge whether reusing Room
-  // II's language is worth the presence. Plain smooth surfaces with *less*
-  // deviation than the current one were measured and dropped: fine noise is not
-  // what the eye reads at this scale.
-  'room-4-pat-liso-fuerte': {
-    id: 'room-4-pat-liso-fuerte', room: 'room-4', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/concrete036_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.28, roughness: 0.35, tint: '#7b74ab',
-  },
-  'room-4-pat-terrazo': {
-    id: 'room-4-pat-terrazo', room: 'room-4', kind: 'lime-cloud',
+  // Room IV — the same aggregate at a lighter dose, if the shipped one ever
+  // reads as too much chip for this room.
+  'room-4-pat-terrazo-indigo': {
+    id: 'room-4-pat-terrazo-indigo', room: 'room-4', kind: 'lime-cloud',
     technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/terrazzo005_512.jpg',
     tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.2, roughness: 0.35, tint: '#6f68a0',
-  },
-  'room-4-pat-terrazo-oscuro': {
-    id: 'room-4-pat-terrazo-oscuro', room: 'room-4', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/terrazzo005_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.24, roughness: 0.35, tint: '#3a3560',
-  },
-  'room-4-pat-marmol-indigo': {
-    id: 'room-4-pat-marmol-indigo', room: 'room-4', kind: 'lime-cloud',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble016_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.18, roughness: 0.3, tint: '#6b64a8',
-  },
-  'room-4-pat-resina-onda': {
-    id: 'room-4-pat-resina-onda', room: 'room-4', kind: 'marble-veins',
-    technique: 'albedo-map', tile: 6, depth: 0.6, bands: 1, cross: 1, sharpness: 5,
-    warp: 1.9, grain: 0.35, gain: 1.06, opacity: 0, roughness: 0, tint: '#160f30',
-  },
-  'room-4-pat-resina-onda-suave': {
-    id: 'room-4-pat-resina-onda-suave', room: 'room-4', kind: 'marble-veins',
-    technique: 'albedo-map', tile: 6.5, depth: 0.32, bands: 1, cross: 1, sharpness: 6,
-    warp: 1.9, grain: 0.4, gain: 1.03, opacity: 0, roughness: 0, tint: '#160f30',
-  },
-  'room-2-pat-marmol-azul-suave': {
-    id: 'room-2-pat-marmol-azul-suave', room: 'room-2', kind: 'marble-veins',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble023_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.18, roughness: 0.35, tint: '#ffffff',
-  },
-  'room-2-pat-marmol-azul-media': {
-    id: 'room-2-pat-marmol-azul-media', room: 'room-2', kind: 'marble-veins',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble023_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.34, roughness: 0.35, tint: '#ffffff',
-  },
-  'room-2-pat-marmol-azul-fuerte': {
-    id: 'room-2-pat-marmol-azul-fuerte', room: 'room-2', kind: 'marble-veins',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble023_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.55, roughness: 0.35, tint: '#ffffff',
-  },
-  'room-2-pat-marmol-gris': {
-    id: 'room-2-pat-marmol-gris', room: 'room-2', kind: 'marble-veins',
-    technique: 'overlay-mesh', source: 'imported', file: '/floor-pattern/marble012_512.jpg',
-    tile: 2.4, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1, opacity: 0.3, roughness: 0.35, tint: '#ffffff',
-  },
-  'room-2-pat-veta': {
-    // Round 3: the same perturbation, but irregular instead of parallel courses.
-    // Regular spacing is what reads as banding on a sharp reflection, so this
-    // wanders the way Room I's accepted marble does and drops the laja rhythm.
-    id: 'room-2-pat-veta', room: 'room-2', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 3, depth: 0.85, bands: 3, cross: 2, sharpness: 12, warp: 1.2, grain: 0.18,
-    gain: 1.12, opacity: 0, roughness: 0, tint: '#101c2c',
-  },
-  'room-2-pat-veta-suave': {
-    id: 'room-2-pat-veta-suave', room: 'room-2', kind: 'marble-veins', technique: 'albedo-map',
-    tile: 3, depth: 0.55, bands: 3, cross: 2, sharpness: 12, warp: 1.2, grain: 0.18,
-    gain: 1.06, opacity: 0, roughness: 0, tint: '#101c2c',
-  },
-  'room-2-pat-moteado': {
-    // No lines at all: broad matte patches, the way a worn slate floor is uneven.
-    id: 'room-2-pat-moteado', room: 'room-2', kind: 'lime-cloud', technique: 'albedo-map',
-    tile: 4.2, depth: 1, bands: 3, cross: 3, sharpness: 4, warp: 0, grain: 1,
-    gain: 1.15, opacity: 0, roughness: 0, tint: '#101c2c',
+    gain: 1, opacity: 0.16, roughness: 0.4, tint: '#6f68a0',
   },
 };
 

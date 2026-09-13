@@ -141,14 +141,14 @@ describe('floor patterns', () => {
     expect(floorPatternPreviewKey('?floor=nope')).toBeNull();
     expect(floorPatternForRoom('?floor=nope', 'room-1')).toBe(FLOOR_PATTERNS['room-1']);
 
-    const study = FLOOR_PATTERN_STUDIES['room-1-pat-smoke'];
-    expect(floorPatternForRoom('?floor=room-1-pat-smoke', 'room-1')).toBe(study);
+    const study = FLOOR_PATTERN_STUDIES['room-1-pat-layer'];
+    expect(floorPatternForRoom('?floor=room-1-pat-layer', 'room-1')).toBe(study);
     // The same key in another room resolves to that room's floor, never to this stone.
-    expect(floorPatternForRoom('?floor=room-1-pat-smoke', 'room-2')).toBe(floorPatternDesign('room-2'));
-    expect(floorPatternForRoom('?floor=room-1-pat-smoke', 'room-3')).toBe(floorPatternDesign('room-3'));
+    expect(floorPatternForRoom('?floor=room-1-pat-layer', 'room-2')).toBe(floorPatternDesign('room-2'));
+    expect(floorPatternForRoom('?floor=room-1-pat-layer', 'room-3')).toBe(floorPatternDesign('room-3'));
     // Only a room with no stone of its own falls all the way back to nothing —
     // now that all four have one, that means an unknown room id.
-    expect(floorPatternForRoom('?floor=room-1-pat-smoke', 'room-9')).toBeNull();
+    expect(floorPatternForRoom('?floor=room-1-pat-layer', 'room-9')).toBeNull();
     // An ordinary visit: no parameter, the room's own stone.
     expect(floorPatternForRoom('?room=room-1', 'room-1')).toBe(FLOOR_PATTERNS['room-1']);
     expect(floorPatternForRoom(null, 'room-1')).toBe(FLOOR_PATTERNS['room-1']);
