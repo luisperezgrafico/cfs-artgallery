@@ -15,6 +15,18 @@ const FINISH_KEYS = [
   'blur', 'depthScale', 'minDepthThreshold', 'maxDepthThreshold', 'resolution',
 ];
 
+/**
+ * Preview studies, grouped by the room they may be previewed in. One per room:
+ * the strongest attempt, kept so the finding (none of them beats its room's
+ * committed floor) can be checked in the browser.
+ */
+const PREVIEWS_BY_ROOM: Record<string, string[]> = {
+  'room-1': ['room-1-alt-study'],
+  'room-2': ['room-2-alt-study'],
+  'room-3': ['room-3-alt-study'],
+  'room-4': ['room-4-alt-study'],
+};
+
 /** Hue families the four rooms already carry; a tint must stay inside one of them. */
 const HEX = /^#[0-9a-f]{6}$/;
 
@@ -28,14 +40,51 @@ function finishes(design: FloorDesign): [FloorFinish, FloorFinish] {
 }
 
 describe('room floors', () => {
-  it('gives all four rooms a floor finish of their own and falls back to Room I', () => {
-    expect(Object.keys(FLOOR_DESIGNS).sort()).toEqual([...ROOM_IDS].sort());
-    for (const roomId of ROOM_IDS) expect(FLOOR_DESIGNS[roomId]).toBeDefined();
-    // Four distinct finishes, one per room.
+  it('keeps one committed reflector-only finish per room and falls back to Room I', () => {
+    for (const roomId of ROOM_IDS) {
+      expect(FLOOR_DESIGNS[roomId]).toBeDefined();
+      expect(FLOOR_DESIGNS[roomId].texture).toBeNull();
+      // Nothing of the preview machinery reaches a committed floor.
+      expect(FLOOR_DESIGNS[roomId].distortion, `${roomId} distortion`).toBe(0);
+      expect(FLOOR_DESIGNS[roomId].bumpScale, `${roomId} bumpScale`).toBe(0);
+    }
+    // Four distinct committed finishes; preview alternatives live beside them.
     expect(new Set(ROOM_IDS.map(roomId => FLOOR_DESIGNS[roomId].id)).size).toBe(4);
     expect(floorDesignForRoom('room-3')).toBe(FLOOR_DESIGNS['room-3']);
     expect(floorDesignForRoom('room-99')).toBe(FLOOR_DESIGNS['room-1']);
     expect(floorDesignForRoom()).toBe(FLOOR_DESIGNS['room-1']);
+  });
+
+  it('gives every preview finish a material, and its room\'s own reflection unchanged', () => {
+    for (const [roomId, keys] of Object.entries(PREVIEWS_BY_ROOM)) {
+      const committed = FLOOR_DESIGNS[roomId];
+      expect(keys.length, `${roomId} previews`).toBeGreaterThanOrEqual(1);
+      for (const key of keys) {
+        const design = FLOOR_DESIGNS[key];
+        expect(design, `${key} registered`).toBeDefined();
+        // A preview is only reachable from its own room; another room's preview
+        // is not a destination.
+        expect(floorDesignForRoom(roomId, key)).toBe(design);
+        expect(floorDesignForRoom('room-9', key)).toBe(FLOOR_DESIGNS['room-1']);
+        // The material: present, and in a band where it displaces the reflection
+        // organically instead of tearing the image off the room.
+        expect(design.texture, `${key} texture`).not.toBeNull();
+        expect(design.distortion, `${key} distortion`).toBeGreaterThan(0);
+        expect(design.distortion, `${key} distortion`).toBeLessThanOrEqual(0.2);
+        expect(design.bumpScale, `${key} bumpScale`).toBeGreaterThan(0);
+        expect(design.bumpScale, `${key} bumpScale`).toBeLessThanOrEqual(0.03);
+        // The rule two failed preview sets broke, from opposite directions: a
+        // preview changes how the reflection breaks, never how much of it there
+        // is. Every reflector value stays exactly the committed one, in both
+        // tiers, so the floor cannot come out dimmer (the multiply-veil set) or
+        // brighter (the roughnessMap set) than the room it belongs to.
+        expect(design.standard, `${key} standard`).toEqual(committed.standard);
+        expect(design.low, `${key} low tier`).toEqual(committed.low);
+        // The room's palette is not the preview's to repaint.
+        expect(design.tint, `${key} tint`).toBe(committed.tint);
+        expect(design.tintMix, `${key} tintMix`).toBe(committed.tintMix);
+      }
+    }
   });
 
   it('keeps every value the reflector shader takes inside a sane, finite range', () => {
