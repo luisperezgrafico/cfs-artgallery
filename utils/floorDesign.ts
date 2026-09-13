@@ -25,10 +25,10 @@ import * as THREE from 'three';
  *  - the moment a value changes, drei rebuilds the render targets, so these are
  *    read once per room mount — not animated, not per frame.
  *
- * `low` is not a second design: it is the same finish at 124 px, where a sharp
- * reflection crawls, so it leans harder on the blurred one (more roughness,
- * wider blur). Mirror, strength, metalness, tint and the depth fade stay put,
- * so the room still reads as itself on a phone.
+ * `low` is not a second design: it is the same finish at 512 px, where a sharp
+ * reflection still crawls, so it leans harder on the blurred one (more
+ * roughness, wider blur). Mirror, strength, metalness, tint and the depth fade
+ * stay put, so the room still reads as itself on a phone.
  */
 
 export interface FloorFinish {
@@ -58,7 +58,7 @@ export interface FloorDesign {
   id: 'waxed-sienna' | 'wet-slate' | 'matte-stone' | 'polished-resin';
   /** Full-quality finish, for a desktop GPU. */
   standard: FloorFinish;
-  /** Same finish at 124 px for phones and low-tier GPUs. Never costlier. */
+  /** Same finish at 512 px for phones and low-tier GPUs. Never costlier. */
   low: FloorFinish;
   /**
    * Hue nudge toward a colour of the room's own family, at `tintMix`. Null
@@ -79,15 +79,15 @@ export const FLOOR_DESIGNS: Record<string, FloorDesign> = {
     tint: '#2e1a0e', tintMix: 0.16,
     standard: {
       mirror: 0.42, roughness: 0.95, metalness: 0.34,
-      mixBlur: 1.05, mixStrength: 13, blur: [340, 120],
+      mixBlur: 1.05, mixStrength: 6, blur: [340, 120],
       depthScale: 1.2, minDepthThreshold: 0.4, maxDepthThreshold: 1.4,
       resolution: 1024,
     },
     low: {
       mirror: 0.42, roughness: 1, metalness: 0.34,
-      mixBlur: 1.15, mixStrength: 13, blur: [420, 150],
+      mixBlur: 1.15, mixStrength: 6, blur: [420, 150],
       depthScale: 1.2, minDepthThreshold: 0.4, maxDepthThreshold: 1.4,
-      resolution: 124,
+      resolution: 512,
     },
   },
 
@@ -106,17 +106,17 @@ export const FLOOR_DESIGNS: Record<string, FloorDesign> = {
     tint: '#101c2c', tintMix: 0.14,
     standard: {
       mirror: 0.68, roughness: 0.9, metalness: 0.52,
-      mixBlur: 0.45, mixStrength: 9, blur: [150, 60],
+      mixBlur: 0.45, mixStrength: 5, blur: [150, 60],
       depthScale: 0.9, minDepthThreshold: 0.45, maxDepthThreshold: 1.45,
       resolution: 1024,
     },
     low: {
-      // 124 px of reflection runs and crawls, so the cheap tier leans on the
-      // blurred copy (blurFactor 0.41 -> 0.43).
+      // A sharp reflection runs and crawls on a phone, so the cheap tier leans
+      // on the blurred copy (blurFactor 0.41 -> 0.43).
       mirror: 0.68, roughness: 0.95, metalness: 0.52,
-      mixBlur: 0.45, mixStrength: 9, blur: [220, 90],
+      mixBlur: 0.45, mixStrength: 5, blur: [220, 90],
       depthScale: 0.9, minDepthThreshold: 0.45, maxDepthThreshold: 1.45,
-      resolution: 124,
+      resolution: 512,
     },
   },
 
@@ -128,15 +128,15 @@ export const FLOOR_DESIGNS: Record<string, FloorDesign> = {
     tint: '#0c1c12', tintMix: 0.15,
     standard: {
       mirror: 0.14, roughness: 1, metalness: 0.1,
-      mixBlur: 1.2, mixStrength: 6, blur: [520, 190],
+      mixBlur: 1.2, mixStrength: 3, blur: [520, 190],
       depthScale: 1.5, minDepthThreshold: 0.35, maxDepthThreshold: 1.45,
       resolution: 1024,
     },
     low: {
       mirror: 0.14, roughness: 1, metalness: 0.1,
-      mixBlur: 1.25, mixStrength: 6, blur: [560, 210],
+      mixBlur: 1.25, mixStrength: 3, blur: [560, 210],
       depthScale: 1.5, minDepthThreshold: 0.35, maxDepthThreshold: 1.45,
-      resolution: 124,
+      resolution: 512,
     },
   },
 
@@ -150,15 +150,15 @@ export const FLOOR_DESIGNS: Record<string, FloorDesign> = {
     tint: '#160f30', tintMix: 0.14,
     standard: {
       mirror: 0.5, roughness: 0.94, metalness: 0.44,
-      mixBlur: 1.3, mixStrength: 11, blur: [300, 240],
+      mixBlur: 1.3, mixStrength: 6, blur: [300, 240],
       depthScale: 1.35, minDepthThreshold: 0.55, maxDepthThreshold: 1.5,
       resolution: 1024,
     },
     low: {
       mirror: 0.5, roughness: 0.98, metalness: 0.44,
-      mixBlur: 1.4, mixStrength: 11, blur: [360, 280],
+      mixBlur: 1.4, mixStrength: 6, blur: [360, 280],
       depthScale: 1.35, minDepthThreshold: 0.55, maxDepthThreshold: 1.5,
-      resolution: 124,
+      resolution: 512,
     },
   },
 };

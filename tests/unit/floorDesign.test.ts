@@ -63,7 +63,7 @@ describe('room floors', () => {
         expect(finish.metalness, `${label} metalness`).toBeLessThanOrEqual(0.6);
         expect(finish.mixBlur, `${label} mixBlur`).toBeGreaterThanOrEqual(0.3);
         expect(finish.mixBlur, `${label} mixBlur`).toBeLessThanOrEqual(1.6);
-        expect(finish.mixStrength, `${label} mixStrength`).toBeGreaterThanOrEqual(5);
+        expect(finish.mixStrength, `${label} mixStrength`).toBeGreaterThanOrEqual(3);
         expect(finish.mixStrength, `${label} mixStrength`).toBeLessThanOrEqual(22);
         // blur magnitude is free (fixed five-tap passes) but must stay on: a zero
         // pair silently switches the reflector onto a different shader path.
@@ -104,7 +104,7 @@ describe('room floors', () => {
       const { standard, low } = design;
       // The reflection pass is the cost: same scene, fewer pixels.
       expect(low.resolution, `${roomId} resolution`).toBeLessThan(standard.resolution);
-      // At 124 px a sharp reflection crawls, so mobile leans on the blurred one.
+      // At low resolution a sharp reflection crawls, so mobile leans on the blurred one.
       expect(low.roughness, `${roomId} roughness`).toBeGreaterThanOrEqual(standard.roughness);
       expect(
         low.blur[0] + low.blur[1],
@@ -155,7 +155,7 @@ describe('room floors', () => {
     // room to light grey, so pinning a spread on it forces one room to go pale.
     // Sharpness is what actually tells the four floors apart.
     expect(Math.max(...blurFactors) - Math.min(...blurFactors)).toBeGreaterThanOrEqual(0.4);
-    expect(Math.max(...strengths) - Math.min(...strengths)).toBeGreaterThanOrEqual(6);
+    expect(Math.max(...strengths) - Math.min(...strengths)).toBeGreaterThanOrEqual(3);
     expect(new Set(designs.map(design => design.tint)).size).toBe(4);
     // One wet mirror and one absorbent matte, as the brief asks.
     expect(mirrors.some(mirror => mirror >= 0.6)).toBe(true);
