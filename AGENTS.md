@@ -3,8 +3,8 @@
 Orientation for agents/contributors working in this repo — *how the code is actually built today*.
 Treat it as a map, not a rulebook: anything here can change, and it goes stale, so trust the code when they disagree.
 
-- **What's decided and what's next:** `docs/feedback-triage.md` — every collaborator suggestion, its decision and its build state. That's the live roadmap.
-- **`SCOPE.md` is gone** (deprecated and deleted). The principles it held are summarised below; the phase plan moved into the triage doc.
+- **What's decided and what's next:** Git — commits, PRs and issues. A status table in prose does not survive contact with the code; the old `docs/feedback-triage.md` was removed for that reason, and this file does not track status either. Maintainer-side planning lives in a private vault outside this repo.
+- **`SCOPE.md` is gone** (deprecated and deleted). The principles it held are summarised below.
 
 > **Note:** the old Phase 0 code (the earlier non-working museum, plus a `_deprecated/` folder and a `content/*.json` data model) has been removed — the live app is entirely under `app/`, `components/`, `config/`, `contexts/`, `lib/`, `types/`, `utils/`.
 
@@ -123,7 +123,7 @@ These have held up so far; they came from `SCOPE.md` and from what the community
 
 ## Known quirks
 
-These are traps, not a status board: what is built and what is next lives in `docs/feedback-triage.md` and in Git, which do not go stale the way a checklist here does.
+These are traps, not a status board: what is built and what is next lives in Git — commits, PRs, issues — not in a checklist here.
 
 - **No linter configured**; `npx tsc --noEmit` plus the test suites are the checks.
 - **The floor shines from the environment map, not the reflector.** `MeshReflectorMaterial`'s `mixStrength` is nearly inert on this floor (measured: ~7% darker with it almost off). What lights the floor is the `<Environment>` HDRI; `environmentIntensity` (currently 0.7) is the lever for how strong the floor reflection reads. Turn the environment off and the floor goes almost black.
@@ -149,6 +149,6 @@ These are traps, not a status board: what is built and what is next lives in `do
 
 ## Conventions
 
-- Docs shared with the Reddit collaborator stay in **English** (this file, `docs/feedback-triage.md`). Luis communicates in Spanish.
+- Docs shared with the Reddit collaborator stay in **English** (this file, `docs/*`). Luis communicates in Spanish.
 - Placeholder art lives in `public/art/*.svg`; plaque text is lorem ipsum until real submissions arrive.
 - Keep new code in the style of the surrounding files (config-driven rooms, HTML overlay for anything interactive/accessible).
