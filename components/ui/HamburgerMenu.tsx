@@ -137,6 +137,15 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
     window.requestAnimationFrame(() => feedbackButtonRef.current?.focus());
   };
 
+  // Until now the submission form could only be opened from an empty canvas,
+  // which a room has only while it still has free slots. The drawer offers it
+  // to any visitor: no room and no slot attached, so the piece goes to the
+  // moderation queue and is hung wherever the curator places it.
+  const openSubmitArtwork = () => {
+    setIsOpen(false);
+    window.dispatchEvent(new CustomEvent('open-submit-artwork'));
+  };
+
   // The word "Menu" cedes the top strip; the icon never does. Both inputs are
   // the *mode* — an artwork on screen, a message up there — never "does this
   // artwork carry a content note?", which would make the word flash in and out
@@ -378,7 +387,6 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 title="Feedback"
                 open={feedbackSectionOpen}
                 onToggle={() => setFeedbackSectionOpen(o => !o)}
-                style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
               >
                 <button
                   ref={feedbackButtonRef}
@@ -390,6 +398,20 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                   Share feedback or a suggestion
                 </button>
               </CollapsibleSection>
+
+              {/* Last thing in the drawer. Same shape as the feedback button on
+                  purpose: with both sections open they stack as twins, so the
+                  two never look like different classes of action. */}
+              <div style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+                <button
+                  type="button"
+                  onClick={openSubmitArtwork}
+                  className="w-full px-3 py-2.5 text-left text-sm transition-colors bg-[var(--panel-btn-bg)] hover:bg-[var(--panel-btn-bg-hover)]"
+                  style={{ color: 'var(--panel-btn-text)', border: '1px solid var(--panel-border)', borderRadius: '2px' }}
+                >
+                  Submit your artwork
+                </button>
+              </div>
             </>
           )}
         </div>

@@ -355,9 +355,12 @@ const UIElements: React.FC = () => {
                   />
                   <ArtworkInfoModal />
                   <ArtworkLightbox />
-                  <SubmitArtworkModal />
                 </div>
               )}
+              {/* Outside the tour group on purpose: this state group is unmounted
+                  while the visitor rests at the bench, and the drawer offers the
+                  submission form there too. */}
+              <SubmitArtworkModal />
               <HamburgerMenu style={{ animation: 'fadeIn 1s ease-out forwards' }} />
               <ResumeVisitChip style={{ animation: 'fadeIn 1s ease-out forwards' }} />
             </div>
