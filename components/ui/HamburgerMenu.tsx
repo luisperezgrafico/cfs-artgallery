@@ -399,10 +399,18 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
                 </button>
               </CollapsibleSection>
 
-              {/* Last thing in the drawer. Same shape as the feedback button on
-                  purpose: with both sections open they stack as twins, so the
-                  two never look like different classes of action. */}
-              <div style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+              {/* Last thing in the drawer, laid out like one more section of the
+                  accordion (same px-5 / border-t / pt-4) but never collapsed:
+                  with the Feedback section open, the two buttons line up as
+                  twins. The safe-area padding lives here because this is now
+                  the last element. */}
+              <div
+                className="px-5 pt-4 border-t shrink-0"
+                style={{
+                  borderColor: 'var(--panel-separator)',
+                  paddingBottom: 'max(2rem, env(safe-area-inset-bottom))',
+                }}
+              >
                 <button
                   type="button"
                   onClick={openSubmitArtwork}
