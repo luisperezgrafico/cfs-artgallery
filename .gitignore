@@ -13,3 +13,4 @@ docs/screenshots/
 test-results/
 playwright-report/
 .playwright/
+logs/
