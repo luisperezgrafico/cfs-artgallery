@@ -116,6 +116,27 @@ export function resolveLinkDestination(
 }
 
 /**
+ * The frame a room opens on.
+ *
+ * Always the overview. Dropping the visitor inside an artwork would decide for
+ * them before they know where they are: they land on a picture filling the
+ * screen with no room around it, having asked for nothing. The saved position
+ * is not lost by this — it is *offered*, by "Start the Tour" (which reads it
+ * through `getInitialFrameIndex`) and by the return chip — it just no longer
+ * places the camera on arrival.
+ *
+ * A link's own destination is the exception, because there the sender asked for
+ * that artwork: `?frame=` arrives as a pending tour target and opens on it, and
+ * `?art=` places itself once the live catalogue is in (`SharedLinkResolver`).
+ */
+export function entryFrameIndex(
+  pendingTourTarget: { roomId: string; frameIndex: number } | null,
+  roomId: string,
+): number {
+  return pendingTourTarget?.roomId === roomId ? pendingTourTarget.frameIndex : -1;
+}
+
+/**
  * The catalogue a link can be resolved against before any fetch: each room's
  * own configured artworks, laid out over its wall slots. Room ids are static,
  * so `?room=` and the static placeholder artworks resolve on the first render.

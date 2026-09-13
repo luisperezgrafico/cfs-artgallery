@@ -8,8 +8,8 @@ import SwipeableContainer from './ui/SwipeableContainer';
 import MuseumStage from './MuseumStage';
 import UIElements from './ui/UIElements';
 import { ImageMetadata } from '../types/museum';
-import { getInitialFrameIndex, saveVisitPosition } from '../utils/userPreferences';
-import { GalleryLink, isLinkLanding, resolveLinkDestination } from '../utils/galleryLink';
+import { saveVisitPosition } from '../utils/userPreferences';
+import { GalleryLink, entryFrameIndex, isLinkLanding, resolveLinkDestination } from '../utils/galleryLink';
 import { ShelfProvider, useShelf } from '../contexts/ShelfContext';
 import { GuidedTourPreferenceProvider, GuidedTourEngineProvider } from '../contexts/GuidedTourContext';
 import { AmbientMusicProvider } from '../contexts/AmbientMusicContext';
@@ -166,17 +166,17 @@ function SharedLinkResolver({ roomId, catalogReady }: { roomId: string; catalogR
 }
 
 function GalleryContent({ catalogReady }: { catalogReady: boolean }) {
-  const { rooms, activeRoomIndex, getRoomImages, pendingTourTarget, arrivedViaLink } = useRoom();
+  const { rooms, activeRoomIndex, getRoomImages, pendingTourTarget } = useRoom();
   const activeRoom = rooms[activeRoomIndex];
   const images = getRoomImages(activeRoom.id);
-  // A link decides where this visit opens; it never resumes a half-remembered
-  // frame. `?frame=` lands on its artwork through pendingTourTarget, a link to a
-  // room opens that room's overview, and `?art=` is placed by SharedLinkResolver.
-  const initialFrameIndex = pendingTourTarget?.roomId === activeRoom.id
-    ? pendingTourTarget.frameIndex
-    : arrivedViaLink
-      ? -1
-      : getInitialFrameIndex(activeRoom.id, images.length);
+  // A visit always opens on the room overview. The room is still the one the
+  // visitor left (getInitialRoomIndex, in RoomContext); it is only the artwork
+  // that no longer places the camera. Landing inside a frame decides for the
+  // visitor before they know where they are, and the saved position is already
+  // offered twice — by "Start the Tour" (TourEntryModal) and by the return chip.
+  // A link is the exception, and only because its sender asked for it: `?frame=`
+  // arrives as pendingTourTarget, `?art=` places itself through SharedLinkResolver.
+  const initialFrameIndex = entryFrameIndex(pendingTourTarget, activeRoom.id);
 
   return (
     // Preferences live above the per-room remount boundary so "Next room" carries

@@ -5,6 +5,7 @@ import type { ImageMetadata } from '../../types/museum';
 import {
   artworkLinkHref,
   describeSavedPosition,
+  entryFrameIndex,
   initialVisitReturnState,
   isLinkLanding,
   parseGalleryLink,
@@ -14,7 +15,12 @@ import {
   withDismissal,
   withVisitorNavigation,
 } from '../../utils/galleryLink';
-import { readVisitPosition, saveVisitPosition } from '../../utils/userPreferences';
+import {
+  getInitialFrameIndex,
+  getInitialRoomIndex,
+  readVisitPosition,
+  saveVisitPosition,
+} from '../../utils/userPreferences';
 
 const catalog = staticLinkCatalog(rooms);
 
@@ -147,6 +153,51 @@ describe('a link never rewrites the saved visit position', () => {
     const door = readFileSync(new URL('../../app/page.tsx', import.meta.url), 'utf8');
     expect(door).toContain('parseGalleryLink');
     expect(door).not.toContain('saveVisitPosition');
+  });
+});
+
+describe('entering the gallery: the room is resumed, the artwork is not', () => {
+  beforeEach(() => {
+    (globalThis as unknown as { window: unknown }).window = { localStorage: fakeStorage() };
+  });
+
+  it('opens on the room overview on a plain visit, saved position or not', () => {
+    saveVisitPosition('room-1', 5);
+
+    // Nothing on a plain visit asks for a frame: not the saved position, not a link.
+    expect(entryFrameIndex(null, 'room-1')).toBe(-1);
+
+    // The saved frame is not lost — it is what "Start the Tour" offers, and only
+    // that. Handing it to the camera on arrival is the behaviour being removed.
+    expect(getInitialFrameIndex('room-1', 8)).toBe(5);
+  });
+
+  it('still restores the room the visitor left', () => {
+    saveVisitPosition('room-3', 5);
+
+    expect(getInitialRoomIndex(rooms)).toBe(2);
+    // ... and that room opens on its overview, not on the saved slot.
+    expect(entryFrameIndex(null, 'room-3')).toBe(-1);
+  });
+
+  it('still opens on the artwork a link asked for', () => {
+    // `?frame=` reaches the room as its pending tour target.
+    expect(entryFrameIndex({ roomId: 'room-1', frameIndex: 2 }, 'room-1')).toBe(2);
+    // A target belonging to another room places nothing here.
+    expect(entryFrameIndex({ roomId: 'room-2', frameIndex: 2 }, 'room-1')).toBe(-1);
+  });
+
+  it('leaves the frame resume to "Start the Tour", not to the entry path', () => {
+    // Source-level guard for the behaviour above: the gallery may only be placed
+    // on a frame by a link, and the resume offer reads the saved position itself.
+    const gallery = readFileSync(new URL('../../components/Gallery.tsx', import.meta.url), 'utf8');
+    expect(gallery).toContain('entryFrameIndex');
+    expect(gallery).not.toContain('getInitialFrameIndex');
+
+    const entryModal = readFileSync(
+      new URL('../../components/ui/TourEntryModal.tsx', import.meta.url), 'utf8',
+    );
+    expect(entryModal).toContain('getInitialFrameIndex');
   });
 });
 

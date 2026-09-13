@@ -113,6 +113,13 @@ export function getInitialRoomIndex(rooms: { id: string }[]): number {
   return index >= 0 ? index : 0;
 }
 
+/**
+ * The saved slot "Start the Tour" offers as a resume point (TourEntryModal), when
+ * it belongs to this room. Not the frame a room *opens* on: a visit always opens
+ * on the room overview (`utils/galleryLink`: `entryFrameIndex`), and this is only
+ * read when the visitor asks to start the tour. Do not wire it into the entry
+ * path — that is the behaviour it used to drive and no longer should.
+ */
 export function getInitialFrameIndex(roomId: string, totalFrames: number): number {
   const saved = readVisitPosition();
   if (!saved || saved.roomId !== roomId || saved.frameIndex < 0 || totalFrames <= 0) {
