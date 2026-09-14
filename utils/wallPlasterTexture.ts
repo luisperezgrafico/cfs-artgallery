@@ -8,20 +8,16 @@ import * as THREE from 'three';
  * pattern.
  *
  * The taste here was set by looking, and it is *very* restrained on purpose — a
- * normal painted wall, not a rusticated one. Three passes got it here, and they
- * are the reason the numbers below are what they are:
- *
- *   1. A broad octave made the walls look like damp patches from across the room.
- *   2. Removing it but keeping a wide relief range and a 1.25 m tile still read
- *      as blotches — too big and too strong.
- *   3. Fine scales, a 0.6 m tile and a narrow range: barely there at a glance,
- *      visible as surface up close.
+ * normal painted wall, not a rusticated one. Anything wider or coarser made
+ * blotches on the side walls: if it ever needs more presence, turn up
+ * `bumpScale` on the material rather than widening the ranges below, and keep
+ * the data free of low frequencies — those are what read as damp patches from
+ * across the room instead of as a surface.
  *
  * The two jobs are carried in separate channels of the same RGBA texture,
  * because three reads `bumpMap` from `.x` and `roughnessMap` from `.g`:
  *
- *   - **r** — relief. Narrow range: this is tooth, not topography. `bumpScale`
- *     on the material is the dial if it ever needs to be stronger.
+ *   - **r** — relief. Narrow range: this is tooth, not topography.
  *   - **g/b** — sheen. Multiplied against `roughness={1}`, it lands the walls at
  *     ~0.89, next to the flat 0.85-0.9 the rooms were tuned with, so turning
  *     this on does not relight a room. Widening this is the fastest way to make
@@ -55,16 +51,16 @@ const SIZE = 256;
  * Metres of wall that one tile of the texture covers. Small: the grain is meant
  * to be fine, and a larger tile turned the same noise into visible blotches.
  */
-export const WALL_TEXTURE_TILE_M = 0.6;
+export const WALL_TEXTURE_TILE_M = 0.35;
 
 /** Relief range (r). Narrow — tooth, not topography. */
-const MIN_RELIEF = 170;
+const MIN_RELIEF = 195;
 const MAX_RELIEF = 255;
 
 // Sheen range (g/b). Narrow and high on purpose: this multiplies `roughness={1}`
-// to land the walls at ~0.89, near the flat 0.85-0.9 they had before, so
+// to land the walls at ~0.92, next to the flat 0.85-0.9 they had before, so
 // switching the texture on does not relight the room.
-const MIN_SHEEN = 200;
+const MIN_SHEEN = 212;
 const MAX_SHEEN = 255;
 
 // Deterministic hash -> [0, 1), no Math.random, so output is reproducible.
@@ -112,8 +108,8 @@ export function createWallPlasterTexture(): THREE.DataTexture {
     for (let x = 0; x < SIZE; x++) {
       const u = x / SIZE;
 
-      const mid = periodicNoise(u * 22, v * 22, 22);
-      const fine = periodicNoise(u * 60, v * 60, 60);
+      const mid = periodicNoise(u * 26, v * 26, 26);
+      const fine = periodicNoise(u * 64, v * 64, 64);
 
       const reliefNoise = mid * 0.55 + fine * 0.45;
       const relief = Math.round(
