@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Floor from './Floor';
+import { getWallPlasterTexture, wallTextureTile } from '../../utils/wallPlasterTexture';
 
 interface RoomProps {
   width: number;
@@ -72,6 +73,19 @@ const Room: React.FC<RoomProps> = ({
   const ceilingWidth   = width + 1 * (length * Math.tan(wallTiltAngle));
   const sideWallLength = length / Math.cos(wallTiltAngle);
 
+  // Painted plaster, not a flat plane: one tile always covers the same number of
+  // metres, so the grain is the same size on every wall of every room. Clones
+  // share the base image, so this costs a single 256 KB texture for the gallery.
+  const plaster = useMemo(() => getWallPlasterTexture(), []);
+  const sideWallPlaster = useMemo(
+    () => wallTextureTile(plaster, sideWallLength, height),
+    [plaster, sideWallLength, height],
+  );
+  const endWallPlaster = useMemo(
+    () => wallTextureTile(plaster, Math.max(frontWidth, ceilingWidth), height),
+    [plaster, frontWidth, ceilingWidth, height],
+  );
+
   return (
     <group>
       {/* Floor */}
@@ -96,7 +110,14 @@ const Room: React.FC<RoomProps> = ({
         receiveShadow
       >
         <planeGeometry args={[sideWallLength, height]} />
-        <meshStandardMaterial color={wallColor} metalness={0} roughness={0.9} />
+        <meshStandardMaterial
+          color={wallColor}
+          metalness={0}
+          roughness={1}
+          bumpMap={sideWallPlaster}
+          bumpScale={0.04}
+          roughnessMap={sideWallPlaster}
+        />
       </mesh>
 
       {/* Right Wall */}
@@ -106,19 +127,40 @@ const Room: React.FC<RoomProps> = ({
         receiveShadow
       >
         <planeGeometry args={[sideWallLength, height]} />
-        <meshStandardMaterial color={wallColor} metalness={0} roughness={0.9} />
+        <meshStandardMaterial
+          color={wallColor}
+          metalness={0}
+          roughness={1}
+          bumpMap={sideWallPlaster}
+          bumpScale={0.04}
+          roughnessMap={sideWallPlaster}
+        />
       </mesh>
 
       {/* Front Wall */}
       <mesh position={[0, height / 2, 0]} receiveShadow>
         <planeGeometry args={[frontWidth, height]} />
-        <meshStandardMaterial color={wallColor} metalness={0} roughness={0.75} />
+        <meshStandardMaterial
+          color={wallColor}
+          metalness={0}
+          roughness={1}
+          bumpMap={endWallPlaster}
+          bumpScale={0.04}
+          roughnessMap={endWallPlaster}
+        />
       </mesh>
 
       {/* Back Wall */}
       <mesh position={[0, height / 2, length]} rotation={[0, Math.PI, 0]} receiveShadow>
         <planeGeometry args={[ceilingWidth, height]} />
-        <meshStandardMaterial color={wallColor} metalness={0} roughness={0.85} />
+        <meshStandardMaterial
+          color={wallColor}
+          metalness={0}
+          roughness={1}
+          bumpMap={endWallPlaster}
+          bumpScale={0.04}
+          roughnessMap={endWallPlaster}
+        />
       </mesh>
 
       {/* Skirting + cornice, so the bare rear of the room still reads as a room */}
