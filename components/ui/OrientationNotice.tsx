@@ -86,8 +86,8 @@ const OrientationNotice: React.FC = () => {
           Best viewed upright
         </h2>
         <p className="text-sm" style={{ color: 'var(--panel-text)' }}>
-          The gallery is designed for portrait mode — turn your phone upright to
-          see the exhibition as intended.
+          Designed for portrait mode. In landscape, some things may not read as
+          intended.
         </p>
         <button
           ref={buttonRef}
