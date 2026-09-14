@@ -80,7 +80,7 @@ const OrientationNotice: React.FC = () => {
       style={{ background: 'rgba(0, 0, 0, 0.82)' }}
     >
       <div
-        className="panel-warm w-full max-w-xs px-6 py-7 text-center space-y-4"
+        className="w-full max-w-xs px-6 py-7 text-center space-y-4"
         style={{
           background: 'var(--panel-bg)',
           border: '1px solid var(--panel-border)',

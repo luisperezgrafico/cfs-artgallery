@@ -183,7 +183,7 @@ const HamburgerMenu: React.FC<{ style?: React.CSSProperties }> = ({ style }) => 
       >
         {/* Drawer panel */}
         <div
-          className="h-full w-[75vw] max-w-sm backdrop-blur-xl border-l flex flex-col overflow-y-auto"
+          className="chrome-dark h-full w-[75vw] max-w-sm backdrop-blur-xl border-l flex flex-col overflow-y-auto"
           style={{
             paddingRight: 'env(safe-area-inset-right)',
             background: 'var(--panel-bg)',

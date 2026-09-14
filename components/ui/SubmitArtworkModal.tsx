@@ -246,7 +246,7 @@ const SubmitArtworkModal: React.FC = () => {
         className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
         style={{ padding: safeAreaPadding, animation: 'scaleInSmooth 0.34s ease-out forwards' }}
       >
-        <div className="panel-warm pointer-events-auto w-full max-w-lg md:max-w-4xl flex flex-col max-h-[92dvh]" style={panelStyle}>
+        <div className="pointer-events-auto w-full max-w-lg md:max-w-4xl flex flex-col max-h-[92dvh]" style={panelStyle}>
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
