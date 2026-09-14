@@ -45,6 +45,7 @@ const VISIT_POSITION_KEY = 'cfs-gallery:visit-position:v1';
 const MENU_TAB_Y_KEY = 'cfs-gallery:menu-tab-y:v1';
 const SHELF_KEY = 'cfs-gallery:shelf:v1';
 const VISIT_MODE_KEY = 'cfs-gallery:visit-mode:v1';
+const ORIENTATION_NOTICE_KEY = 'cfs-gallery:orientation-notice:v1';
 const DEFAULT_MENU_TAB_Y = 0.5;
 const MIN_MENU_TAB_Y = 0.18;
 const MAX_MENU_TAB_Y = 0.82;
@@ -255,5 +256,30 @@ export function saveVisitMode(mode: VisitMode): void {
     ls.setItem(VISIT_MODE_KEY, JSON.stringify({ ...mode, updatedAt: Date.now() }));
   } catch {
     /* storage disabled/full */
+  }
+}
+
+/**
+ * The "best viewed upright" notice, shown on a phone held sideways. Dismissing
+ * it is remembered per device: a visitor who cannot turn the phone, or who
+ * reads with it lying flat, should not be asked again on every visit.
+ */
+export function readOrientationNoticeDismissed(): boolean {
+  const ls = storage();
+  if (!ls) return false;
+  try {
+    return ls.getItem(ORIENTATION_NOTICE_KEY) === 'dismissed';
+  } catch {
+    return false;
+  }
+}
+
+export function dismissOrientationNotice(): void {
+  const ls = storage();
+  if (!ls) return;
+  try {
+    ls.setItem(ORIENTATION_NOTICE_KEY, 'dismissed');
+  } catch {
+    /* storage disabled/full - preference persistence is optional */
   }
 }

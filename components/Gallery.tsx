@@ -7,6 +7,7 @@ import { RoomProvider, useRoom } from '../contexts/RoomContext';
 import SwipeableContainer from './ui/SwipeableContainer';
 import MuseumStage from './MuseumStage';
 import UIElements from './ui/UIElements';
+import OrientationNotice from './ui/OrientationNotice';
 import { ImageMetadata } from '../types/museum';
 import { saveVisitPosition } from '../utils/userPreferences';
 import { GalleryLink, entryFrameIndex, isEntryLanding, resolveLinkDestination } from '../utils/galleryLink';
@@ -199,6 +200,9 @@ function GalleryContent({ catalogReady }: { catalogReady: boolean }) {
               <MuseumStage images={images} theme={activeRoom.theme} roomId={activeRoom.id} />
               <UIElements />
             </SwipeableContainer>
+            {/* Outside the swipe container: it covers the screen and has nothing
+                to do with moving between artworks. */}
+            <OrientationNotice />
           </GuidedTourEngineProvider>
         </TourProvider>
       </AnimationProvider>
