@@ -19,8 +19,8 @@ import { BENCH_LAYOUT } from '../utils/restView';
 const DEFAULT_THEME: RoomTheme = {
   wallColor: '#23212c', ceilingColor: '#130f28', floorColor: '#050505',
   hemisphereTop: '#34303f', hemisphereBottom: '#0a0816', ambientIntensity: 0.2,
-  trimColor: '#2c2550', skirtingColor: '#0d0b0f', corniceColor: '#17141e',
-  doorColor: '#171331', glowColor: '#d8ccf0',
+  trimColor: '#ece6da', skirtingColor: '#0d0b0f', corniceColor: '#17141e',
+  doorColor: '#7d5a38', glowColor: '#d8ccf0',
 };
 
 interface MuseumProps {

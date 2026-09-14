@@ -16,7 +16,11 @@ export interface RoomConfig {
 // used to be *lighter* than the wall, which is why they read as a strip of
 // paint. The cornice carries a little more light than the skirting so its
 // profile still catches the spotlight against an almost black ceiling.
-// `trimColor` is the portal joinery only — keep it light enough to read as wood.
+// `trimColor` is the portal joinery (jambs, lintel, pilasters, panel mouldings)
+// and `doorColor` the leaves. Both are the same in the four rooms on purpose —
+// the doors are the museum's own joinery, not part of a room's colour scheme —
+// and they live here, not as constants in the component, so a single room can
+// still be pulled apart later without touching code.
 
 const THEME_INDIGO: RoomTheme = {
   // Dark indigo / cinematic. Wall and hemisphere desaturated twice over — S43%
@@ -28,10 +32,10 @@ const THEME_INDIGO: RoomTheme = {
   hemisphereTop:    '#34303f',   // was #312b44, and #2a1f50 before that
   hemisphereBottom: '#08060f',
   ambientIntensity: 0.2,
-  trimColor:        '#2c2550',
+  trimColor:        '#ece6da',
   skirtingColor:    '#0a0814',
   corniceColor:     '#120f24',
-  doorColor:        '#171331',
+  doorColor:        '#7d5a38',
   glowColor:        '#d8ccf0',
 };
 
@@ -43,10 +47,10 @@ const THEME_ARDOISE: RoomTheme = {
   hemisphereTop:    '#252e40',
   hemisphereBottom: '#07080c',
   ambientIntensity: 0.2,
-  trimColor:        '#2d3646',
+  trimColor:        '#ece6da',
   skirtingColor:    '#080c14',
   corniceColor:     '#0f1524',
-  doorColor:        '#161b26',
+  doorColor:        '#7d5a38',
   glowColor:        '#cfe0f0',
 };
 
@@ -60,10 +64,10 @@ const THEME_FORET: RoomTheme = {
   hemisphereTop:    '#3b443c',   // was #364838
   hemisphereBottom: '#080e0a',
   ambientIntensity: 0.2,
-  trimColor:        '#3a4a3c',
+  trimColor:        '#ece6da',
   skirtingColor:    '#0a120c',
   corniceColor:     '#122115',
-  doorColor:        '#1c2620',
+  doorColor:        '#7d5a38',
   glowColor:        '#e8dfb8',
 };
 
@@ -75,10 +79,10 @@ const THEME_OCRE: RoomTheme = {
   hemisphereTop:    '#422a18',
   hemisphereBottom: '#0a0806',
   ambientIntensity: 0.2,
-  trimColor:        '#3b2a1e',
+  trimColor:        '#ece6da',
   skirtingColor:    '#140c08',
   corniceColor:     '#24170f',
-  doorColor:        '#241610',
+  doorColor:        '#7d5a38',
   glowColor:        '#f0d9a0',
 };
 
