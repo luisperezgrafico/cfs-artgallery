@@ -3,6 +3,21 @@
 import React, { useEffect, useMemo } from 'react';
 import Floor from './Floor';
 import { createPlasterMaterial } from '../../utils/wallPlasterShader';
+import {
+  CORNICE_HEIGHT,
+  createCorniceGeometry,
+  createSkirtingGeometry,
+} from '../../utils/wallTrimProfile';
+
+/**
+ * How far the trims stand off the wall plane. The profiles are drawn from the
+ * wall outwards, so this only needs to beat z-fighting against the wall itself.
+ */
+const WALL_CLEARANCE = 0.005;
+
+/** Warm dark wood, used when a theme does not spell out its trims. */
+const DEFAULT_SKIRTING = '#0d0b08';
+const DEFAULT_CORNICE = '#171310';
 
 interface RoomProps {
   width: number;
@@ -12,7 +27,8 @@ interface RoomProps {
   wallColor?: string;
   ceilingColor?: string;
   floorColor?: string;
-  trimColor?: string;
+  skirtingColor?: string;
+  corniceColor?: string;
   /** Room whose finishes to use (floor, and anything else keyed by room id) */
   roomId?: string;
   /** Width to leave free in the middle of the back baseboard, for the entrance portal */
@@ -26,35 +42,48 @@ interface WallTrimProps {
   /** Length of the wall */
   span: number;
   height: number;
-  color: string;
+  skirtingColor: string;
+  corniceColor: string;
   /** Leave this much free in the middle (for a door) */
   gap?: number;
 }
 
 /**
- * Skirting + cornice along one wall. Shares the wall's own transform, so local
- * +Z is always "into the room" and a single 0.05 offset keeps it off the plane.
+ * Skirting + cornice along one wall, as extruded profiles rather than boxes —
+ * it is the section that reads as joinery under a spotlight (see
+ * `utils/wallTrimProfile.ts`). Shares the wall's own transform, so the profile's
+ * own +Z already points into the room and a small offset keeps it off the plane.
  */
 const WallTrim: React.FC<WallTrimProps> = ({
-  position, rotation = [0, 0, 0], span, height, color, gap = 0,
+  position, rotation = [0, 0, 0], span, height, skirtingColor, corniceColor, gap = 0,
 }) => {
   const segmentWidth = gap > 0 ? (span - gap) / 2 : span;
   const segmentOffset = gap > 0 ? (span + gap) / 4 : 0;
   const offsets = gap > 0 ? [-segmentOffset, segmentOffset] : [0];
 
+  const skirtingGeometry = useMemo(() => createSkirtingGeometry(segmentWidth), [segmentWidth]);
+  const corniceGeometry = useMemo(() => createCorniceGeometry(span), [span]);
+
+  // Geometries built here are handed to meshes and would otherwise leak on every
+  // room change.
+  useEffect(() => () => skirtingGeometry.dispose(), [skirtingGeometry]);
+  useEffect(() => () => corniceGeometry.dispose(), [corniceGeometry]);
+
   return (
     <group position={position} rotation={rotation}>
       {/* Skirting */}
       {offsets.map((x) => (
-        <mesh key={x} position={[x, 0.075, 0.035]} receiveShadow>
-          <boxGeometry args={[segmentWidth, 0.15, 0.05]} />
-          <meshStandardMaterial color={color} metalness={0.05} roughness={0.85} />
+        <mesh key={x} geometry={skirtingGeometry} position={[x, 0, WALL_CLEARANCE]} receiveShadow>
+          <meshStandardMaterial color={skirtingColor} metalness={0.05} roughness={0.85} />
         </mesh>
       ))}
-      {/* Cornice — flush against the ceiling, same 0.05 clearance convention as the ceiling fixtures */}
-      <mesh position={[0, height - 0.05, 0.035]} receiveShadow>
-        <boxGeometry args={[span, 0.1, 0.05]} />
-        <meshStandardMaterial color={color} metalness={0.05} roughness={0.85} />
+      {/* Cornice — hangs to the ceiling, and runs unbroken over a doorway */}
+      <mesh
+        geometry={corniceGeometry}
+        position={[0, height - CORNICE_HEIGHT, WALL_CLEARANCE]}
+        receiveShadow
+      >
+        <meshStandardMaterial color={corniceColor} metalness={0.05} roughness={0.85} />
       </mesh>
     </group>
   );
@@ -65,7 +94,8 @@ const Room: React.FC<RoomProps> = ({
   wallColor    = '#1A1637',
   ceilingColor = '#130f28',
   floorColor   = '#050505',
-  trimColor    = '#3b2a1e',
+  skirtingColor = DEFAULT_SKIRTING,
+  corniceColor  = DEFAULT_CORNICE,
   roomId,
   portalGap    = 0,
 }) => {
@@ -140,22 +170,31 @@ const Room: React.FC<RoomProps> = ({
         rotation={[0, Math.PI / 2 - wallTiltAngle, 0]}
         span={sideWallLength}
         height={height}
-        color={trimColor}
+        skirtingColor={skirtingColor}
+        corniceColor={corniceColor}
       />
       <WallTrim
         position={[width / 2, 0, length / 2]}
         rotation={[0, -Math.PI / 2 + wallTiltAngle, 0]}
         span={sideWallLength}
         height={height}
-        color={trimColor}
+        skirtingColor={skirtingColor}
+        corniceColor={corniceColor}
       />
-      <WallTrim position={[0, 0, 0]} span={frontWidth} height={height} color={trimColor} />
+      <WallTrim
+        position={[0, 0, 0]}
+        span={frontWidth}
+        height={height}
+        skirtingColor={skirtingColor}
+        corniceColor={corniceColor}
+      />
       <WallTrim
         position={[0, 0, length]}
         rotation={[0, Math.PI, 0]}
         span={ceilingWidth}
         height={height}
-        color={trimColor}
+        skirtingColor={skirtingColor}
+        corniceColor={corniceColor}
         gap={portalGap}
       />
     </group>

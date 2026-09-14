@@ -19,7 +19,8 @@ import { BENCH_LAYOUT } from '../utils/restView';
 const DEFAULT_THEME: RoomTheme = {
   wallColor: '#1A1637', ceilingColor: '#130f28', floorColor: '#050505',
   hemisphereTop: '#3d2b6b', hemisphereBottom: '#0a0816', ambientIntensity: 0.2,
-  trimColor: '#2c2550', doorColor: '#171331', glowColor: '#d8ccf0',
+  trimColor: '#2c2550', skirtingColor: '#0d0b0f', corniceColor: '#17141e',
+  doorColor: '#171331', glowColor: '#d8ccf0',
 };
 
 interface MuseumProps {
@@ -82,7 +83,8 @@ const Museum: React.FC<MuseumProps> = ({ images, theme = DEFAULT_THEME, roomId }
           wallColor={theme.wallColor}
           ceilingColor={theme.ceilingColor}
           floorColor={theme.floorColor}
-          trimColor={theme.trimColor}
+          skirtingColor={theme.skirtingColor}
+          corniceColor={theme.corniceColor}
           roomId={roomId}
           portalGap={PORTAL_OUTER_WIDTH}
         />

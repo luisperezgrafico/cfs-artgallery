@@ -10,15 +10,26 @@ export interface RoomConfig {
 
 // ── Room themes ───────────────────────────────────────────────────────────────
 
+// Skirting and cornice in every room are the room's own hue taken down to a
+// near-black (L5.5% and L10%), which is what a museum does: the trim separates
+// the wall from the floor and the ceiling without competing with the art. They
+// used to be *lighter* than the wall, which is why they read as a strip of
+// paint. The cornice carries a little more light than the skirting so its
+// profile still catches the spotlight against an almost black ceiling.
+// `trimColor` is the portal joinery only — keep it light enough to read as wood.
+
 const THEME_INDIGO: RoomTheme = {
-  // Dark indigo / cinematic — ceiling darkened to match other dark themes
-  wallColor:        '#1A1637',
+  // Dark indigo / cinematic. Wall and hemisphere desaturated by half: at S43%
+  // the indigo shouted across the room.
+  wallColor:        '#201e2f',   // was #1A1637 (S43% -> S22%)
   ceilingColor:     '#0a0916',
   floorColor:       '#050505',
-  hemisphereTop:    '#2a1f50',
+  hemisphereTop:    '#312b44',   // was #2a1f50
   hemisphereBottom: '#08060f',
   ambientIntensity: 0.2,
   trimColor:        '#2c2550',
+  skirtingColor:    '#0a0814',
+  corniceColor:     '#120f24',
   doorColor:        '#171331',
   glowColor:        '#d8ccf0',
 };
@@ -32,19 +43,25 @@ const THEME_ARDOISE: RoomTheme = {
   hemisphereBottom: '#07080c',
   ambientIntensity: 0.2,
   trimColor:        '#2d3646',
+  skirtingColor:    '#080c14',
+  corniceColor:     '#0f1524',
   doorColor:        '#161b26',
   glowColor:        '#cfe0f0',
 };
 
 const THEME_FORET: RoomTheme = {
-  // Room III — Vert Forêt: deep sage green / National Gallery dark rooms
-  wallColor:        '#253028',
+  // Room III — Vert Forêt: deep sage green / National Gallery dark rooms.
+  // Desaturated by half (wall S13% -> S6%): the green looked loud, and most of
+  // that came from the coloured hemisphere light, so that comes down too.
+  wallColor:        '#282d29',   // was #253028
   ceilingColor:     '#131814',
   floorColor:       '#080e0a',
-  hemisphereTop:    '#364838',
+  hemisphereTop:    '#3b443c',   // was #364838
   hemisphereBottom: '#080e0a',
   ambientIntensity: 0.2,
   trimColor:        '#3a4a3c',
+  skirtingColor:    '#0a120c',
+  corniceColor:     '#122115',
   doorColor:        '#1c2620',
   glowColor:        '#e8dfb8',
 };
@@ -58,6 +75,8 @@ const THEME_OCRE: RoomTheme = {
   hemisphereBottom: '#0a0806',
   ambientIntensity: 0.2,
   trimColor:        '#3b2a1e',
+  skirtingColor:    '#140c08',
+  corniceColor:     '#24170f',
   doorColor:        '#241610',
   glowColor:        '#f0d9a0',
 };

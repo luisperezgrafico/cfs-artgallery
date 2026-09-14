@@ -21,8 +21,12 @@ export interface RoomTheme {
   hemisphereTop: string;
   hemisphereBottom: string;
   ambientIntensity: number;
-  /** Skirting, cornice, door frame and pilasters. Optional — falls back to a warm dark wood. */
+  /** Door frame and pilasters of the entrance portal. Optional — falls back to a warm dark wood. */
   trimColor?: string;
+  /** Skirting along the base of every wall. Optional — falls back to a near-black. */
+  skirtingColor?: string;
+  /** Cornice where the walls meet the ceiling. Optional — falls back to a near-black. */
+  corniceColor?: string;
   /** The closed entrance door leaves */
   doorColor?: string;
   /** Warm light: sconces, transom and the back-wall wash */
