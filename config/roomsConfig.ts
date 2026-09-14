@@ -19,12 +19,13 @@ export interface RoomConfig {
 // `trimColor` is the portal joinery only — keep it light enough to read as wood.
 
 const THEME_INDIGO: RoomTheme = {
-  // Dark indigo / cinematic. Wall and hemisphere desaturated by half: at S43%
-  // the indigo shouted across the room.
-  wallColor:        '#201e2f',   // was #1A1637 (S43% -> S22%)
+  // Dark indigo / cinematic. Wall and hemisphere desaturated twice over — S43%
+  // shouted, and S22% still read loud: the indigo is now almost a grey-violet.
+  // The skirting and cornice stay as they are; they were already right.
+  wallColor:        '#23212c',   // was #201e2f, and #1A1637 before that (S43% -> S13%)
   ceilingColor:     '#0a0916',
   floorColor:       '#050505',
-  hemisphereTop:    '#312b44',   // was #2a1f50
+  hemisphereTop:    '#34303f',   // was #312b44, and #2a1f50 before that
   hemisphereBottom: '#08060f',
   ambientIntensity: 0.2,
   trimColor:        '#2c2550',
