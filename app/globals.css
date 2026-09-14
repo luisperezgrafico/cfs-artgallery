@@ -41,8 +41,9 @@
      * the visitor reads the exhibition through (artwork modals, list view, tour
      * entry, orientation notice), plus the door and the admin panel. Only the
      * chrome the visitor *operates* the gallery with is near-black, and that is
-     * the exception — see `.chrome-dark` and the `--floating-*` group below.
-     * Default = warm dark.
+     * the exception — see `.chrome-dark` (panel surfaces, dark theme only, so the
+     * light theme still turns the drawer light) and the `--floating-*` group
+     * (near-black in both themes). Default = warm dark.
      */
     --door-bg: linear-gradient(160deg, #1a1611 0%, #14110d 55%, #0d0b08 100%);
     --door-title: #ece6da;
@@ -81,11 +82,11 @@
  * Near-black chrome for the gallery's own operating furniture — the menu drawer
  * today: the surfaces the visitor *drives* the gallery with, as opposed to the
  * ones they read the artwork in. Add `chrome-dark` to a panel root and the
- * panel/field tokens below it are re-pointed. This is deliberately the
- * exception, and it wins in the light theme as well: these controls sit on the
- * scene, which is dark whatever the HTML chrome is doing.
+ * panel/field tokens below it are re-pointed — in the dark theme only: with the
+ * light theme on, the drawer goes back to the light chrome the visitor toggled
+ * into, exactly as it did before.
  */
-.chrome-dark {
+:root:not([data-theme='light']) .chrome-dark {
   --panel-bg: rgba(16, 16, 16, 0.92);
   --panel-border: rgba(255, 255, 255, 0.14);
   --panel-title: #f0f0f0;
