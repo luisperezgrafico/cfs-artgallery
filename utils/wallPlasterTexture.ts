@@ -4,19 +4,28 @@ import * as THREE from 'three';
  * Small deterministic plaster/gesso texture for the room walls, meant to be used
  * as `bumpMap` **and** `roughnessMap` at once on the wall materials: a bare
  * `planeGeometry` with a flat colour reads as untextured 3D plastic, and what
- * sells painted plaster is uneven micro-relief plus an uneven sheen, not a
- * colour pattern.
+ * sells painted plaster is a fine tooth plus an uneven sheen, not a colour
+ * pattern.
+ *
+ * The taste here was set by looking, and it is *very* restrained on purpose — a
+ * normal painted wall, not a rusticated one. Three passes got it here, and they
+ * are the reason the numbers below are what they are:
+ *
+ *   1. A broad octave made the walls look like damp patches from across the room.
+ *   2. Removing it but keeping a wide relief range and a 1.25 m tile still read
+ *      as blotches — too big and too strong.
+ *   3. Fine scales, a 0.6 m tile and a narrow range: barely there at a glance,
+ *      visible as surface up close.
  *
  * The two jobs are carried in separate channels of the same RGBA texture,
  * because three reads `bumpMap` from `.x` and `roughnessMap` from `.g`:
  *
- *   - **r** — relief, full range. A flat wall under a soft spotlight changes
- *     almost nothing in N·L, so the bump only reads if its gradients are wide.
- *     Measured: with a narrow range here, quadrupling `bumpScale` moved 533
- *     pixels of a 1280×960 capture by at most 25 levels, i.e. nothing.
- *   - **g/b** — sheen, squeezed high. This is what a roughnessMap multiplies
- *     against `roughness={1}`, so keeping it near 0.85 leaves the wall's overall
- *     reflectivity where the curated per-room look had it.
+ *   - **r** — relief. Narrow range: this is tooth, not topography. `bumpScale`
+ *     on the material is the dial if it ever needs to be stronger.
+ *   - **g/b** — sheen. Multiplied against `roughness={1}`, it lands the walls at
+ *     ~0.89, next to the flat 0.85-0.9 the rooms were tuned with, so turning
+ *     this on does not relight a room. Widening this is the fastest way to make
+ *     the walls look wet.
  *
  * Deliberately not a colour map: the per-room `wallColor` stays the source of
  * the wall's tint, and a `map` would multiply into it (and drag the walls a few
@@ -30,7 +39,7 @@ import * as THREE from 'three';
  *   const plaster = useMemo(getWallPlasterTexture, []);
  *   <meshStandardMaterial
  *     roughness={1}
- *     bumpMap={plaster} bumpScale={0.02}
+ *     bumpMap={plaster} bumpScale={0.025}
  *     roughnessMap={plaster}
  *   />
  * ...or `wallTextureTile(plaster, span, height)` per wall so one tile always
@@ -43,22 +52,19 @@ import * as THREE from 'three';
 const SIZE = 256;
 
 /**
- * Metres of wall that one tile of the texture covers. Small on purpose: the
- * grain should read as fine tooth, and at 2.5 m the same noise looked like
- * patches of uneven paint instead. There is nothing low-frequency left in the
- * data, so the repeat does not announce itself as a pattern.
+ * Metres of wall that one tile of the texture covers. Small: the grain is meant
+ * to be fine, and a larger tile turned the same noise into visible blotches.
  */
-export const WALL_TEXTURE_TILE_M = 1.25;
+export const WALL_TEXTURE_TILE_M = 0.6;
 
-/** Relief range (r). Wide, so the bump has gradients to work with. */
-const MIN_RELIEF = 70;
+/** Relief range (r). Narrow — tooth, not topography. */
+const MIN_RELIEF = 170;
 const MAX_RELIEF = 255;
 
 // Sheen range (g/b). Narrow and high on purpose: this multiplies `roughness={1}`
-// to land the walls at ~0.83, near the flat 0.85-0.9 they had before, so
-// switching the texture on does not relight the room. Widening this is the
-// fastest way to make the walls look wet.
-const MIN_SHEEN = 175;
+// to land the walls at ~0.89, near the flat 0.85-0.9 they had before, so
+// switching the texture on does not relight the room.
+const MIN_SHEEN = 200;
 const MAX_SHEEN = 255;
 
 // Deterministic hash -> [0, 1), no Math.random, so output is reproducible.
@@ -74,8 +80,8 @@ function smoothstep(t: number): number {
 /**
  * Value noise with bilinear interpolation over an integer lattice that wraps
  * every `period` cells. The wrap is what makes the tile seamless: walls are
- * large planes with a repeating texture, and a visible seam every 2.5 m would
- * be worse than the flat look this replaces.
+ * large planes with a repeating texture, and a visible seam would be worse than
+ * the flat look this replaces.
  */
 function periodicNoise(x: number, y: number, period: number): number {
   const x0 = Math.floor(x), y0 = Math.floor(y);
@@ -93,10 +99,10 @@ function periodicNoise(x: number, y: number, period: number): number {
 /**
  * Builds the wall plaster texture. See module comment.
  *
- * Three octaves, all wrapping at whole cells so the octaves stay seamless too:
- * broad trowel patches, then the coarser tooth of the paint, then a fine grain
- * that only shows up close. High octaves mip away with distance, which is what
- * keeps the walls calm from the back of the room.
+ * Two octaves at neighbouring fine scales, both wrapping at whole cells so they
+ * stay seamless: together they read as one irregular grain rather than as two
+ * sizes of blob. With only high frequencies in the data, a tile repeat does not
+ * announce itself as a pattern, however small the tile is.
  */
 export function createWallPlasterTexture(): THREE.DataTexture {
   const data = new Uint8Array(SIZE * SIZE * 4);
@@ -106,19 +112,14 @@ export function createWallPlasterTexture(): THREE.DataTexture {
     for (let x = 0; x < SIZE; x++) {
       const u = x / SIZE;
 
-      const mid = periodicNoise(u * 14, v * 14, 14);
-      const fine = periodicNoise(u * 48, v * 48, 48);
+      const mid = periodicNoise(u * 22, v * 22, 22);
+      const fine = periodicNoise(u * 60, v * 60, 60);
 
-      // r: relief. No broad octave here on purpose: at room scale the low
-      // frequency reads as damp patches on the side walls, not as a surface.
-      // What sells plaster from across the room is even, fine tooth.
       const reliefNoise = mid * 0.55 + fine * 0.45;
       const relief = Math.round(
         MIN_RELIEF + Math.max(0, Math.min(1, reliefNoise)) * (MAX_RELIEF - MIN_RELIEF),
       );
 
-      // g/b: sheen, kept at the same fine scales — anything broader and the
-      // repeat becomes visible as a soft blotch every tile.
       const sheenNoise = mid * 0.6 + fine * 0.4;
       const sheen = Math.round(
         MIN_SHEEN + Math.max(0, Math.min(1, sheenNoise)) * (MAX_SHEEN - MIN_SHEEN),

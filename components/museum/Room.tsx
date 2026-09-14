@@ -115,7 +115,7 @@ const Room: React.FC<RoomProps> = ({
           metalness={0}
           roughness={1}
           bumpMap={sideWallPlaster}
-          bumpScale={0.04}
+          bumpScale={0.025}
           roughnessMap={sideWallPlaster}
         />
       </mesh>
@@ -132,7 +132,7 @@ const Room: React.FC<RoomProps> = ({
           metalness={0}
           roughness={1}
           bumpMap={sideWallPlaster}
-          bumpScale={0.04}
+          bumpScale={0.025}
           roughnessMap={sideWallPlaster}
         />
       </mesh>
@@ -145,7 +145,7 @@ const Room: React.FC<RoomProps> = ({
           metalness={0}
           roughness={1}
           bumpMap={endWallPlaster}
-          bumpScale={0.04}
+          bumpScale={0.025}
           roughnessMap={endWallPlaster}
         />
       </mesh>
@@ -158,7 +158,7 @@ const Room: React.FC<RoomProps> = ({
           metalness={0}
           roughness={1}
           bumpMap={endWallPlaster}
-          bumpScale={0.04}
+          bumpScale={0.025}
           roughnessMap={endWallPlaster}
         />
       </mesh>

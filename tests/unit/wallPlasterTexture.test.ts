@@ -57,16 +57,18 @@ describe('createWallPlasterTexture', () => {
       count++;
     }
 
-    // The bump needs gradients to perturb normals with at all.
-    expect(reliefMin).toBeGreaterThanOrEqual(70);
-    expect(reliefMax - reliefMin).toBeGreaterThan(120);
+    // Tooth, not topography: enough range for the bump to have gradients, but
+    // restrained — a wide range turned the walls into blotches.
+    expect(reliefMin).toBeGreaterThanOrEqual(165);
+    expect(reliefMax - reliefMin).toBeGreaterThan(40);
+    expect(reliefMax - reliefMin).toBeLessThan(120);
 
     // The sheen multiplies roughness={1}: kept near the flat 0.85-0.9 the walls
     // were tuned with, so enabling this does not relight a room.
-    expect(sheenMin).toBeGreaterThanOrEqual(150);
+    expect(sheenMin).toBeGreaterThanOrEqual(195);
     expect(sheenMax).toBeLessThanOrEqual(255);
     expect(sheenMax - sheenMin).toBeGreaterThan(40);
-    expect(sheenSum / count).toBeGreaterThan(205);
+    expect(sheenSum / count).toBeGreaterThan(220);
   });
 
   it('has no seam: the facing edges differ no more than neighbouring columns do', () => {
