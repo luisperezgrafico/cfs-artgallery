@@ -136,33 +136,31 @@ export const BENCH_DESIGNS: Record<string, BenchDesign> = {
   },
 
   'room-4': {
-    // Indigo, the sled: two champagne patines with turned-up tips, a pair of
-    // flared ebony blades on each, and the slab flying above them on a
-    // pinstripe. The terraces of the room's bench stand up into a base.
+    // Indigo, the cushion: four slim champagne posts under one thick champagne
+    // cushion with its edges rounded, sitting in an ebony tray. Nothing carries
+    // the seat but the posts, and they land on the floor bare — a bench, not a
+    // frame you sit on top of. The cushion is the room's accent colour, so the
+    // seat reads against the indigo instead of melting into it.
     id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
     parts: [
-      { shape: 'box', size: [1.54, 0.05, 0.4], position: [0, 0.395, 0], material: 0 },
-      { shape: 'box', size: [1.5, 0.012, 0.36], position: [0, 0.364, 0], material: 1 },
-      { shape: 'box', size: [1.42, 0.02, 0.34], position: [0, 0.348, 0], material: 2 },
-      // Blades flare upwards and lean outwards a little: corbels on a sled, not
-      // posts. `taper` narrows a top face, so the flare is made by turning the
-      // part over — the turn and the lean compose, verified in the unit test.
-      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [-0.63, 0.179, 0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, -0.12] },
-      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [0.63, 0.179, 0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, 0.12] },
-      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [-0.63, 0.179, -0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, -0.12] },
-      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [0.63, 0.179, -0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, 0.12] },
-      { shape: 'box', size: [1.3, 0.02, 0.026], position: [0, 0.01, 0.155], material: 1 },
-      { shape: 'box', size: [1.3, 0.02, 0.026], position: [0, 0.01, -0.155], material: 1 },
-      // The upturned tip every sled has, in place of a blunt runner end: it
-      // starts inside the runner and leaves it as one continuous line.
-      { shape: 'box', size: [0.018, 0.1, 0.026], position: [0.6757, 0.0522, 0.155], material: 1, rotation: [0, 0, -0.7] },
-      { shape: 'box', size: [0.018, 0.1, 0.026], position: [-0.6757, 0.0522, 0.155], material: 1, rotation: [0, 0, 0.7] },
-      { shape: 'box', size: [0.018, 0.1, 0.026], position: [0.6757, 0.0522, -0.155], material: 1, rotation: [0, 0, -0.7] },
-      { shape: 'box', size: [0.018, 0.1, 0.026], position: [-0.6757, 0.0522, -0.155], material: 1, rotation: [0, 0, 0.7] },
+      // The ebony tray the cushion sits in: set back, so its edge is the shadow
+      // line that stops the cushion from reading as one solid block.
+      { shape: 'box', size: [1.4, 0.025, 0.38], position: [0, 0.3025, 0], material: 0 },
+      // The cushion itself: champagne matte, edges broken by a radius, so it
+      // reads as a seat and not as another block.
+      { shape: 'cushion', size: [1.44, 0.105, 0.4], position: [0, 0.3675, 0], material: 1, round: 0.032 },
+      // Four turned posts, straight-sided: the only thing under the seat.
+      ...mirrored({
+        shape: 'lathe', size: [0.042, 0.29, 0.042], material: 1,
+        profile: [[0.021, 0], [0.021, 0.29]],
+      }, 0.6, 0.145, 0.14),
+      // One black rail per end, tying its two posts together under the tray.
+      { shape: 'box', size: [0.036, 0.036, 0.33], position: [-0.6, 0.262, 0], material: 2 },
+      { shape: 'box', size: [0.036, 0.036, 0.33], position: [0.6, 0.262, 0], material: 2 },
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
-      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
+      { color: '#201e2e', metalness: 0.05, roughness: 0.75 },
+      { color: '#c3a479', metalness: 0.05, roughness: 0.72 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
   },
@@ -377,30 +375,33 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
   },
 
   'room-4-alt-e': {
-    // Indigo, the cushion: the sled's frame traded for four slim champagne posts
-    // and one thick ebony cushion, its edges matted by the taper. Nothing carries
-    // the seat but the posts, and they land on the floor bare — a bench, not a
-    // frame you sit on top of.
+    // Indigo, the sled: where the room sat before the cushion. Two champagne
+    // patines with turned-up tips, a pair of flared ebony blades on each, and the
+    // slab flying above them on a pinstripe.
     id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
     parts: [
-      // The ebony tray the cushion sits in: set back, so its edge is the shadow
-      // line that stops the cushion from reading as one solid block.
-      { shape: 'box', size: [1.4, 0.025, 0.38], position: [0, 0.3025, 0], material: 0 },
-      // The cushion itself: champagne matte, edges broken by a radius, so it
-      // reads as a seat and not as another block.
-      { shape: 'cushion', size: [1.44, 0.105, 0.4], position: [0, 0.3675, 0], material: 1, round: 0.032 },
-      // Four turned posts, straight-sided: the only thing under the seat.
-      ...mirrored({
-        shape: 'lathe', size: [0.042, 0.29, 0.042], material: 1,
-        profile: [[0.021, 0], [0.021, 0.29]],
-      }, 0.6, 0.145, 0.14),
-      // One black rail per end, tying its two posts together under the tray.
-      { shape: 'box', size: [0.036, 0.036, 0.33], position: [-0.6, 0.262, 0], material: 2 },
-      { shape: 'box', size: [0.036, 0.036, 0.33], position: [0.6, 0.262, 0], material: 2 },
+      { shape: 'box', size: [1.54, 0.05, 0.4], position: [0, 0.395, 0], material: 0 },
+      { shape: 'box', size: [1.5, 0.012, 0.36], position: [0, 0.364, 0], material: 1 },
+      { shape: 'box', size: [1.42, 0.02, 0.34], position: [0, 0.348, 0], material: 2 },
+      // Blades flare upwards and lean outwards a little: corbels on a sled, not
+      // posts. `taper` narrows a top face, so the flare is made by turning the
+      // part over — the turn and the lean compose, verified in the unit test.
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [-0.63, 0.179, 0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, -0.12] },
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [0.63, 0.179, 0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, 0.12] },
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [-0.63, 0.179, -0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, -0.12] },
+      { shape: 'taper', size: [0.06, 0.318, 0.046], position: [0.63, 0.179, -0.14], material: 0, taper: 0.5, rotation: [Math.PI, 0, 0.12] },
+      { shape: 'box', size: [1.3, 0.02, 0.026], position: [0, 0.01, 0.155], material: 1 },
+      { shape: 'box', size: [1.3, 0.02, 0.026], position: [0, 0.01, -0.155], material: 1 },
+      // The upturned tip every sled has, in place of a blunt runner end: it
+      // starts inside the runner and leaves it as one continuous line.
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [0.6757, 0.0522, 0.155], material: 1, rotation: [0, 0, -0.7] },
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [-0.6757, 0.0522, 0.155], material: 1, rotation: [0, 0, 0.7] },
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [0.6757, 0.0522, -0.155], material: 1, rotation: [0, 0, -0.7] },
+      { shape: 'box', size: [0.018, 0.1, 0.026], position: [-0.6757, 0.0522, -0.155], material: 1, rotation: [0, 0, 0.7] },
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.75 },
-      { color: '#c3a479', metalness: 0.05, roughness: 0.72 },
+      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
   },
