@@ -136,22 +136,22 @@ export const BENCH_DESIGNS: Record<string, BenchDesign> = {
   },
 
   'room-4': {
-    // Indigo, the cushion: four slim champagne posts under one thick champagne
-    // cushion with its edges rounded, sitting in an ebony tray. Nothing carries
+    // Indigo, the cushion: four slim black posts under one thick champagne
+    // cushion with its edges rounded, sitting in a copper tray. Nothing carries
     // the seat but the posts, and they land on the floor bare — a bench, not a
     // frame you sit on top of. The cushion is the room's accent colour, so the
     // seat reads against the indigo instead of melting into it.
     id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
     parts: [
-      // The ebony tray the cushion sits in: set back, so its edge is the shadow
-      // line that stops the cushion from reading as one solid block.
+      // The copper tray the cushion sits in: set back, so its edge is the line
+      // that stops the cushion from reading as one solid block.
       { shape: 'box', size: [1.4, 0.025, 0.38], position: [0, 0.3025, 0], material: 0 },
       // The cushion itself: champagne matte, edges broken by a radius, so it
       // reads as a seat and not as another block.
       { shape: 'cushion', size: [1.44, 0.105, 0.4], position: [0, 0.3675, 0], material: 1, round: 0.032 },
-      // Four turned posts, straight-sided: the only thing under the seat.
+      // Four turned posts, straight-sided and black: the only thing under the seat.
       ...mirrored({
-        shape: 'lathe', size: [0.042, 0.29, 0.042], material: 1,
+        shape: 'lathe', size: [0.042, 0.29, 0.042], material: 2,
         profile: [[0.021, 0], [0.021, 0.29]],
       }, 0.6, 0.145, 0.14),
       // One black rail per end, tying its two posts together under the tray.
@@ -159,7 +159,8 @@ export const BENCH_DESIGNS: Record<string, BenchDesign> = {
       { shape: 'box', size: [0.036, 0.036, 0.33], position: [0.6, 0.262, 0], material: 2 },
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.75 },
+      // Copper tray, champagne cushion, black frame: one finish each.
+      { color: '#b87333', metalness: 0.35, roughness: 0.5 },
       { color: '#c3a479', metalness: 0.05, roughness: 0.72 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
@@ -244,7 +245,7 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
       }, 0.52, 0.295, 0.183),
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#b87333', metalness: 0.35, roughness: 0.5 },
       { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
@@ -314,7 +315,7 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
       ...rakerFan(1),
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#b87333', metalness: 0.35, roughness: 0.5 },
       { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
@@ -343,7 +344,7 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
       { shape: 'box', size: [0.3, 0.018, 0.3], position: [0.6, 0.009, 0], material: 1 },
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#b87333', metalness: 0.35, roughness: 0.5 },
       { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
@@ -368,7 +369,7 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
       { shape: 'box', size: [0.63, 0.012, 0.36], position: [0, 0.245, 0], material: 1 },
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#b87333', metalness: 0.35, roughness: 0.5 },
       { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
@@ -400,7 +401,7 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
       { shape: 'box', size: [0.018, 0.1, 0.026], position: [-0.6757, 0.0522, -0.155], material: 1, rotation: [0, 0, 0.7] },
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#b87333', metalness: 0.35, roughness: 0.5 },
       { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
