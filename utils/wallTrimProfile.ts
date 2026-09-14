@@ -68,22 +68,24 @@ function extrudeAlongWall(section: THREE.Shape, length: number): THREE.ExtrudeGe
     curveSegments: CURVE_SEGMENTS,
   });
   // The section is extruded along +Z; the wall needs it along +X, with the
-  // profile standing off the wall towards +Z.
+  // profile standing off the wall towards +Z. Centred on the segment's midpoint,
+  // because that is where the caller places it: anchored at one end, a trim
+  // reaches half way along its wall and leaves the rest bare.
   geometry.rotateY(-Math.PI / 2);
-  geometry.translate(length, 0, 0);
+  geometry.translate(length / 2, 0, 0);
   geometry.computeVertexNormals();
   return geometry;
 }
 
-/** Skirting for a wall segment `length` metres long; origin at the wall's base. */
+/** Skirting for a wall segment `length` metres long, centred on the wall's midpoint. */
 export function createSkirtingGeometry(length: number): THREE.ExtrudeGeometry {
   return extrudeAlongWall(skirtingSection(), length);
 }
 
 /**
- * Cornice for a wall segment `length` metres long; the origin is the *bottom* of
- * the profile, so a caller hangs it by offsetting `CORNICE_HEIGHT` down from the
- * ceiling.
+ * Cornice for a wall segment `length` metres long, centred on the wall's midpoint
+ * like the skirting. The origin is the *bottom* of the profile, so a caller hangs
+ * it by offsetting `CORNICE_HEIGHT` down from the ceiling.
  */
 export function createCorniceGeometry(length: number): THREE.ExtrudeGeometry {
   return extrudeAlongWall(corniceSection(), length);
