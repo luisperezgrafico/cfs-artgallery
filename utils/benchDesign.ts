@@ -193,6 +193,29 @@ function rakerFan(end: -1 | 1): BenchPart[] {
 }
 
 /**
+ * One X: two bars crossing half way up the leg, in both depth planes.
+ *
+ * The bars are cut to the height they occupy and only then leaned, because the
+ * envelope test measures a part twice — as the box it is drawn from and as the
+ * box it ends up in — and a bar long enough to reach the floor along its own
+ * axis pokes below it as a box. Leaning a 0.36 m bar by 0.42 rad lands its foot
+ * at 16 mm, inside the 18 mm floor plate, which is the joint it should read as
+ * anyway. A box turned about its own centre keeps its own size, so the length is
+ * the span over the cosine of the lean.
+ */
+function crossedBars(x: number, height: number, lean: number): BenchPart[] {
+  return [0.13, -0.13].flatMap((z) =>
+    [1, -1].map((direction): BenchPart => ({
+      shape: 'box',
+      size: [0.035, height, 0.045],
+      position: [x, height / 2, z],
+      material: 0,
+      rotation: [0, 0, lean * direction],
+    })),
+  );
+}
+
+/**
  * Prototype benches, in their own registry on purpose.
  *
  * `BENCH_DESIGNS` stays exactly one bench per room — that is the invariant the
@@ -289,6 +312,60 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
       // One éventail per end, both raker planes each.
       ...rakerFan(-1),
       ...rakerFan(1),
+    ],
+    materials: [
+      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
+      { color: '#13111b', metalness: 0, roughness: 0.88 },
+    ],
+  },
+
+  'room-4-alt-c': {
+    // Indigo, the cross: the sled's runners and blades traded for a crossed pair
+    // of ebony bars at each end, bolted through the crossing by a champagne pin
+    // and standing on champagne plates. Nothing vertical is solid, so the room
+    // shows through the bench from any seat.
+    id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
+    parts: [
+      { shape: 'box', size: [1.54, 0.05, 0.4], position: [0, 0.395, 0], material: 0 },
+      { shape: 'box', size: [1.48, 0.01, 0.36], position: [0, 0.365, 0], material: 1 },
+      // The rail the bars die into: their tops stop inside it, so no bar tip
+      // shows under the slab.
+      { shape: 'box', size: [1.42, 0.018, 0.34], position: [0, 0.351, 0], material: 2 },
+      ...crossedBars(-0.6, 0.36, 0.42),
+      ...crossedBars(0.6, 0.36, 0.42),
+      // The pin through each crossing, in place of a joint no one would see.
+      { shape: 'box', size: [0.024, 0.024, 0.28], position: [-0.6, 0.18, 0], material: 1 },
+      { shape: 'box', size: [0.024, 0.024, 0.28], position: [0.6, 0.18, 0], material: 1 },
+      // Floor plates, wide enough to take the splay of both bars and tall enough
+      // to swallow where they land.
+      { shape: 'box', size: [0.3, 0.018, 0.3], position: [-0.6, 0.009, 0], material: 1 },
+      { shape: 'box', size: [0.3, 0.018, 0.3], position: [0.6, 0.009, 0], material: 1 },
+    ],
+    materials: [
+      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
+      { color: '#13111b', metalness: 0, roughness: 0.88 },
+    ],
+  },
+
+  'room-4-alt-d': {
+    // Indigo, the drum: one ebony mass under the middle of the slab instead of a
+    // frame under all of it, grooved by two champagne lines and set on a
+    // recessed plinth. The seat flies out better than half a metre at each end,
+    // which is the whole idea — the bench reads as a slab, not as a seat.
+    id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
+    parts: [
+      { shape: 'box', size: [1.54, 0.05, 0.4], position: [0, 0.395, 0], material: 0 },
+      { shape: 'box', size: [1.48, 0.01, 0.36], position: [0, 0.365, 0], material: 1 },
+      { shape: 'box', size: [1.44, 0.014, 0.37], position: [0, 0.357, 0], material: 1 },
+      { shape: 'box', size: [0.6, 0.33, 0.34], position: [0, 0.185, 0], material: 2 },
+      // The plinth, narrower than the mass above it: its shadow is what lifts
+      // the whole thing off the floor.
+      { shape: 'box', size: [0.46, 0.026, 0.24], position: [0, 0.013, 0], material: 2 },
+      // Two grooves, proud of the mass on every face they cross.
+      { shape: 'box', size: [0.63, 0.012, 0.36], position: [0, 0.105, 0], material: 1 },
+      { shape: 'box', size: [0.63, 0.012, 0.36], position: [0, 0.245, 0], material: 1 },
     ],
     materials: [
       { color: '#201e2e', metalness: 0.05, roughness: 0.6 },

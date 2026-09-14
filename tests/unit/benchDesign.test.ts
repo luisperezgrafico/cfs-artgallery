@@ -255,7 +255,7 @@ describe('bench preview', () => {
     expect(benchPreviewDesign(undefined)).toBeNull();
     expect(benchPreviewDesign(null)).toBeNull();
     // A typo previews nothing rather than a bench from another room.
-    expect(benchPreviewKey('?bench=room-4-alt-c')).toBeNull();
+    expect(benchPreviewKey('?bench=room-4-alt-z')).toBeNull();
     expect(benchPreviewDesign('?bench=')).toBeNull();
     expect(benchPreviewDesign('?bench=%20')).toBeNull();
   });
