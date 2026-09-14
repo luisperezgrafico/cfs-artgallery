@@ -24,8 +24,8 @@ export interface BenchMaterial {
 }
 
 export interface BenchPart {
-  /** box = plain block · taper = block with a scaled top face · lathe = turned leg. */
-  shape: 'box' | 'taper' | 'lathe';
+  /** box = plain block · taper = block with a scaled top face · lathe = turned leg · cushion = block with its long edges rounded. */
+  shape: 'box' | 'taper' | 'lathe' | 'cushion';
   /** Bounding size: [along the seat, height, depth]. */
   size: [width: number, height: number, depth: number];
   /** Centre of the part, in bench-local metres. */
@@ -36,6 +36,8 @@ export interface BenchPart {
   taper?: number;
   /** 'lathe' only — half cross-section, from the part's base (y = 0) up to size[1]. */
   profile?: [radius: number, y: number][];
+  /** 'cushion' only — radius of the rounded edges, in metres. */
+  round?: number;
   /**
    * 'box' / 'taper' — tilt of the part about its own centre, in radians. A
    * placement, like `position`: the part keeps its own true size, so a tilted
@@ -381,23 +383,24 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
     // frame you sit on top of.
     id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
     parts: [
-      // The dark tray the cushion sits in: its lip is the shadow line that stops
-      // the cushion reading as one solid block.
-      { shape: 'box', size: [1.44, 0.025, 0.4], position: [0, 0.3025, 0], material: 2 },
-      // The cushion itself, 10 cm thick with the top face pulled in a touch.
-      { shape: 'taper', size: [1.44, 0.105, 0.4], position: [0, 0.3675, 0], material: 0, taper: 0.93 },
+      // The ebony tray the cushion sits in: set back, so its edge is the shadow
+      // line that stops the cushion from reading as one solid block.
+      { shape: 'box', size: [1.4, 0.025, 0.38], position: [0, 0.3025, 0], material: 0 },
+      // The cushion itself: champagne matte, edges broken by a radius, so it
+      // reads as a seat and not as another block.
+      { shape: 'cushion', size: [1.44, 0.105, 0.4], position: [0, 0.3675, 0], material: 1, round: 0.032 },
       // Four turned posts, straight-sided: the only thing under the seat.
       ...mirrored({
         shape: 'lathe', size: [0.042, 0.29, 0.042], material: 1,
         profile: [[0.021, 0], [0.021, 0.29]],
       }, 0.6, 0.145, 0.14),
-      // One rail per end, tying its two posts together under the tray.
-      { shape: 'box', size: [0.036, 0.036, 0.33], position: [-0.6, 0.262, 0], material: 1 },
-      { shape: 'box', size: [0.036, 0.036, 0.33], position: [0.6, 0.262, 0], material: 1 },
+      // One black rail per end, tying its two posts together under the tray.
+      { shape: 'box', size: [0.036, 0.036, 0.33], position: [-0.6, 0.262, 0], material: 2 },
+      { shape: 'box', size: [0.036, 0.036, 0.33], position: [0.6, 0.262, 0], material: 2 },
     ],
     materials: [
-      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
-      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
+      { color: '#201e2e', metalness: 0.05, roughness: 0.75 },
+      { color: '#c3a479', metalness: 0.05, roughness: 0.72 },
       { color: '#13111b', metalness: 0, roughness: 0.88 },
     ],
   },
@@ -421,6 +424,7 @@ export function createBenchPartGeometry(part: BenchPart): THREE.BufferGeometry {
     throw new Error('Bench part dimensions must be positive and finite');
   }
   if (part.shape === 'lathe') return createLatheGeometry(part.profile, height);
+  if (part.shape === 'cushion') return createCushionGeometry(width, height, depth, part.round ?? 0.025);
   if (part.shape === 'taper') return createTaperedGeometry(width, height, depth, part.taper ?? 1);
   return new THREE.BoxGeometry(width, height, depth);
 }
@@ -481,6 +485,43 @@ export function createBenchGeometry(design: BenchDesign): THREE.BufferGeometry {
   } finally {
     for (const part of parts) part.dispose();
   }
+}
+
+/**
+ * A cushion: the section across the seat with its corners broken by a radius,
+ * extruded along the seat and inset at both ends. A plain block is what the seat
+ * of a bench reads as when nobody is meant to sit on it; this is the one shape in
+ * the vocabulary that says "cushion" from across the room. It stays a single
+ * convex solid, so it bounds, tiles and casts like the block it replaces.
+ */
+function createCushionGeometry(width: number, height: number, depth: number, round: number): THREE.BufferGeometry {
+  if (!Number.isFinite(round) || round <= 0) throw new Error('Bench cushion radius must be positive and finite');
+  // The bevel grows the section outwards as it rounds the ends, so the profile
+  // is cut back by that much to leave the part exactly the size it declares —
+  // and the radius is measured on the finished edge, not on the profile.
+  const bevel = Math.min(round, 0.022);
+  if (depth <= 2 * bevel) throw new Error('Bench cushion is too short for its own bevel');
+  const halfWidth = width / 2 - bevel, halfHeight = height / 2 - bevel;
+  if (halfWidth <= 0 || halfHeight <= 0) throw new Error('Bench cushion is too small for its own bevel');
+  const corner = Math.min(round - bevel, halfWidth / 2, halfHeight / 2);
+  if (corner < 0.001) throw new Error('Bench cushion radius must survive its own bevel');
+  const shape = new THREE.Shape();
+  shape.moveTo(-halfWidth + corner, -halfHeight);
+  shape.lineTo(halfWidth - corner, -halfHeight);
+  shape.quadraticCurveTo(halfWidth, -halfHeight, halfWidth, -halfHeight + corner);
+  shape.lineTo(halfWidth, halfHeight - corner);
+  shape.quadraticCurveTo(halfWidth, halfHeight, halfWidth - corner, halfHeight);
+  shape.lineTo(-halfWidth + corner, halfHeight);
+  shape.quadraticCurveTo(-halfWidth, halfHeight, -halfWidth, halfHeight - corner);
+  shape.lineTo(-halfWidth, -halfHeight + corner);
+  shape.quadraticCurveTo(-halfWidth, -halfHeight, -halfWidth + corner, -halfHeight);
+  const body = depth - 2 * bevel;
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: body, bevelEnabled: true, bevelSize: bevel, bevelThickness: bevel,
+    bevelSegments: 1, curveSegments: 2,
+  });
+  geometry.translate(0, 0, -body / 2);
+  return geometry;
 }
 
 /**

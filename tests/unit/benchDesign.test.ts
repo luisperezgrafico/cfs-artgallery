@@ -234,6 +234,9 @@ describe('room benches', () => {
     expect(() => createBenchPartGeometry({ shape: 'box', size: [1, NaN, 1], position: [0, 0, 0], material: 0 })).toThrow();
     expect(() => createBenchPartGeometry({ shape: 'taper', size: [1, 1, 1], position: [0, 0, 0], material: 0, taper: 0 })).toThrow();
     expect(() => createBenchPartGeometry({ shape: 'lathe', size: [1, 1, 1], position: [0, 0, 0], material: 0 })).toThrow();
+    // A cushion whose radius would not survive its own bevel is not a cushion.
+    expect(() => createBenchPartGeometry({ shape: 'cushion', size: [1.4, 0.1, 0.4], position: [0, 0, 0], material: 0, round: 0 })).toThrow();
+    expect(() => createBenchPartGeometry({ shape: 'cushion', size: [1.4, 0.03, 0.4], position: [0, 0, 0], material: 0, round: 0.03 })).toThrow();
     // A profile that does not span the part's height would sit wrong on the floor.
     expect(() => createBenchPartGeometry({
       shape: 'lathe', size: [0.1, 0.2, 0.1], position: [0, 0.1, 0], material: 0,
