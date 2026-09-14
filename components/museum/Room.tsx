@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Floor from './Floor';
-import { getWallPlasterTexture, wallTextureTile } from '../../utils/wallPlasterTexture';
+import { createPlasterMaterial } from '../../utils/wallPlasterShader';
 
 interface RoomProps {
   width: number;
@@ -73,18 +73,14 @@ const Room: React.FC<RoomProps> = ({
   const ceilingWidth   = width + 1 * (length * Math.tan(wallTiltAngle));
   const sideWallLength = length / Math.cos(wallTiltAngle);
 
-  // Painted plaster, not a flat plane: one tile always covers the same number of
-  // metres, so the grain is the same size on every wall of every room. Clones
-  // share the base image, so this costs a single 256 KB texture for the gallery.
-  const plaster = useMemo(() => getWallPlasterTexture(), []);
-  const sideWallPlaster = useMemo(
-    () => wallTextureTile(plaster, sideWallLength, height),
-    [plaster, sideWallLength, height],
-  );
-  const endWallPlaster = useMemo(
-    () => wallTextureTile(plaster, Math.max(frontWidth, ceilingWidth), height),
-    [plaster, frontWidth, ceilingWidth, height],
-  );
+  // Painted plaster, not a flat plane. The grain is evaluated in the shader on
+  // world position, so there is no tile to repeat and the same material can be
+  // shared by every wall of the room.
+  const wallMaterial = useMemo(() => createPlasterMaterial(wallColor), [wallColor]);
+
+  // The material is handed to the meshes as a prop, so React Three Fiber does not
+  // own it and will not free it when the room unmounts.
+  useEffect(() => () => wallMaterial.dispose(), [wallMaterial]);
 
   return (
     <group>
@@ -105,62 +101,37 @@ const Room: React.FC<RoomProps> = ({
 
       {/* Left Wall */}
       <mesh
+        material={wallMaterial}
         position={[-width / 2, height / 2, length / 2]}
         rotation={[0, Math.PI / 2 - wallTiltAngle, 0]}
         receiveShadow
       >
         <planeGeometry args={[sideWallLength, height]} />
-        <meshStandardMaterial
-          color={wallColor}
-          metalness={0}
-          roughness={1}
-          bumpMap={sideWallPlaster}
-          bumpScale={0.018}
-          roughnessMap={sideWallPlaster}
-        />
       </mesh>
 
       {/* Right Wall */}
       <mesh
+        material={wallMaterial}
         position={[width / 2, height / 2, length / 2]}
         rotation={[0, -Math.PI / 2 + wallTiltAngle, 0]}
         receiveShadow
       >
         <planeGeometry args={[sideWallLength, height]} />
-        <meshStandardMaterial
-          color={wallColor}
-          metalness={0}
-          roughness={1}
-          bumpMap={sideWallPlaster}
-          bumpScale={0.018}
-          roughnessMap={sideWallPlaster}
-        />
       </mesh>
 
       {/* Front Wall */}
-      <mesh position={[0, height / 2, 0]} receiveShadow>
+      <mesh material={wallMaterial} position={[0, height / 2, 0]} receiveShadow>
         <planeGeometry args={[frontWidth, height]} />
-        <meshStandardMaterial
-          color={wallColor}
-          metalness={0}
-          roughness={1}
-          bumpMap={endWallPlaster}
-          bumpScale={0.018}
-          roughnessMap={endWallPlaster}
-        />
       </mesh>
 
       {/* Back Wall */}
-      <mesh position={[0, height / 2, length]} rotation={[0, Math.PI, 0]} receiveShadow>
+      <mesh
+        material={wallMaterial}
+        position={[0, height / 2, length]}
+        rotation={[0, Math.PI, 0]}
+        receiveShadow
+      >
         <planeGeometry args={[ceilingWidth, height]} />
-        <meshStandardMaterial
-          color={wallColor}
-          metalness={0}
-          roughness={1}
-          bumpMap={endWallPlaster}
-          bumpScale={0.018}
-          roughnessMap={endWallPlaster}
-        />
       </mesh>
 
       {/* Skirting + cornice, so the bare rear of the room still reads as a room */}
