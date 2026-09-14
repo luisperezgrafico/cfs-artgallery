@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RotateCw } from 'lucide-react';
+import { RotateCwSquare } from 'lucide-react';
 import {
   dismissOrientationNotice,
   readOrientationNoticeDismissed,
@@ -60,7 +60,7 @@ const OrientationNotice: React.FC = () => {
       style={{ background: 'rgba(0, 0, 0, 0.82)' }}
     >
       <div
-        className="w-full max-w-xs px-6 py-7 text-center space-y-4"
+        className="panel-warm w-full max-w-xs px-6 py-7 text-center space-y-4"
         style={{
           background: 'var(--panel-bg)',
           border: '1px solid var(--panel-border)',
@@ -68,7 +68,7 @@ const OrientationNotice: React.FC = () => {
           borderRadius: '2px',
         }}
       >
-        <RotateCw
+        <RotateCwSquare
           size={26}
           aria-hidden="true"
           className="mx-auto"
@@ -86,8 +86,8 @@ const OrientationNotice: React.FC = () => {
           Best viewed upright
         </h2>
         <p className="text-sm" style={{ color: 'var(--panel-text)' }}>
-          The gallery is framed for an upright screen. On its side the controls
-          cover the artwork, and each piece is much smaller.
+          The gallery is designed for portrait mode — turn your phone upright to
+          see the exhibition as intended.
         </p>
         <button
           ref={buttonRef}
