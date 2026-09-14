@@ -374,6 +374,34 @@ export const BENCH_ALTERNATES: Record<string, BenchDesign> = {
     ],
   },
 
+  'room-4-alt-e': {
+    // Indigo, the cushion: the sled's frame traded for four slim champagne posts
+    // and one thick ebony cushion, its edges matted by the taper. Nothing carries
+    // the seat but the posts, and they land on the floor bare — a bench, not a
+    // frame you sit on top of.
+    id: 'deco', seatHeight: 0.42, width: 1.54, depth: 0.4,
+    parts: [
+      // The dark tray the cushion sits in: its lip is the shadow line that stops
+      // the cushion reading as one solid block.
+      { shape: 'box', size: [1.44, 0.025, 0.4], position: [0, 0.3025, 0], material: 2 },
+      // The cushion itself, 10 cm thick with the top face pulled in a touch.
+      { shape: 'taper', size: [1.44, 0.105, 0.4], position: [0, 0.3675, 0], material: 0, taper: 0.93 },
+      // Four turned posts, straight-sided: the only thing under the seat.
+      ...mirrored({
+        shape: 'lathe', size: [0.042, 0.29, 0.042], material: 1,
+        profile: [[0.021, 0], [0.021, 0.29]],
+      }, 0.6, 0.145, 0.14),
+      // One rail per end, tying its two posts together under the tray.
+      { shape: 'box', size: [0.036, 0.036, 0.33], position: [-0.6, 0.262, 0], material: 1 },
+      { shape: 'box', size: [0.036, 0.036, 0.33], position: [0.6, 0.262, 0], material: 1 },
+    ],
+    materials: [
+      { color: '#201e2e', metalness: 0.05, roughness: 0.6 },
+      { color: '#c3a479', metalness: 0.38, roughness: 0.45 },
+      { color: '#13111b', metalness: 0, roughness: 0.88 },
+    ],
+  },
+
 };
 
 export function benchDesignForRoom(roomId?: string): BenchDesign {
